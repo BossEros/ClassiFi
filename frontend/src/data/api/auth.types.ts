@@ -78,7 +78,7 @@ export interface ChangePasswordRequest {
 }
 
 /**
- * Payload for delete account request.
+ * Payload for account deactivation request.
  */
 export interface DeleteAccountRequest {
   password: string
@@ -142,9 +142,12 @@ export type ResetFlowResponse = BaseAuthResponse
 export type ChangePasswordResponse = BaseAuthResponse
 
 /**
- * Response for delete account request.
+ * Response for account deactivation request.
  */
 export type DeleteAccountResponse = BaseAuthResponse
+
+export type DeactivateAccountRequest = DeleteAccountRequest
+export type DeactivateAccountResponse = DeleteAccountResponse
 
 // ============================================================================
 // Validation Types

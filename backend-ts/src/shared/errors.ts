@@ -90,12 +90,28 @@ export class TeacherApprovalPendingError extends ForbiddenError {
   }
 }
 
+export class AccountDeactivatedError extends ForbiddenError {
+  constructor() {
+    super("Your account has been deactivated. Please contact an administrator.")
+    this.name = "AccountDeactivatedError"
+  }
+}
+
 export class TeacherSelfDeletionNotAllowedError extends ForbiddenError {
   constructor() {
     super(
       "Teacher accounts cannot be deleted from personal settings. Please contact an administrator if account removal is required.",
     )
     this.name = "TeacherSelfDeletionNotAllowedError"
+  }
+}
+
+export class SelfAccountDeactivationNotAllowedError extends ForbiddenError {
+  constructor() {
+    super(
+      "Account deactivation is handled by administrators. Please contact your teacher or system administrator if you need account assistance.",
+    )
+    this.name = "SelfAccountDeactivationNotAllowedError"
   }
 }
 

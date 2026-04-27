@@ -4,6 +4,7 @@ import { assignments, type Assignment } from "@/modules/assignments/assignment.m
 import { classes, type Class } from "@/modules/classes/class.model.js"
 import { enrollments } from "@/modules/enrollments/enrollment.model.js"
 import { submissions } from "@/modules/submissions/submission.model.js"
+import { users } from "@/modules/users/user.model.js"
 import { db } from "@/shared/database.js"
 /**
  * All assignments read model for teacher assignments page.
@@ -113,6 +114,8 @@ export class DashboardQueryRepository {
         count: sql<number>`count(*)`.as("student_count"),
       })
       .from(enrollments)
+      .innerJoin(users, eq(enrollments.studentId, users.id))
+      .where(eq(users.isActive, true))
       .groupBy(enrollments.classId)
       .as("student_counts")
 

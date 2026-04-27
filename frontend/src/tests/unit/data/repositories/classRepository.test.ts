@@ -366,6 +366,19 @@ describe("classRepository", () => {
       expect(result).toEqual([])
     })
 
+    it("includes the requested status query parameter", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: true, students: mockStudents },
+        status: 200,
+      })
+
+      await classRepository.getAllEnrolledStudentsForClassId(1, "inactive")
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/classes/1/students?status=inactive",
+      )
+    })
+
     it("throws error when API fails", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         error: "Class not found",

@@ -4,6 +4,7 @@ import {
   ClassIdParamSchema,
   ClassResponseSchema,
   ClassStudentParamsSchema,
+  ClassStudentsQuerySchema,
   CreateClassRequestSchema,
   DayOfWeekSchema,
   GetClassByIdQuerySchema,
@@ -133,6 +134,7 @@ describe("Class Schemas", () => {
       expect(TeacherIdQuerySchema.parse({ teacherId: "9" }).teacherId).toBe(9)
       expect(GetClassesQuerySchema.parse({ activeOnly: "true" }).activeOnly).toBe("true")
       expect(GetClassByIdQuerySchema.parse({})).toEqual({})
+      expect(ClassStudentsQuerySchema.parse({ status: "inactive" }).status).toBe("inactive")
     })
 
     it("coerces combined class/student params", () => {
@@ -170,6 +172,7 @@ describe("Class Schemas", () => {
         email: "student@classifi.com",
         firstName: "Student",
         lastName: "User",
+        isActive: false,
       })
       expect(parseResult.success).toBe(true)
     })

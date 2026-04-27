@@ -457,7 +457,7 @@ async function fetchAssignmentCounts(
       assignmentService
         .getAssignmentSubmissions(assignmentId, true)
         .catch(() => []),
-      classService.getClassStudents(classId).catch(() => []),
+      classService.getClassStudents(classId, "active").catch(() => []),
     ])
 
     return {

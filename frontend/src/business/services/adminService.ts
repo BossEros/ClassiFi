@@ -170,16 +170,18 @@ export async function toggleUserStatus(userId: number): Promise<AdminUser> {
 }
 
 /**
- * Permanently deletes a user account.
+ * Deactivates a user account while preserving academic records.
  *
- * @param userId - The unique identifier of the user to delete.
- * @returns A promise that resolves when the deletion is complete.
+ * @param userId - The unique identifier of the user to deactivate.
+ * @returns A promise that resolves when the deactivation is complete.
  */
-export async function deleteUser(userId: number): Promise<void> {
+export async function deactivateUser(userId: number): Promise<void> {
   validateId(userId, "user")
 
-  await adminRepository.deleteUserAccountById(userId)
+  await adminRepository.deactivateUserAccountById(userId)
 }
+
+export const deleteUser = deactivateUser
 
 // ============ Analytics ============
 

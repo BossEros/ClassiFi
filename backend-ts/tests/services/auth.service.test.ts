@@ -12,6 +12,7 @@ import {
   EmailNotVerifiedError,
   InvalidRoleError,
   TeacherApprovalPendingError,
+  AccountDeactivatedError,
 } from "../../src/shared/errors.js"
 
 // Mock the UserRepository class but preserve USER_ROLES constant
@@ -501,6 +502,40 @@ describe("AuthService", () => {
         ),
       ).rejects.toThrow(TeacherApprovalPendingError)
     })
+
+    it("should throw AccountDeactivatedError for inactive student accounts", async () => {
+      mockAuthAdapter.signInWithPassword.mockResolvedValue({
+        accessToken: "token",
+        user: { id: "inactive-student-id" },
+      })
+      mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+        createMockUser({ isActive: false }),
+      )
+
+      await expect(
+        authService.loginUser(
+          validCredentials.email,
+          validCredentials.password,
+        ),
+      ).rejects.toThrow(AccountDeactivatedError)
+    })
+
+    it("should throw AccountDeactivatedError for inactive admin accounts", async () => {
+      mockAuthAdapter.signInWithPassword.mockResolvedValue({
+        accessToken: "token",
+        user: { id: "inactive-admin-id" },
+      })
+      mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+        createMockUser({ role: "admin", isActive: false }),
+      )
+
+      await expect(
+        authService.loginUser(
+          validCredentials.email,
+          validCredentials.password,
+        ),
+      ).rejects.toThrow(AccountDeactivatedError)
+    })
   })
 
   // ============ verifyToken Tests ============
@@ -543,6 +578,28 @@ describe("AuthService", () => {
 
       await expect(authService.verifyToken("valid-token")).rejects.toThrow(
         TeacherApprovalPendingError,
+      )
+    })
+
+    it("should throw AccountDeactivatedError for inactive student accounts", async () => {
+      mockAuthAdapter.getUser.mockResolvedValue({ id: "inactive-student-id" })
+      mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+        createMockUser({ isActive: false }),
+      )
+
+      await expect(authService.verifyToken("valid-token")).rejects.toThrow(
+        AccountDeactivatedError,
+      )
+    })
+
+    it("should throw AccountDeactivatedError for inactive admin accounts", async () => {
+      mockAuthAdapter.getUser.mockResolvedValue({ id: "inactive-admin-id" })
+      mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+        createMockUser({ role: "admin", isActive: false }),
+      )
+
+      await expect(authService.verifyToken("valid-token")).rejects.toThrow(
+        AccountDeactivatedError,
       )
     })
   })

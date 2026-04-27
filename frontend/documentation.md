@@ -155,7 +155,7 @@ Routing is composed in `src/app/App.tsx`, which mounts route groups from `src/ap
 - `AuthRedirectHandler` normalizes Supabase email-confirmation and recovery links into the correct reset or confirmation pages.
 - Shared pages such as assignment detail, settings, notifications, and calendar are intentionally routed once and adapt based on user role and available permissions.
 - Teacher self-registration completes normally, but the frontend does not persist a local auth session for teacher accounts returned with `isActive = false`.
-- If backend verification rejects a teacher with pending approval, the frontend immediately clears the Supabase session, clears local auth state, and shows the exact backend message unchanged.
+- If backend verification rejects a teacher with pending approval or rejects a student/admin because the account is deactivated, the frontend immediately clears the Supabase session, clears local auth state, and shows the exact backend message unchanged.
 
 ### Key Routes
 
@@ -216,7 +216,10 @@ Admin enrollment workspace behavior:
 - **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination.
 - **`PairComparison`** and **`PairCodeDiff`**: Side-by-side code comparison surfaces for evidence review.
 - **Teacher PDF exports**: Threshold-aware class report download plus pairwise evidence download built with `@react-pdf/renderer`
-- **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
+- **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export, ordered by class standing instead of alphabetical name order.
+- Teacher gradebook `Average` now represents a points-weighted current standing: assignments with no submission yet count as `0`, submitted work awaiting grading is excluded until a score exists, and the final percentage is computed from earned points over countable possible points.
+- **Teacher gradebook exports**: CSV exports include a `Status` column for `Active` / `Inactive` students. PDF exports include inactive students by default, label them explicitly, highlight their rows subtly, and keep summary metrics scoped to active students only.
+- **Teacher roster status filters**: The class `Students` tab exposes `Active` and `Inactive` filters only. The roster defaults to active students, while inactive/deactivated students are still reviewable through the inactive filter and are labeled with an explicit status badge.
 - **`StudentClassGradesContent`**: Student-only class grades tab that shows personal current grade, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, similarity-deduction breakdowns, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
@@ -239,9 +242,9 @@ Admin enrollment workspace behavior:
   - Create flow requires any provided deadline to be in the future; edit flow allows keeping or saving an already-past deadline so teachers can revise expired assignments without reopening them
   - Resubmission settings
 - **`AdminUserModal` / `AdminEditUserModal`**: Admin user create/edit flows use `react-hook-form` + Zod schemas.
-- **`AdminDeleteUserModal`**: Admin delete-user confirmation flow uses `react-hook-form` + Zod confirmation schema.
+- **`AdminDeactivateUserModal`**: Admin user deactivation confirmation flow uses `react-hook-form` + Zod confirmation schema and preserves academic records.
 - **`ChangePasswordModal`**: Password change flow uses `react-hook-form` + Zod schema with strong-password and confirmation checks.
-- **`DeleteAccountModal`**: Account deletion confirmation flow uses `react-hook-form` + Zod schema for password + destructive confirmation.
+- **Account Status settings card**: Student and teacher settings show a read-only account status card with the current access state and administrator contact guidance. Admin settings intentionally omit this card.
 - **`GradeOverrideModal`**: Shared grade-override input (used from teacher submission detail view) with `react-hook-form` + dynamic Zod schema and assignment-score bounds.
 
 Frontend form validation schemas are colocated in `src/presentation/schemas/*` by feature:
@@ -345,6 +348,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 4.  **Token**: Supabase manages the session (JWT). `supabaseAuthAdapter` listens for changes.
 5.  **Redirect**: On success, user is navigated to `/dashboard`.
 6.  **Persistence**: Session is persisted in LocalStorage/Cookies by Supabase client.
+7.  **Inactive account cleanup**: If backend profile verification rejects the sign-in because the teacher is pending approval or the student/admin account is deactivated, the frontend signs out from Supabase and clears local auth state before showing the backend message.
 
 ## Key Features
 
@@ -486,7 +490,7 @@ Teacher approval UX notes:
 
 - The registration completion step uses a teacher-specific success message when the new account is inactive:
   - `Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin`
-- Admin user management reuses the existing status toggle as the v1 approval action.
+- Admin user management reuses the existing status toggle as the v1 approval action, showing `Activate Account` for inactive users and `Deactivate User` for active users.
 - In the admin users table and edit modal, inactive teachers are labeled `Pending Approval` instead of generic suspended wording.
 
 #### Usage Example
@@ -603,7 +607,10 @@ Specialized types for the class detail page redesign:
 2. **View Class Information**:
    - Class header displays instructor name, schedule (days and time), and class code
    - Access quick actions: View Gradebook, Edit Class, Delete Class
-   - Gradebook provides a read-only grade overview and CSV export (no inline grade override actions)
+- Gradebook provides a read-only grade overview and CSV export (no inline grade override actions)
+- Teacher gradebook rows are ordered by active-student class standing first, using the same points-weighted current-standing percentage shown in the `Average` column; alphabetical order is now only a tie-breaker.
+- The teacher `Average` column is not a graded-work-only average. It is a current-standing metric: missing work counts as zero immediately, pending-review submissions are excluded until graded, and assignment totals are weighted by their available points.
+- Inactive/deactivated students remain visible in the gradebook with an `Inactive` status label so historical records remain intact
    - Class code badge is styled with teal colors for easy visibility
 3. **Manage Assignments**:
    - Assignments are organized into **modules** (collapsible sections like "Module 1", "Midterm", "Finals")
@@ -617,6 +624,7 @@ Specialized types for the class detail page redesign:
    - Click assignment cards to view submissions and grade student work
    - In the submissions view, the Instructions card is collapsible from the header chevron to save vertical space
    - Submission metrics are shown as individual cards (`Total Submissions`, `On Time`, `Late`, `Missing`) with status icons
+   - Teacher assignment expectation metrics (`submitted / total`, `Missing`, pending filters, and calendar submission ratios) are scoped to active students only, while existing submissions from inactive students remain visible for review
    - Submissions are listed in a paginated table (`Student Name`, `Status`, `Grade`, `Action`) with 10 rows per page
    - Search includes a leading icon and shares the action bar row with the similarity action button (left search, right action button)
    - Clicking a submissions table row or the `View Details` action opens assignment review for the selected submission (`submissionId` in URL query)
@@ -629,7 +637,8 @@ Specialized types for the class detail page redesign:
    - Edit/delete assignment actions are available from the assignment submissions page dropdown menu (teacher/admin only)
 4. **View Students**:
    - Switch to Students tab to view enrolled students
-   - Manage student enrollments
+   - Use only two roster filters: `Active` and `Inactive`
+   - The default roster view shows active students only, and inactive students appear with a status badge when the inactive filter is selected
 5. **Create New Assignment**:
    - Click "Add Assignment" button (from module card or tab header)
    - Select which module to assign the assignment to via the module selector dropdown

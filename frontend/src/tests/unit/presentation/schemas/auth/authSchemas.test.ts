@@ -180,16 +180,16 @@ describe("authSchemas", () => {
     }
   })
 
-  it("accepts valid delete account confirmation payload", () => {
+  it("accepts valid deactivate account confirmation payload", () => {
     const parseResult = deleteAccountFormSchema.safeParse({
       password: "Password1!",
-      confirmation: "DELETE",
+      confirmation: "DEACTIVATE",
     })
 
     expect(parseResult.success).toBe(true)
   })
 
-  it("rejects invalid delete account confirmation text", () => {
+  it("rejects invalid deactivate account confirmation text", () => {
     const parseResult = deleteAccountFormSchema.safeParse({
       password: "Password1!",
       confirmation: "DEL",
@@ -199,7 +199,7 @@ describe("authSchemas", () => {
 
     if (!parseResult.success) {
       expect(parseResult.error.issues[0]?.message).toBe(
-        "Please type DELETE to confirm account deletion",
+        "Please type DEACTIVATE to confirm account deactivation",
       )
     }
   })

@@ -17,8 +17,6 @@ import {
   Mail,
   Bell,
   Camera,
-  Trash2,
-  AlertTriangle,
   Shield,
 } from "lucide-react"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
@@ -46,12 +44,6 @@ import {
   type ChangePasswordFormValues,
 } from "@/presentation/schemas/auth/authSchemas"
 import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
-import { deleteAccount } from "@/business/services/authService"
-import { useNavigate } from "react-router-dom"
-import {
-  deleteAccountFormSchema,
-  type DeleteAccountFormValues,
-} from "@/presentation/schemas/auth/authSchemas"
 import { Toggle } from "@/presentation/components/ui/Toggle"
 import { updateNotificationPreferences } from "@/business/services/userService"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
@@ -66,6 +58,41 @@ const LIGHT_MODAL_SECONDARY_BUTTON_CLASSES =
   "flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm shadow-slate-200/60 transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
 const LIGHT_INPUT_BASE_CLASSES =
   "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm shadow-slate-200/60 transition-all duration-200 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+
+interface AccountStatusContent {
+  badgeLabel: string
+  badgeClassName: string
+  message: string
+}
+
+function getAccountStatusContent(user: User): AccountStatusContent {
+  const isPendingTeacherApproval = user.role === "teacher" && !user.isActive
+
+  if (user.isActive) {
+    return {
+      badgeLabel: "Active",
+      badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      message:
+        "Your account is active. If you need help changing your access, contact your school administrator.",
+    }
+  }
+
+  if (isPendingTeacherApproval) {
+    return {
+      badgeLabel: "Pending Approval",
+      badgeClassName: "border-amber-200 bg-amber-50 text-amber-700",
+      message:
+        "Your account is waiting for administrator approval. Contact your school administrator if you need help with access.",
+    }
+  }
+
+  return {
+    badgeLabel: "Inactive",
+    badgeClassName: "border-slate-300 bg-slate-100 text-slate-600",
+    message:
+      "Your account is currently inactive. Contact your school administrator if you need help restoring access.",
+  }
+}
 
 // Inlined from src/presentation/components/shared/settings/AvatarUploadModal.tsx
 interface AvatarUploadModalProps {
@@ -733,362 +760,6 @@ export function ChangePasswordModal({
   )
 }
 
-// Inlined from src/presentation/components/shared/settings/DeleteAccountModal.tsx
-interface DeleteAccountModalProps {
-  isOpen: boolean
-  onClose: () => void
-}
-
-const INITIAL_DELETE_ACCOUNT_VALUES: DeleteAccountFormValues = {
-  password: "",
-  confirmation: "",
-}
-
-export function DeleteAccountModal({
-  isOpen,
-  onClose,
-}: DeleteAccountModalProps) {
-  const navigate = useNavigate()
-  const { register, handleSubmit, watch, setValue, reset } = useZodForm({
-    schema: deleteAccountFormSchema,
-    defaultValues: INITIAL_DELETE_ACCOUNT_VALUES,
-    mode: "onSubmit",
-  })
-  const [isDeleting, setIsDeleting] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-  const [step, setStep] = React.useState<"warning" | "confirm" | "success">(
-    "warning",
-  )
-  const [showPassword, setShowPassword] = React.useState(false)
-
-  const passwordField = register("password")
-  const confirmationField = register("confirmation")
-  const passwordValue = watch("password")
-  const confirmationValue = watch("confirmation")
-
-  // Reset form when modal opens/closes
-  React.useEffect(() => {
-    if (!isOpen) {
-      reset(INITIAL_DELETE_ACCOUNT_VALUES)
-      setError(null)
-      setStep("warning")
-    }
-  }, [isOpen, reset])
-
-  // Close on escape key
-  React.useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isDeleting) {
-        onClose()
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape)
-      document.body.style.overflow = "hidden"
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape)
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen, onClose, isDeleting])
-
-  const handleContinue = () => {
-    setStep("confirm")
-  }
-
-  const handleValidSubmit = async (formValues: DeleteAccountFormValues) => {
-    setError(null)
-    setIsDeleting(true)
-
-    try {
-      const result = await deleteAccount(formValues)
-
-      if (result.success) {
-        // Show success message before redirecting
-        setStep("success")
-        setTimeout(() => {
-          navigate("/", { replace: true })
-        }, 3500)
-      } else {
-        setError(result.message || "Failed to delete account")
-      }
-    } catch {
-      setError("An unexpected error occurred. Please try again.")
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
-  const handleInvalidSubmit = (
-    validationErrors: FieldErrors<DeleteAccountFormValues>,
-  ) => {
-    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
-
-    if (firstErrorMessage) {
-      setError(firstErrorMessage)
-    }
-  }
-
-  const isConfirmDisabled =
-    confirmationValue !== "DELETE" || !passwordValue || isDeleting
-
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={!isDeleting ? onClose : undefined}
-      />
-
-      {/* Modal */}
-      <div
-        className={cn(
-          "relative w-[calc(100%-2rem)] max-w-[480px] mx-4 p-6 shrink-0",
-          "rounded-2xl border border-rose-200 bg-white shadow-2xl shadow-rose-200/50",
-          "animate-in fade-in-0 zoom-in-95 duration-200",
-        )}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="delete-account-title"
-      >
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          disabled={isDeleting}
-          className={cn(
-            LIGHT_MODAL_CLOSE_BUTTON_CLASSES,
-            "focus-visible:ring-rose-500",
-          )}
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Icon */}
-        <div className="flex justify-center mb-4">
-          <div
-            className={cn(
-              "w-16 h-16 rounded-full flex items-center justify-center",
-              step === "success" ? "bg-emerald-50" : "bg-rose-50",
-            )}
-          >
-            {step === "warning" ? (
-              <AlertTriangle className="w-8 h-8 text-rose-600 shrink-0" />
-            ) : step === "confirm" ? (
-              <Trash2 className="w-8 h-8 text-rose-600 shrink-0" />
-            ) : (
-              <CheckCircle className="w-8 h-8 text-emerald-600 shrink-0" />
-            )}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2
-          id="delete-account-title"
-          className={cn(
-            "mb-2 text-center text-xl font-semibold",
-            step === "success" ? "text-emerald-700" : "text-slate-900",
-          )}
-        >
-          {step === "warning"
-            ? "Delete Account?"
-            : step === "confirm"
-              ? "Confirm Deletion"
-              : "Account Deleted"}
-        </h2>
-
-        {step === "warning" ? (
-          <>
-            {/* Warning content */}
-            <p className="mb-4 w-full text-center text-sm text-slate-600">
-              {/* Permanent and irreversible text */}
-              This action is{" "}
-              <span className="font-semibold text-rose-700">
-                permanent and irreversible
-              </span>
-              .
-            </p>
-
-            <div className="mb-6 space-y-3 rounded-xl border border-rose-200 bg-rose-50 p-4">
-              <p className="text-sm text-slate-700">
-                Deleting your account will permanently remove:
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 text-rose-600">&bull;</span>
-                  <span className="flex-1 min-w-0">
-                    Your profile and personal information
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 text-rose-600">&bull;</span>
-                  <span className="flex-1 min-w-0">
-                    All your submissions and assignment
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 text-rose-600">&bull;</span>
-                  <span className="flex-1 min-w-0">
-                    Your enrollments in all classes
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className={LIGHT_MODAL_SECONDARY_BUTTON_CLASSES}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleContinue}
-                className={cn(
-                  "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "border border-rose-200 bg-rose-100 text-rose-700",
-                  "hover:bg-rose-200 transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
-                )}
-              >
-                Continue
-              </button>
-            </div>
-          </>
-        ) : step === "confirm" ? (
-          <>
-            {/* Confirmation form */}
-            <p className="mb-6 text-center text-sm text-slate-600">
-              Please confirm your decision by entering your password and typing{" "}
-              <span className="font-mono font-semibold text-rose-700">
-                DELETE
-              </span>
-              .
-            </p>
-
-            <form
-              onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
-              className="space-y-4"
-              noValidate
-            >
-              {/* Error message */}
-              {error && (
-                <div className="flex w-full items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                  <p className="flex-1 text-sm text-rose-700">{error}</p>
-                </div>
-              )}
-
-              {/* Password */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
-                  Your Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    {...passwordField}
-                    value={passwordValue}
-                    onChange={(e) => {
-                      passwordField.onChange(e)
-                      setError(null)
-                    }}
-                    className={cn(
-                      LIGHT_INPUT_BASE_CLASSES,
-                      "pr-12 focus:border-rose-500 focus:ring-rose-500/20",
-                    )}
-                    placeholder="Enter your password"
-                    disabled={isDeleting}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Type DELETE */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
-                  Type <span className="font-mono text-rose-700">DELETE</span>{" "}
-                  to confirm
-                </label>
-                <input
-                  type="text"
-                  {...confirmationField}
-                  value={confirmationValue}
-                  onChange={(e) => {
-                    setValue("confirmation", e.target.value.toUpperCase(), {
-                      shouldDirty: true,
-                      shouldTouch: true,
-                    })
-                    setError(null)
-                  }}
-                  className={cn(
-                    LIGHT_INPUT_BASE_CLASSES,
-                    "font-mono focus:border-rose-500 focus:ring-rose-500/20",
-                    confirmationValue === "DELETE" && "border-rose-400",
-                  )}
-                  placeholder="DELETE"
-                  disabled={isDeleting}
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setStep("warning")}
-                  disabled={isDeleting}
-                  type="button"
-                  className={LIGHT_MODAL_SECONDARY_BUTTON_CLASSES}
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={isConfirmDisabled}
-                  className={cn(
-                    "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                    "bg-red-600 text-white",
-                    "hover:bg-red-700 transition-colors duration-200",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                  )}
-                >
-                  {isDeleting ? "Deleting..." : "Delete My Account"}
-                </button>
-              </div>
-            </form>
-          </>
-        ) : (
-          <>
-            {/* Success message */}
-            <p className="mb-6 text-center text-sm text-slate-600">
-              Your account has been permanently deleted. All your data has been
-              removed.
-            </p>
-            <p className="text-center text-xs text-slate-500">
-              Redirecting to home page...
-            </p>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // Inlined from src/presentation/components/shared/settings/NotificationPreferences.tsx
 /**
  * Notification preferences component.
@@ -1185,7 +856,6 @@ export function SettingsPage() {
   const currentUser = useAuthStore((state) => state.user)
   const [user, setUser] = useState<User | null>(currentUser)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
-  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
   const [isAvatarUploadOpen, setIsAvatarUploadOpen] = useState(false)
 
   useEffect(() => {
@@ -1208,7 +878,7 @@ export function SettingsPage() {
 
   if (!user) return null
 
-  const shouldShowDeleteAccountDangerZone = user.role !== "teacher"
+  const accountStatusContent = getAccountStatusContent(user)
 
   return (
     <DashboardLayout topBar={topBar}>
@@ -1353,60 +1023,41 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
-          {shouldShowDeleteAccountDangerZone ? (
-            <Card className="rounded-2xl border-rose-200 bg-white shadow-md shadow-rose-100/70">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-rose-700">
-                  <AlertTriangle className="w-5 h-5" />
-                  Danger Zone
-                </CardTitle>
-                <CardDescription className="text-rose-500">
-                  Irreversible and destructive actions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-100/60">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100">
-                      <Trash2 className="w-5 h-5 text-rose-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900">
-                        Delete Account
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-600">
-                        Permanently delete your account and all associated data
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => setIsDeleteAccountOpen(true)}
-                    className="h-9 w-auto shrink-0 border border-rose-600 bg-rose-600 px-4 text-xs text-white hover:bg-rose-700 focus-visible:ring-rose-500 focus-visible:ring-offset-white"
-                  >
-                    Delete Account
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
+          {user.role !== "admin" ? (
             <Card className={cn("rounded-2xl", LIGHT_SURFACE_CARD_CLASSES)}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-slate-900">
                   <Shield className="w-5 h-5 text-teal-600" />
-                  Account Management
+                  Account Status
                 </CardTitle>
                 <CardDescription className="text-slate-500">
-                  Teacher accounts are protected from self-service deletion
+                  View your current account access status
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-slate-700 shadow-sm shadow-teal-100/60">
-                  Teacher accounts can only be removed by an administrator after
-                  all assigned classes have been reassigned to another teacher.
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm shadow-slate-200/60">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        Current status
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {accountStatusContent.message}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold",
+                        accountStatusContent.badgeClassName,
+                      )}
+                    >
+                      {accountStatusContent.badgeLabel}
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -1414,11 +1065,6 @@ export function SettingsPage() {
       <ChangePasswordModal
         isOpen={isChangePasswordOpen}
         onClose={() => setIsChangePasswordOpen(false)}
-      />
-
-      <DeleteAccountModal
-        isOpen={isDeleteAccountOpen}
-        onClose={() => setIsDeleteAccountOpen(false)}
       />
 
       <AvatarUploadModal

@@ -3,6 +3,7 @@ import { assignments, type Assignment, type NewAssignment, type LatePenaltyConfi
 import { classes } from "@/modules/classes/class.model.js"
 import { submissions } from "@/modules/submissions/submission.model.js"
 import { enrollments } from "@/modules/enrollments/enrollment.model.js"
+import { users } from "@/modules/users/user.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 import type { ProgrammingLanguage } from "@/shared/constants.js"
@@ -163,6 +164,8 @@ export class AssignmentRepository extends BaseRepository<
         count: sql<number>`count(*)`.as("studentCount"),
       })
       .from(enrollments)
+      .innerJoin(users, eq(enrollments.studentId, users.id))
+      .where(eq(users.isActive, true))
       .groupBy(enrollments.classId)
       .as("studentCounts")
   }

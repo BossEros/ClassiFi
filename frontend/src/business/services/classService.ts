@@ -7,6 +7,7 @@ import type {
   Assignment,
   EnrolledStudent,
   ClassDetailData,
+  ClassStudentStatusFilter,
   CreateClassRequest,
   UpdateClassRequest,
 } from "@/data/api/class.types"
@@ -22,6 +23,7 @@ export type { GradeEntry, GradebookStudent }
 // Re-export class types for presentation layer
 export { parseISODate } from "@/data/api/class.types"
 export type { DayOfWeek, Class, Assignment, EnrolledStudent, ClassDetailData, Module, ClassTab, Task, NavigationItem } from "@/data/api/class.types"
+export type { ClassStudentStatusFilter } from "@/data/api/class.types"
 
 const ASSIGNMENT_INSTRUCTIONS_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024
 const ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES = [
@@ -130,11 +132,14 @@ function addFullNameToStudent<
  */
 export async function getClassStudents(
   classId: number,
+  status?: ClassStudentStatusFilter,
 ): Promise<EnrolledStudent[]> {
   validateId(classId, "class")
 
-  const students =
-    await classRepository.getAllEnrolledStudentsForClassId(classId)
+  const students = await classRepository.getAllEnrolledStudentsForClassId(
+    classId,
+    status,
+  )
 
   return students.map(addFullNameToStudent)
 }
@@ -162,7 +167,7 @@ export async function getClassDetailData(
   const [classInfo, assignments, students] = await Promise.all([
     classRepository.getClassDetailsById(classId, teacherId),
     classRepository.getAllAssignmentsForClassId(classId, studentId),
-    classRepository.getAllEnrolledStudentsForClassId(classId),
+    classRepository.getAllEnrolledStudentsForClassId(classId, "active"),
   ])
 
   return {

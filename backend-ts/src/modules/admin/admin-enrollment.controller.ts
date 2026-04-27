@@ -99,6 +99,7 @@ export async function adminEnrollmentRoutes(
         lastName: student.lastName,
         email: student.email,
         avatarUrl: student.avatarUrl,
+        isActive: student.isActive,
         enrolledAt: student.enrolledAt,
       }))
 

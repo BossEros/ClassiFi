@@ -58,8 +58,36 @@ const generateMockStudents = (count: number) => {
     lastName: `${index + 1}`,
     fullName: `Student ${index + 1}`,
     avatarUrl: null,
+    isActive: true,
     enrolledAt: new Date().toISOString() as ISODateString,
   }))
+}
+
+const createMockStudent = (
+  id: number,
+  fullName: string,
+  isActive: boolean,
+) => ({
+  id,
+  email: `${fullName.toLowerCase().replace(/\s+/g, ".")}@test.com`,
+  firstName: fullName.split(" ")[0],
+  lastName: fullName.split(" ").slice(1).join(" "),
+  fullName,
+  avatarUrl: null,
+  isActive,
+  enrolledAt: new Date().toISOString() as ISODateString,
+})
+
+const mockActiveStudentRoster = (activeStudents: ReturnType<typeof generateMockStudents>) => {
+  vi.mocked(classService.getClassStudents).mockImplementation(
+    async (_classId, status) => {
+      if (status === "inactive") {
+        return []
+      }
+
+      return activeStudents
+    },
+  )
 }
 
 const renderClassDetailPage = () => {
@@ -107,6 +135,7 @@ describe("ClassDetailPage - Pagination", () => {
     vi.clearAllMocks()
     useAuthStore.setState({ user: mockUser as any, isAuthenticated: true })
     vi.mocked(moduleService.getModulesByClassId).mockResolvedValue([])
+    vi.mocked(classService.getClassStudents).mockResolvedValue([])
   })
 
   it("shows teacher timeline filters and hides student status filters", async () => {
@@ -186,6 +215,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("does not show pagination with 10 or fewer students", async () => {
     const students = generateMockStudents(10)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -208,6 +238,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("shows pagination with more than 10 students", async () => {
     const students = generateMockStudents(25)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -232,6 +263,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("navigates to next page when clicking Next button", async () => {
     const students = generateMockStudents(25)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -258,6 +290,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("navigates to specific page when clicking page number", async () => {
     const students = generateMockStudents(25)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -283,6 +316,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("resets to page 1 when switching tabs", async () => {
     const students = generateMockStudents(25)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -327,9 +361,120 @@ describe("ClassDetailPage - Pagination", () => {
     await userEvent.click(studentsTab)
 
     await waitFor(() => {
-      expect(screen.getByText("No students enrolled")).toBeInTheDocument()
+      expect(screen.getByText("No active students")).toBeInTheDocument()
     })
 
     expect(screen.queryByLabelText("Previous page")).not.toBeInTheDocument()
+  })
+
+  it("defaults to active students and switches to inactive students when the inactive filter is selected", async () => {
+    vi.mocked(classService.getClassDetailData).mockResolvedValue({
+      classInfo: { ...mockClassInfo, studentCount: 3 },
+      assignments: [],
+      students: [
+        createMockStudent(1, "Active Student One", true),
+        createMockStudent(2, "Active Student Two", true),
+      ],
+    })
+    vi.mocked(classService.getClassStudents).mockImplementation(
+      async (_classId, status) => {
+        if (status === "inactive") {
+          return [createMockStudent(3, "Inactive Student", false)] as any
+        }
+
+        return [
+          createMockStudent(1, "Active Student One", true),
+          createMockStudent(2, "Active Student Two", true),
+        ] as any
+      },
+    )
+
+    renderClassDetailPage()
+
+    await waitForClassHeading()
+
+    await userEvent.click(screen.getByRole("tab", { name: /students/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Active Student One")).toHaveLength(2)
+      expect(screen.getAllByText("Active")).not.toHaveLength(0)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: /show active students \(2\)/i,
+        }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", {
+          name: /show inactive students \(1\)/i,
+        }),
+      ).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText("Inactive Student")).not.toBeInTheDocument()
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /show inactive students \(1\)/i }),
+    )
+
+    await waitFor(() => {
+      expect(classService.getClassStudents).toHaveBeenCalledWith(1, "inactive")
+      expect(screen.getAllByText("Inactive Student")).toHaveLength(2)
+    })
+
+    expect(screen.queryByText("Active Student One")).not.toBeInTheDocument()
+  })
+
+  it("preserves the roster search query and reuses the cached inactive roster when switching filters", async () => {
+    vi.mocked(classService.getClassDetailData).mockResolvedValue({
+      classInfo: { ...mockClassInfo, studentCount: 3 },
+      assignments: [],
+      students: [
+        createMockStudent(1, "Active Student One", true),
+        createMockStudent(2, "Active Student Two", true),
+      ],
+    })
+    vi.mocked(classService.getClassStudents).mockImplementation(
+      async (_classId, status) => {
+        if (status === "inactive") {
+          return [createMockStudent(3, "Inactive Student", false)] as any
+        }
+
+        return [
+          createMockStudent(1, "Active Student One", true),
+          createMockStudent(2, "Active Student Two", true),
+        ] as any
+      },
+    )
+
+    renderClassDetailPage()
+
+    await waitForClassHeading()
+    await userEvent.click(screen.getByRole("tab", { name: /students/i }))
+
+    const studentSearchInput = screen.getByLabelText(
+      /search students by name or email/i,
+    )
+
+    await userEvent.type(studentSearchInput, "Inactive")
+
+    await waitFor(() => {
+      expect(screen.getByText("No students match your search.")).toBeInTheDocument()
+      expect(classService.getClassStudents).toHaveBeenCalledTimes(1)
+      expect(classService.getClassStudents).toHaveBeenCalledWith(1, "inactive")
+    })
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /show inactive students \(1\)/i }),
+    )
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Inactive Student")).toHaveLength(2)
+    })
+
+    expect(studentSearchInput).toHaveValue("Inactive")
+    expect(classService.getClassStudents).toHaveBeenCalledTimes(1)
   })
 })

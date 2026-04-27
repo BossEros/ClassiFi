@@ -1,5 +1,5 @@
 import { db } from "@/shared/database.js"
-import { eq, and, sql, isNotNull, inArray, max } from "drizzle-orm"
+import { eq, and, inArray, max } from "drizzle-orm"
 import { users } from "@/modules/users/user.model.js"
 import { classes } from "@/modules/classes/class.model.js"
 import { assignments } from "@/modules/assignments/assignment.model.js"
@@ -8,6 +8,10 @@ import { submissions } from "@/modules/submissions/submission.model.js"
 import { similarityResults } from "@/modules/plagiarism/similarity-result.model.js"
 import { injectable } from "tsyringe"
 import { buildSubmissionGradeComputation, type GradeBreakdown } from "@/modules/submissions/submission-grade.js"
+import {
+  getStudentRankFromGradebook,
+  sortGradebookStudentsByRank,
+} from "@/modules/gradebook/gradebook-ranking.js"
 
 /** Assignment summary for gradebook */
 export interface GradebookAssignment {
@@ -23,6 +27,7 @@ export interface EnrolledStudent {
   firstName: string
   lastName: string
   email: string
+  isActive: boolean
 }
 
 /** Submission data for gradebook lookup */
@@ -56,6 +61,7 @@ export interface GradebookStudent {
   id: number
   name: string
   email: string
+  isActive: boolean
   grades: StudentGrade[]
 }
 
@@ -151,9 +157,14 @@ export class GradebookRepository {
       similarityScoreMap,
     )
 
+    const rankedStudents = sortGradebookStudentsByRank(
+      classAssignments,
+      students,
+    )
+
     return {
       assignments: classAssignments,
-      students,
+      students: rankedStudents,
     }
   }
 
@@ -189,11 +200,11 @@ export class GradebookRepository {
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
+        isActive: users.isActive,
       })
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
       .where(eq(enrollments.classId, classId))
-      .orderBy(users.lastName, users.firstName)
   }
 
   /**
@@ -252,6 +263,7 @@ export class GradebookRepository {
       id: student.id,
       name: `${student.firstName} ${student.lastName}`,
       email: student.email,
+      isActive: student.isActive,
       grades: classAssignments.map((assignment) => {
         const sub = submissionMap.get(`${student.id}-${assignment.id}`)
         const gradeComputation = buildSubmissionGradeComputation({
@@ -510,55 +522,12 @@ export class GradebookRepository {
     studentId: number,
     classId: number,
   ): Promise<StudentRank | null> {
-    // Subquery to calculate average grade per student in this class
-    const studentAverages = this.db
-      .select({
-        studentId: submissions.studentId,
-        avgGrade: sql<number>`avg(${submissions.grade})`.as("avg_grade"),
-      })
-      .from(submissions)
-      .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
-      .where(
-        and(
-          eq(assignments.classId, classId),
-          eq(submissions.isLatest, true),
-          isNotNull(submissions.grade),
-        ),
-      )
-      .groupBy(submissions.studentId)
-      .as("student_avgs")
+    const classGradebook = await this.getClassGradebook(classId)
 
-    // First compute ranks for ALL students, then filter for the target student
-    const rankedStudents = this.db
-      .select({
-        studentId: studentAverages.studentId,
-        avgGrade: studentAverages.avgGrade,
-        rank: sql<number>`RANK() OVER (ORDER BY ${studentAverages.avgGrade} DESC)`.as(
-          "rank",
-        ),
-        totalStudents: sql<number>`COUNT(*) OVER ()`.as("total_students"),
-      })
-      .from(studentAverages)
-      .as("ranked_students")
-
-    // Now filter for the specific student from the pre-computed rankings
-    const rankResult = await this.db
-      .select({
-        rank: rankedStudents.rank,
-        totalStudents: rankedStudents.totalStudents,
-      })
-      .from(rankedStudents)
-      .where(eq(rankedStudents.studentId, studentId))
-      .limit(1)
-
-    if (rankResult.length === 0) return null
-
-    const rank = Number(rankResult[0].rank)
-    const totalStudents = Number(rankResult[0].totalStudents)
-
-    // Calculate percentile (Top X%)
-    const percentile = Math.round((rank / totalStudents) * 100)
-
-    return { rank, totalStudents, percentile }
+    return getStudentRankFromGradebook(
+      classGradebook.assignments,
+      classGradebook.students,
+      studentId,
+    )
   }
 }

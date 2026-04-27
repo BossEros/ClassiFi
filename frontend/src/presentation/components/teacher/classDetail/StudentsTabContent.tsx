@@ -2,7 +2,10 @@ import { Search, Users } from "lucide-react"
 import { StudentListItem } from "@/presentation/components/shared/dashboard/StudentListItem"
 import { Pagination } from "@/presentation/components/ui/Pagination"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
-import type { EnrolledStudent } from "@/data/api/class.types"
+import type {
+  EnrolledStudent,
+  ClassStudentStatusFilter,
+} from "@/data/api/class.types"
 
 interface StudentsTabContentProps {
   students: EnrolledStudent[]
@@ -13,8 +16,21 @@ interface StudentsTabContentProps {
   studentSearchQuery: string
   currentStudentPage: number
   totalStudentPages: number
+  studentStatusFilter: Extract<ClassStudentStatusFilter, "active" | "inactive">
+  studentStatusCounts: Record<
+    Extract<ClassStudentStatusFilter, "active" | "inactive">,
+    number
+  >
+  loadedStudentStatuses: Record<
+    Extract<ClassStudentStatusFilter, "active" | "inactive">,
+    boolean
+  >
+  isLoadingStudents: boolean
   studentGridTemplate: string
   onStudentSearchQueryChange: (value: string) => void
+  onStudentStatusFilterChange: (
+    value: Extract<ClassStudentStatusFilter, "active" | "inactive">,
+  ) => void
   onRemoveStudent: (student: EnrolledStudent) => void
   onStudentPageChange: (page: number) => void
   variant?: "dark" | "light"
@@ -29,8 +45,13 @@ export function StudentsTabContent({
   studentSearchQuery,
   currentStudentPage,
   totalStudentPages,
+  studentStatusFilter,
+  studentStatusCounts,
+  loadedStudentStatuses,
+  isLoadingStudents,
   studentGridTemplate,
   onStudentSearchQueryChange,
+  onStudentStatusFilterChange,
   onRemoveStudent,
   onStudentPageChange,
   variant = "dark",
@@ -41,54 +62,92 @@ export function StudentsTabContent({
   void isTeacher
   void onRemoveStudent
 
-  if (students.length === 0) {
-    return (
-      <div className="py-12 text-center">
-        <div
-          className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLight ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}
-        >
-          <Users
-            className={`w-8 h-8 ${isLight ? "text-slate-400" : "text-gray-500"}`}
-          />
-        </div>
-        <p
-          className={`mb-1 font-medium ${isLight ? "text-slate-800" : "text-gray-300"}`}
-        >
-          No students enrolled
-        </p>
-        <p
-          className={`text-sm ${isLight ? "text-slate-500" : "text-gray-500"}`}
-        >
-          Share the class code{" "}
-          <span
-            className={`font-mono ${isLight ? "text-teal-700" : "text-teal-400"}`}
-          >
-            {classCode}
-          </span>{" "}
-          with your students.
-        </p>
-      </div>
-    )
-  }
+  const shouldShowRosterEmptyState =
+    !isLoadingStudents && students.length === 0 && !studentSearchQuery.trim()
+  const rosterEmptyStateTitle =
+    studentStatusFilter === "inactive"
+      ? "No inactive students"
+      : "No active students"
+  const rosterEmptyStateDescription =
+    studentStatusFilter === "inactive"
+      ? "There are no deactivated students enrolled in this class right now."
+      : "Share the class code with your students so they can join this class."
+  const searchPlaceholder =
+    studentStatusFilter === "inactive"
+      ? "Search inactive students..."
+      : "Search active students..."
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <h2
-            className={
-              isLight
-                ? dashboardTheme.sectionTitle
-                : "text-lg font-semibold tracking-tight text-white"
-            }
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
+            <h2
+              className={
+                isLight
+                  ? dashboardTheme.sectionTitle
+                  : "text-lg font-semibold tracking-tight text-white"
+              }
+            >
+              Enrolled Students
+            </h2>
+            <span
+              className={`rounded-full px-3 py-1 text-sm font-medium ${isLight ? "border border-slate-200 bg-slate-100 text-slate-600" : "bg-white/10 text-gray-300"}`}
+            >
+              {students.length}
+            </span>
+          </div>
+
+          <div
+            className={`inline-flex rounded-xl p-1 ${isLight ? "border border-slate-200 bg-slate-100" : "border border-white/10 bg-white/5"}`}
+            role="group"
+            aria-label="Filter enrolled students by account status"
           >
-            Enrolled Students
-          </h2>
-          <span
-            className={`rounded-full px-3 py-1 text-sm font-medium ${isLight ? "border border-slate-200 bg-slate-100 text-slate-600" : "bg-white/10 text-gray-300"}`}
-          >
-            {students.length}
-          </span>
+            {(["active", "inactive"] as const).map((statusOption) => {
+              const isSelected = studentStatusFilter === statusOption
+              const hasLoadedStatusCount = loadedStudentStatuses[statusOption]
+              const statusCountLabel = hasLoadedStatusCount
+                ? String(studentStatusCounts[statusOption])
+                : "..."
+              const statusLabel =
+                statusOption === "active" ? "Active" : "Inactive"
+
+              return (
+                <button
+                  key={statusOption}
+                  type="button"
+                  onClick={() => onStudentStatusFilterChange(statusOption)}
+                  disabled={isLoadingStudents}
+                  aria-pressed={isSelected}
+                  aria-label={`Show ${statusLabel.toLowerCase()} students (${statusCountLabel})`}
+                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                    isSelected
+                      ? isLight
+                        ? "bg-white text-teal-700 shadow-sm"
+                        : "bg-teal-500/20 text-teal-300"
+                      : isLight
+                        ? "text-slate-600 hover:text-slate-900"
+                        : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <span>{statusLabel}</span>
+                  <span
+                    className={`ml-2 inline-flex min-w-8 justify-center rounded-full px-2 py-0.5 text-xs ${
+                      isSelected
+                        ? isLight
+                          ? "bg-teal-50 text-teal-700"
+                          : "bg-teal-500/20 text-teal-200"
+                        : isLight
+                          ? "bg-white text-slate-500"
+                          : "bg-white/10 text-slate-300"
+                    }`}
+                  >
+                    {statusCountLabel}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div className="relative w-full sm:w-auto">
@@ -98,7 +157,7 @@ export function StudentsTabContent({
           <input
             id="student-search"
             type="text"
-            placeholder="Search students..."
+            placeholder={searchPlaceholder}
             value={studentSearchQuery}
             onChange={(event) => onStudentSearchQueryChange(event.target.value)}
             className={`h-11 w-full rounded-lg border pl-10 pr-4 text-sm transition-all focus:outline-none focus:ring-2 focus:border-transparent sm:h-10 sm:w-64 ${isLight ? "border-slate-300 bg-slate-50 text-slate-800 shadow-sm placeholder:text-slate-400 hover:border-slate-400 hover:bg-white focus:ring-teal-500/20" : "border-white/10 bg-white/5 text-white placeholder-gray-500 focus:ring-teal-500"}`}
@@ -109,7 +168,47 @@ export function StudentsTabContent({
         </div>
       </div>
 
-      {filteredStudents.length > 0 ? (
+      {isLoadingStudents ? (
+        <div
+          className={`rounded-lg border py-12 text-center ${isLight ? "border-slate-200 bg-white" : "border-white/10 bg-slate-900/50"}`}
+        >
+          <p className={isLight ? "text-slate-500" : "text-gray-400"}>
+            Loading students...
+          </p>
+        </div>
+      ) : shouldShowRosterEmptyState ? (
+        <div className="py-12 text-center">
+          <div
+            className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLight ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}
+          >
+            <Users
+              className={`w-8 h-8 ${isLight ? "text-slate-400" : "text-gray-500"}`}
+            />
+          </div>
+          <p
+            className={`mb-1 font-medium ${isLight ? "text-slate-800" : "text-gray-300"}`}
+          >
+            {rosterEmptyStateTitle}
+          </p>
+          <p
+            className={`text-sm ${isLight ? "text-slate-500" : "text-gray-500"}`}
+          >
+            {studentStatusFilter === "active" ? (
+              <>
+                {rosterEmptyStateDescription}{" "}
+                <span
+                  className={`font-mono ${isLight ? "text-teal-700" : "text-teal-400"}`}
+                >
+                  {classCode}
+                </span>
+                .
+              </>
+            ) : (
+              rosterEmptyStateDescription
+            )}
+          </p>
+        </div>
+      ) : filteredStudents.length > 0 ? (
         <>
           <div className="space-y-3 md:hidden">
             {paginatedStudents.map((student) => (
@@ -147,7 +246,7 @@ export function StudentsTabContent({
               <div
                 className={`text-xs font-semibold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-gray-400"}`}
               >
-                Role
+                Status
               </div>
               <div className="w-10"></div>
             </div>
@@ -180,7 +279,7 @@ export function StudentsTabContent({
         </div>
       )}
 
-      {totalStudentPages > 1 && filteredStudents.length > 0 && (
+      {totalStudentPages > 1 && filteredStudents.length > 0 && !isLoadingStudents && (
         <Pagination
           currentPage={currentStudentPage}
           totalPages={totalStudentPages}

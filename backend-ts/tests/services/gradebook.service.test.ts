@@ -398,6 +398,7 @@ describe("GradebookService", () => {
             id: 1,
             name: "John Doe",
             email: "john@test.com",
+            isActive: true,
             grades: [
               {
                 assignmentId: 1,
@@ -417,6 +418,7 @@ describe("GradebookService", () => {
             id: 2,
             name: "Jane Smith",
             email: "jane@test.com",
+            isActive: false,
             grades: [
               {
                 assignmentId: 1,
@@ -441,13 +443,16 @@ describe("GradebookService", () => {
 
       expect(csv).toContain("Student Name")
       expect(csv).toContain("Email")
+      expect(csv).toContain("Status")
       expect(csv).toContain("Assignment 1 (/100)")
       expect(csv).toContain("Assignment 2 (/50)")
       expect(csv).toContain("Average")
       expect(csv).toContain("John Doe")
       expect(csv).toContain("john@test.com")
+      expect(csv).toContain("Active")
       expect(csv).toContain("85")
       expect(csv).toContain("jane@test.com")
+      expect(csv).toContain("Inactive")
     })
 
     it("should handle empty gradebook", async () => {
@@ -460,7 +465,164 @@ describe("GradebookService", () => {
 
       expect(csv).toContain("Student Name")
       expect(csv).toContain("Email")
+      expect(csv).toContain("Status")
       expect(csv).toContain("Average")
+    })
+
+    it("counts no-submission assignments as zero while excluding pending-review submissions from CSV averages", async () => {
+      mockGradebookRepo.getClassGradebook.mockResolvedValue({
+        assignments: [
+          {
+            id: 1,
+            name: "Assignment 1",
+            totalScore: 100,
+            deadline: new Date(),
+          },
+          {
+            id: 2,
+            name: "Assignment 2",
+            totalScore: 67,
+            deadline: new Date(),
+          },
+        ],
+        students: [
+          {
+            id: 1,
+            name: "Missing Counts As Zero",
+            email: "missing@test.com",
+            isActive: true,
+            grades: [
+              {
+                assignmentId: 1,
+                submissionId: 11,
+                grade: 100,
+                isOverridden: false,
+                submittedAt: null,
+              },
+              {
+                assignmentId: 2,
+                submissionId: null,
+                grade: null,
+                isOverridden: false,
+                submittedAt: null,
+              },
+            ],
+          },
+          {
+            id: 2,
+            name: "Pending Review Excluded",
+            email: "pending@test.com",
+            isActive: true,
+            grades: [
+              {
+                assignmentId: 1,
+                submissionId: 21,
+                grade: 100,
+                isOverridden: false,
+                submittedAt: null,
+              },
+              {
+                assignmentId: 2,
+                submissionId: 22,
+                grade: null,
+                isOverridden: false,
+                submittedAt: null,
+              },
+            ],
+          },
+        ],
+      })
+
+      const csv = await gradebookService.exportGradebookCSV(1)
+
+      expect(csv).toContain('"Missing Counts As Zero","missing@test.com","Active","100","","60"')
+      expect(csv).toContain('"Pending Review Excluded","pending@test.com","Active","100","","100"')
+    })
+
+    it("uses a points-weighted total when assignment scores differ", async () => {
+      mockGradebookRepo.getClassGradebook.mockResolvedValue({
+        assignments: [
+          {
+            id: 1,
+            name: "Assignment 1",
+            totalScore: 100,
+            deadline: new Date(),
+          },
+          {
+            id: 2,
+            name: "Assignment 2",
+            totalScore: 100,
+            deadline: new Date(),
+          },
+          {
+            id: 3,
+            name: "Assignment 3",
+            totalScore: 100,
+            deadline: new Date(),
+          },
+          {
+            id: 4,
+            name: "Assignment 4",
+            totalScore: 67,
+            deadline: new Date(),
+          },
+          {
+            id: 5,
+            name: "Assignment 5",
+            totalScore: 100,
+            deadline: new Date(),
+          },
+        ],
+        students: [
+          {
+            id: 1,
+            name: "Weighted Example",
+            email: "weighted@test.com",
+            isActive: true,
+            grades: [
+              {
+                assignmentId: 1,
+                submissionId: 11,
+                grade: 100,
+                isOverridden: false,
+                submittedAt: null,
+              },
+              {
+                assignmentId: 2,
+                submissionId: 12,
+                grade: 100,
+                isOverridden: false,
+                submittedAt: null,
+              },
+              {
+                assignmentId: 3,
+                submissionId: 13,
+                grade: 100,
+                isOverridden: false,
+                submittedAt: null,
+              },
+              {
+                assignmentId: 4,
+                submissionId: null,
+                grade: null,
+                isOverridden: false,
+                submittedAt: null,
+              },
+              {
+                assignmentId: 5,
+                submissionId: null,
+                grade: null,
+                isOverridden: false,
+                submittedAt: null,
+              },
+            ],
+          },
+        ],
+      })
+
+      const csv = await gradebookService.exportGradebookCSV(1)
+
+      expect(csv).toContain('"Weighted Example","weighted@test.com","Active","100","100","100","","","64"')
     })
   })
 })

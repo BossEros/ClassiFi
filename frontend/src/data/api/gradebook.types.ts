@@ -69,6 +69,7 @@ export interface GradebookStudent {
   id: number
   name: string
   email: string
+  isActive: boolean
   grades: GradeEntry[]
 }
 

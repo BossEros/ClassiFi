@@ -161,20 +161,22 @@ export async function toggleUserAccountStatusById(
 }
 
 /**
- * Deletes a user account by ID.
+ * Deactivates a user account by ID while preserving academic records.
  *
- * @param userId - The unique identifier of the user to delete.
+ * @param userId - The unique identifier of the user to deactivate.
  * @returns Generic admin operation response.
  */
-export async function deleteUserAccountById(
+export async function deactivateUserAccountById(
   userId: number,
 ): Promise<AdminResponse> {
   const apiResponse = await apiClient.delete<AdminResponse>(
     `/admin/users/${userId}`,
   )
 
-  return unwrapApiResponse(apiResponse, "Failed to delete user")
+  return unwrapApiResponse(apiResponse, "Failed to deactivate user")
 }
+
+export const deleteUserAccountById = deactivateUserAccountById
 
 // ============ Analytics ============
 

@@ -5,7 +5,7 @@ import { StorageService } from "@/services/storage.service.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import {
   UserNotFoundError,
-  TeacherSelfDeletionNotAllowedError,
+  SelfAccountDeactivationNotAllowedError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
@@ -71,24 +71,31 @@ export class UserService {
   }
 
   /**
-   * Delete the current user's own account.
-   * Teacher self-deletion is blocked because class ownership must be reassigned first.
+   * Block self-service account deactivation.
+   * Kept as a compatibility wrapper for the existing route/service contract.
    *
    * @throws {UserNotFoundError} If user not found
-   * @throws {TeacherSelfDeletionNotAllowedError} If the current user is a teacher
+   * @throws {SelfAccountDeactivationNotAllowedError} Self-service deactivation is not allowed
    */
   async deleteOwnAccount(userId: number): Promise<void> {
+    await this.deactivateOwnAccount(userId)
+  }
+
+  /**
+   * Block self-service account deactivation for all roles.
+   * Account deactivation must be performed by an administrator.
+   *
+   * @throws {UserNotFoundError} If user not found
+   * @throws {SelfAccountDeactivationNotAllowedError} Self-service deactivation is not allowed
+   */
+  async deactivateOwnAccount(userId: number): Promise<void> {
     const user = await this.userRepo.getUserById(userId)
 
     if (!user) {
       throw new UserNotFoundError(userId)
     }
 
-    if (user.role === "teacher") {
-      throw new TeacherSelfDeletionNotAllowedError()
-    }
-
-    await this.deleteAccount(userId)
+    throw new SelfAccountDeactivationNotAllowedError()
   }
 
   /**

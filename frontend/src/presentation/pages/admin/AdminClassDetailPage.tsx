@@ -51,6 +51,26 @@ interface AdminClassActionDropdownPosition {
   y: number
 }
 
+function getStudentEnrollmentStatusBadge(studentIsActive: boolean): {
+  label: string
+  className: string
+  Icon: typeof CheckCircle
+} {
+  if (!studentIsActive) {
+    return {
+      label: "Inactive Student",
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+      Icon: XCircle,
+    }
+  }
+
+  return {
+    label: "Active Enrollment",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    Icon: CheckCircle,
+  }
+}
+
 // Inlined from src/presentation/components/admin/AdminAddStudentModal.tsx
 interface AdminAddStudentModalProps {
   isOpen: boolean
@@ -860,6 +880,9 @@ export function AdminClassDetailPage() {
                     <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                       Enrolled On
                     </th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                      Status
+                    </th>
                     <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                       Actions
                     </th>
@@ -867,11 +890,15 @@ export function AdminClassDetailPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-300/70">
                   {totalFilteredStudents > 0 ? (
-                    paginatedStudents.map((student) => (
-                      <tr
-                        key={student.id}
-                        className="group transition-colors duration-200 hover:bg-slate-100"
-                      >
+                    paginatedStudents.map((student) => {
+                      const studentEnrollmentStatusBadge =
+                        getStudentEnrollmentStatusBadge(student.isActive)
+
+                      return (
+                        <tr
+                          key={student.id}
+                          className="group transition-colors duration-200 hover:bg-slate-100"
+                        >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <Avatar
@@ -898,6 +925,14 @@ export function AdminClassDetailPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${studentEnrollmentStatusBadge.className}`}
+                          >
+                            <studentEnrollmentStatusBadge.Icon className="h-3.5 w-3.5" />
+                            {studentEnrollmentStatusBadge.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
                           <div className="flex items-center justify-center">
                             <button
                               onClick={() => setStudentPendingRemoval(student)}
@@ -913,11 +948,12 @@ export function AdminClassDetailPage() {
                             </button>
                           </div>
                         </td>
-                      </tr>
-                    ))
+                        </tr>
+                      )
+                    })
                   ) : (
                     <tr>
-                      <td colSpan={4} className="px-6 py-14 text-center text-slate-500">
+                      <td colSpan={5} className="px-6 py-14 text-center text-slate-500">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-slate-100 p-4">
                             <Search className="h-8 w-8 opacity-40" />

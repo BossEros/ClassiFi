@@ -19,6 +19,7 @@ import {
   buildSubmissionNotificationUrl,
   formatSubmissionLatenessText,
 } from "@/modules/notifications/submission-grade-notification.js"
+import { calculateStudentAveragePercentage } from "@/modules/gradebook/gradebook-ranking.js"
 
 const logger = createLogger("GradebookService")
 
@@ -396,6 +397,7 @@ export class GradebookService {
     const headers = [
       "Student Name",
       "Email",
+      "Status",
       ...gradebook.assignments.map((a) => `${a.name} (/${a.totalScore})`),
       "Average",
     ]
@@ -411,26 +413,20 @@ export class GradebookService {
       const gradeValues = student.grades.map((g) =>
         g.grade !== null ? g.grade.toString() : "",
       )
+      const average = calculateStudentAveragePercentage(
+        gradebook.assignments,
+        student.grades,
+      )
 
-      // Calculate average
-      const validGrades: number[] = []
-      student.grades.forEach((g, i) => {
-        if (g.grade !== null) {
-          const assignment = gradebook.assignments[i]
-          if (assignment && assignment.totalScore > 0) {
-            validGrades.push((g.grade / assignment.totalScore) * 100)
-          }
-        }
-      })
+      const statusLabel = student.isActive ? "Active" : "Inactive"
 
-      const average =
-        validGrades.length > 0
-          ? Math.round(
-              validGrades.reduce((a, b) => a + b, 0) / validGrades.length,
-            )
-          : ""
-
-      return [student.name, student.email, ...gradeValues, average.toString()]
+      return [
+        student.name,
+        student.email,
+        statusLabel,
+        ...gradeValues,
+        average !== null ? average.toString() : "",
+      ]
     })
 
     // Convert to CSV string

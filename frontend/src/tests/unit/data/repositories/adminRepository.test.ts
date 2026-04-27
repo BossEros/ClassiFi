@@ -286,27 +286,27 @@ describe("adminRepository", () => {
     })
   })
 
-  describe("deleteUserAccountById", () => {
-    it("deletes a user", async () => {
+  describe("deactivateUserAccountById", () => {
+    it("deactivates a user", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
-        data: { success: true, message: "User deleted" },
+        data: { success: true, message: "User deactivated" },
         status: 200,
       })
 
-      const result = await adminRepository.deleteUserAccountById(1)
+      const result = await adminRepository.deactivateUserAccountById(1)
 
       expect(apiClient.delete).toHaveBeenCalledWith("/admin/users/1")
       expect(result.success).toBe(true)
     })
 
-    it("throws error when deletion fails", async () => {
+    it("throws error when deactivation fails", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
-        error: "Cannot delete user with active enrollments",
+        error: "Cannot deactivate user with active enrollments",
         status: 400,
       })
 
-      await expect(adminRepository.deleteUserAccountById(1)).rejects.toThrow(
-        "Cannot delete user with active enrollments",
+      await expect(adminRepository.deactivateUserAccountById(1)).rejects.toThrow(
+        "Cannot deactivate user with active enrollments",
       )
     })
   })

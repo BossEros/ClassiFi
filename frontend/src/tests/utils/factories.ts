@@ -209,6 +209,7 @@ export function createMockEnrolledStudent(
     lastName: "Student",
     email: "enrolled@example.com",
     avatarUrl: null,
+    isActive: true,
     enrolledAt: toISO(new Date()),
     fullName: "Enrolled Student",
     ...overrides,
