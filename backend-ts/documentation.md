@@ -325,6 +325,8 @@ Teacher self-registration approval behavior:
 - Both `/auth/login` and `/auth/verify` reject inactive teacher accounts with `403` and this exact message:
   - `Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin`
 - In v1, `users.is_active` doubles as both the approval gate and the general access gate for teachers. This means all inactive teachers are treated as pending administrator approval until a separate approval state is introduced.
+- Inactive student and admin accounts are treated as deactivated accounts. Authentication and token verification reject them with `403` and this exact message:
+  - `Your account has been deactivated. Please contact an administrator.`
 - Admin approval in v1 reuses the existing user status toggle (`PATCH /admin/users/:id/status`) to activate the teacher account.
 - When an admin activates an inactive teacher account, the backend sends the teacher an approval email so they know they can sign in.
 - The approval confirmation is email-only in v1 and does not create an in-app notification record.
@@ -336,13 +338,13 @@ Teacher self-registration approval behavior:
 | GET    | `/user/me`                          | Get current user's profile                 |
 | PATCH  | `/user/me/avatar`                   | Update avatar URL                          |
 | PATCH  | `/user/me/notification-preferences` | Update user notification delivery settings |
-| DELETE | `/user/me`                          | Delete account (student/admin only)        |
+| DELETE | `/user/me`                          | Reject self-service account deactivation     |
 
-Account-deletion safety rules:
+Account deactivation and deletion safety rules:
 
-- Teacher self-service account deletion is blocked from `DELETE /user/me`.
-- Teacher accounts can be deleted by admins only after every assigned class has been reassigned.
-- Admin deletion of a teacher with assigned classes returns `409 Conflict` and instructs the admin to reassign classes first.
+- Self-service account deactivation is blocked for all roles. Account deactivation must be handled by an administrator.
+- Teacher accounts can be deactivated by admins only after every assigned class has been reassigned.
+- Admin deactivation of a teacher with assigned classes returns `409 Conflict` and instructs the admin to reassign classes first.
 
 ### Classes
 
@@ -384,6 +386,18 @@ Student enrolled-classes query behavior:
 - For students: Includes `submittedAt`, `grade`, and `maxGrade` fields
 - `grade` is null if not yet graded
 - `maxGrade` defaults to 100 if not specified
+- For teacher-facing assignment progress, aggregate `studentCount` values are scoped to active students only so pending/missing submission metrics do not include inactive enrollments
+
+**Class Students Response** (`GET /classes/:id/students`):
+
+- Accepts optional query `status=active|inactive|all`
+- Each returned student includes `isActive`
+- This supports the teacher roster rule of defaulting to active students while still allowing explicit review of inactive/deactivated students
+
+**Gradebook CSV Export** (`GET /gradebook/classes/:classId/export`):
+
+- Includes all gradebook students, including inactive students, so historical grade records remain exportable.
+- Adds a `Status` column with `Active` or `Inactive` for downstream filtering and audit clarity.
 
 ### Modules
 
@@ -400,6 +414,7 @@ Student enrolled-classes query behavior:
 - Modules are assignment grouping containers within a class (e.g., "Module 1", "Midterm", "Finals")
 - Every assignment optionally belongs to a module via the `moduleId` foreign key
 - `GET /classes/:classId/modules` returns modules ordered by creation date (ascending), each including its nested assignments with submission counts
+- Teacher-facing module assignment progress uses active-student totals only; inactive students' historical submissions remain accessible through submission review endpoints
 - Deleting a module cascades to all assignments within it
 - Modules support publish/unpublish toggling (`isPublished` boolean)
 - A "General" module is auto-created per class during migration for ungrouped assignments
@@ -460,6 +475,8 @@ Gradebook scoring notes:
 - `grade` is the displayed score returned to clients.
 - Automatic similarity deductions are applied to the automatic grade after test scoring and late penalties.
 - Manual teacher overrides still win as the final displayed score and are stored separately in `override_grade`.
+- Class gradebook rows also include each student's `isActive` flag.
+- Inactive/deactivated students remain in gradebook responses and exports so historical academic records are preserved.
 
 ### Test Cases & Code Testing
 
@@ -692,13 +709,13 @@ Notifications separate write commits from email delivery:
 | GET    | `/admin/users/:id`      | Get user details |
 | PUT    | `/admin/users/:id`      | Update user      |
 | PATCH  | `/admin/users/:id/role` | Update user role |
-| DELETE | `/admin/users/:id`      | Delete user      |
+| DELETE | `/admin/users/:id`      | Deactivate user  |
 
-Teacher deletion policy:
+Admin user deactivation policy:
 
-- Admin user deletion no longer cascade-deletes a teacher's classes.
-- A teacher can be deleted only when their assigned class count is zero.
-- Class reassignment should be completed through the admin classes workflow before retrying deletion.
+- Admin user deactivation sets `users.is_active` to `false` and preserves the user row, Supabase Auth user, enrollments, submissions, grades, avatars, and files.
+- Deactivated student and admin accounts are blocked by the authentication guard on login and token verification.
+- Teacher accounts with assigned classes remain blocked from this action until their classes are reassigned.
 
 #### Class Management
 
@@ -831,7 +848,7 @@ class AdminUserService {
   createUser(userData) // Create new user
   updateUser(userId, userData) // Update user information
   updateUserRole(userId, role) // Change user role
-  deleteUser(userId) // Delete user account
+  deactivateUser(userId) // Deactivate user account without deleting records
 }
 ```
 

@@ -1,5 +1,8 @@
 import type { ClassGradebook } from "@/data/api/gradebook.types"
-import type { ReportMetadataEntry, SummaryMetric } from "@/presentation/components/shared/pdf/pdfReportTypes"
+import type {
+  ReportMetadataEntry,
+  SummaryMetric,
+} from "@/presentation/components/shared/pdf/pdfReportTypes"
 
 export type {
   PdfDocumentDownloadOptions,
@@ -9,6 +12,8 @@ export type {
 
 export interface GradeReportStudentRow {
   studentName: string
+  statusLabel: "Active" | "Inactive"
+  isActive: boolean
   grades: GradeReportGradeCell[]
   average: string
 }
@@ -35,4 +40,3 @@ export interface GradeReportBuilderOptions {
   teacherName?: string
   downloadedAt?: Date
 }
-

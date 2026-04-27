@@ -63,7 +63,7 @@ export class ModuleService {
       : await this.moduleRepo.getModulesByClassId(classId)
 
     const allAssignments = await this.assignmentRepo.getAssignmentsByClassId(classId)
-    const studentCount = await this.classRepo.getStudentCount(classId)
+    const studentCount = await this.classRepo.getActiveStudentCount(classId)
 
     const assignmentIds = allAssignments.map((a) => a.id)
     const submissionCounts = assignmentIds.length

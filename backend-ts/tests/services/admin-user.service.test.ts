@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 import type { MockedObject } from "vitest"
 import { AdminUserService } from "../../src/modules/admin/admin-user.service.js"
 import type { UserRepository } from "../../src/modules/users/user.repository.js"
-import type { UserService } from "../../src/modules/users/user.service.js"
 import type { ClassService } from "../../src/modules/classes/class.service.js"
 import type { SupabaseAuthAdapter } from "../../src/services/supabase-auth.adapter.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
@@ -16,7 +15,6 @@ import { createMockUser, createMockTeacher } from "../utils/factories.js"
 describe("AdminUserService", () => {
   let adminUserService: AdminUserService
   let mockUserRepo: Partial<MockedObject<UserRepository>>
-  let mockUserService: Partial<MockedObject<UserService>>
   let mockClassService: Partial<MockedObject<ClassService>>
   let mockNotificationService: Partial<MockedObject<NotificationService>>
   let mockAuthAdapter: Partial<MockedObject<SupabaseAuthAdapter>>
@@ -38,10 +36,6 @@ describe("AdminUserService", () => {
       createUser: vi.fn(),
     } as any
 
-    mockUserService = {
-      deleteAccount: vi.fn(),
-    } as any
-
     mockClassService = {
       deleteClassesByTeacher: vi.fn(),
       getAssignedClassCountByTeacher: vi.fn(),
@@ -59,7 +53,6 @@ describe("AdminUserService", () => {
 
     adminUserService = new AdminUserService(
       mockUserRepo as unknown as UserRepository,
-      mockUserService as unknown as UserService,
       mockClassService as unknown as ClassService,
       mockNotificationService as unknown as NotificationService,
       mockAuthAdapter as unknown as SupabaseAuthAdapter,
@@ -344,52 +337,68 @@ describe("AdminUserService", () => {
     })
   })
 
-  describe("deleteUser", () => {
-    it("should delete a student user", async () => {
+  describe("deactivateUser", () => {
+    it("should deactivate a student user without deleting records", async () => {
+      const deactivatedUser = createMockUser({ isActive: false })
       mockUserRepo.getUserById!.mockResolvedValue(mockUser)
-      mockUserService.deleteAccount!.mockResolvedValue(undefined)
+      mockUserRepo.updateUser!.mockResolvedValue(deactivatedUser)
 
-      await adminUserService.deleteUser(1)
+      await adminUserService.deactivateUser(1)
 
       expect(mockClassService.deleteClassesByTeacher).not.toHaveBeenCalled()
       expect(
         mockClassService.getAssignedClassCountByTeacher,
       ).not.toHaveBeenCalled()
-      expect(mockUserService.deleteAccount).toHaveBeenCalledWith(1)
+      expect(mockUserRepo.updateUser).toHaveBeenCalledWith(1, {
+        isActive: false,
+      })
     })
 
-    it("should delete a teacher when no classes are assigned", async () => {
+    it("should deactivate a teacher when no classes are assigned", async () => {
+      const deactivatedTeacher = createMockTeacher({ isActive: false })
       mockUserRepo.getUserById!.mockResolvedValue(mockTeacher)
       mockClassService.getAssignedClassCountByTeacher!.mockResolvedValue(0)
-      mockUserService.deleteAccount!.mockResolvedValue(undefined)
+      mockUserRepo.updateUser!.mockResolvedValue(deactivatedTeacher)
 
-      await adminUserService.deleteUser(mockTeacher.id)
+      await adminUserService.deactivateUser(mockTeacher.id)
 
       expect(mockClassService.getAssignedClassCountByTeacher).toHaveBeenCalledWith(
         mockTeacher.id,
       )
-      expect(mockUserService.deleteAccount).toHaveBeenCalledWith(
-        mockTeacher.id,
-      )
+      expect(mockUserRepo.updateUser).toHaveBeenCalledWith(mockTeacher.id, {
+        isActive: false,
+      })
     })
 
-    it("should block teacher deletion when classes are still assigned", async () => {
+    it("should block teacher deactivation when classes are still assigned", async () => {
       mockUserRepo.getUserById!.mockResolvedValue(mockTeacher)
       mockClassService.getAssignedClassCountByTeacher!.mockResolvedValue(2)
 
-      await expect(adminUserService.deleteUser(mockTeacher.id)).rejects.toThrow(
-        TeacherHasAssignedClassesError,
-      )
+      await expect(
+        adminUserService.deactivateUser(mockTeacher.id),
+      ).rejects.toThrow(TeacherHasAssignedClassesError)
 
-      expect(mockUserService.deleteAccount).not.toHaveBeenCalled()
+      expect(mockUserRepo.updateUser).not.toHaveBeenCalled()
     })
 
     it("should throw UserNotFoundError when user does not exist", async () => {
       mockUserRepo.getUserById!.mockResolvedValue(null)
 
-      await expect(adminUserService.deleteUser(999)).rejects.toThrow(
+      await expect(adminUserService.deactivateUser(999)).rejects.toThrow(
         UserNotFoundError,
       )
+    })
+
+    it("should keep deleteUser as a compatibility wrapper", async () => {
+      const deactivatedUser = createMockUser({ isActive: false })
+      mockUserRepo.getUserById!.mockResolvedValue(mockUser)
+      mockUserRepo.updateUser!.mockResolvedValue(deactivatedUser)
+
+      await adminUserService.deleteUser(1)
+
+      expect(mockUserRepo.updateUser).toHaveBeenCalledWith(1, {
+        isActive: false,
+      })
     })
   })
 

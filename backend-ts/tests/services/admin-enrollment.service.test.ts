@@ -235,6 +235,7 @@ describe("AdminEnrollmentService", () => {
       const result = await adminEnrollmentService.getClassStudents(1)
 
       expect(result[0]?.id).toBe(7)
+      expect(result[0]?.isActive).toBe(true)
       expect(result[0]?.enrolledAt).toBe("2026-03-08T10:00:00.000Z")
     })
   })

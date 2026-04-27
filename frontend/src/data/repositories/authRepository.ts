@@ -6,7 +6,7 @@ import type {
   RegisterRequest,
   AuthResponse,
   ForgotPasswordResponse,
-  DeleteAccountResponse,
+  DeactivateAccountResponse,
 } from "@/data/api/auth.types"
 
 // Export helper for external use
@@ -250,10 +250,10 @@ export async function changeAuthenticatedUserPassword(
 }
 
 /**
- * Delete user account.
+ * Deactivate user account.
  * Accepts email and password as parameters instead of reading from localStorage.
  */
-export async function deleteUserAccountWithVerification(
+export async function deactivateUserAccountWithVerification(
   userEmailAddress: string,
   verificationPassword: string,
 ) {
@@ -270,17 +270,19 @@ export async function deleteUserAccountWithVerification(
     }
   }
 
-  // Call backend to delete account (handles database + Supabase Auth cleanup)
-  const deleteResult = await apiClient.delete<DeleteAccountResponse>("/user/me")
+  // Call backend to deactivate account while preserving historical records.
+  const deactivateResult =
+    await apiClient.delete<DeactivateAccountResponse>("/user/me")
 
-  if (deleteResult.error) {
+  if (deactivateResult.error) {
     return {
       signInError: null,
-      deleteError: deleteResult.error,
+      deactivateError: deactivateResult.error,
+      deleteError: deactivateResult.error,
     }
   }
 
-  // Sign out after successful deletion
+  // Sign out after successful deactivation.
   const signOutResult = await supabaseAuthAdapter.signOut()
 
   // Cleanup local state (user data only - token is managed by Supabase)
@@ -288,10 +290,14 @@ export async function deleteUserAccountWithVerification(
 
   return {
     signInError: null,
+    deactivateError: null,
     deleteError: null,
     signOutError: signOutResult.error,
   }
 }
+
+export const deleteUserAccountWithVerification =
+  deactivateUserAccountWithVerification
 
 // ============================================================================
 // Helpers

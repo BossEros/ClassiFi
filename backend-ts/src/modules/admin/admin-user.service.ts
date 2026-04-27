@@ -4,7 +4,6 @@ import {
   type UserRole,
 } from "@/modules/users/user.repository.js"
 import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
-import { UserService } from "@/modules/users/user.service.js"
 import { ClassService } from "@/modules/classes/class.service.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import {
@@ -25,7 +24,6 @@ import { settings } from "@/shared/config.js"
 export class AdminUserService {
   constructor(
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
-    @inject(DI_TOKENS.services.user) private userService: UserService,
     @inject(DI_TOKENS.services.class) private classService: ClassService,
     @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
@@ -213,16 +211,16 @@ export class AdminUserService {
   }
 
   /**
-   * Delete a user (admin-initiated).
+   * Deactivate a user account from the admin panel while preserving records.
    */
-  async deleteUser(userId: number): Promise<void> {
+  async deactivateUser(userId: number): Promise<void> {
     // STEP 1: Load and verify the user exists
     const user = await this.userRepo.getUserById(userId)
     if (!user) {
       throw new UserNotFoundError(userId)
     }
 
-    // STEP 2: If the user is a teacher, block deletion until all owned classes are reassigned
+    // STEP 2: If the user is a teacher, keep the existing class reassignment guard.
     if (user.role === "teacher") {
       const assignedClassCount =
         await this.classService.getAssignedClassCountByTeacher(userId)
@@ -232,8 +230,21 @@ export class AdminUserService {
       }
     }
 
-    // STEP 3: Delete the account (handles storage cleanup and Supabase auth removal)
-    await this.userService.deleteAccount(userId)
+    // STEP 3: Deactivate only. Academic records and auth records stay intact.
+    const deactivatedUser = await this.userRepo.updateUser(userId, {
+      isActive: false,
+    })
+
+    if (!deactivatedUser) {
+      throw new UserNotFoundError(userId)
+    }
+  }
+
+  /**
+   * Backward-compatible wrapper for the existing admin DELETE route.
+   */
+  async deleteUser(userId: number): Promise<void> {
+    await this.deactivateUser(userId)
   }
 
   /**

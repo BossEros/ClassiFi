@@ -168,7 +168,7 @@ export const handlers = [
   http.delete(`${API_BASE}/user/me`, async () => {
     return HttpResponse.json({
       success: true,
-      message: "Account deleted",
+      message: "Account deactivated",
     })
   }),
 

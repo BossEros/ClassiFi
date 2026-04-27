@@ -21,6 +21,7 @@ export interface GradebookStudentDTO {
   id: number
   name: string
   email: string
+  isActive: boolean
   grades: GradebookGradeDTO[]
 }
 
@@ -59,6 +60,7 @@ export function toClassGradebookDTO(gradebook: {
     id: number
     name: string
     email: string
+    isActive: boolean
     grades: Array<{
       assignmentId: number
       submissionId: number | null
@@ -81,6 +83,7 @@ export function toClassGradebookDTO(gradebook: {
       id: s.id,
       name: s.name,
       email: s.email,
+      isActive: s.isActive,
       grades: s.grades.map((g) => ({
         assignmentId: g.assignmentId,
         submissionId: g.submissionId,

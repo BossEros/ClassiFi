@@ -37,6 +37,7 @@ describe("ClassService", () => {
       getClassById: vi.fn(),
       checkClassCodeExists: vi.fn(),
       getStudentCount: vi.fn(),
+      getActiveStudentCount: vi.fn(),
       getClassesWithStudentCounts: vi.fn(),
       updateClass: vi.fn(),
       deleteClass: vi.fn(),
@@ -249,7 +250,7 @@ describe("ClassService", () => {
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
-      mockClassRepo.getStudentCount!.mockResolvedValue(30)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(28)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map([[11, 12]]),
       )
@@ -258,8 +259,9 @@ describe("ClassService", () => {
 
       expect(result).toHaveLength(1)
       expect(result[0].className).toBe("Mobile Systems")
+      expect(result[0].studentCount).toBe(28)
+      expect(mockClassRepo.getActiveStudentCount).toHaveBeenCalledWith(1)
       expect(result[0].submissionCount).toBe(12)
-      expect(result[0].studentCount).toBe(30)
       expect(
         mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds,
       ).toHaveBeenCalledWith([11])
@@ -296,7 +298,7 @@ describe("ClassService", () => {
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
-      mockClassRepo.getStudentCount!.mockResolvedValue(18)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(18)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map(),
       )
@@ -371,7 +373,7 @@ describe("ClassService", () => {
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
-      mockClassRepo.getStudentCount!.mockResolvedValue(30)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(30)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map([[11, 12]]),
       )
@@ -422,7 +424,7 @@ describe("ClassService", () => {
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
-      mockClassRepo.getStudentCount!.mockResolvedValue(18)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(18)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map(),
       )
@@ -596,6 +598,44 @@ describe("ClassService", () => {
 
       expect(mockEnrollmentRepo.unenrollStudent).not.toHaveBeenCalled()
       expect(mockNotificationService.createNotification).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("getClassStudents", () => {
+    it("should return only inactive students when the inactive filter is requested", async () => {
+      const existingClass = createMockClass({ id: 9 })
+
+      mockClassRepo.getClassById!.mockResolvedValue(existingClass)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue([
+        {
+          user: createMockUser({
+            id: 41,
+            role: "student",
+            firstName: "Inactive",
+            lastName: "Student",
+            email: "inactive@student.test",
+            isActive: false,
+          }),
+          enrolledAt: new Date("2026-04-01T00:00:00.000Z"),
+        },
+      ])
+
+      const result = await classService.getClassStudents(9, "inactive")
+
+      expect(mockEnrollmentRepo.getEnrolledStudentsWithInfo).toHaveBeenCalledWith(
+        9,
+        "inactive",
+      )
+      expect(result).toEqual([
+        {
+          id: 41,
+          email: "inactive@student.test",
+          firstName: "Inactive",
+          lastName: "Student",
+          avatarUrl: null,
+          isActive: false,
+        },
+      ])
     })
   })
 })

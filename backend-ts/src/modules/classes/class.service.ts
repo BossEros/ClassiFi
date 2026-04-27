@@ -30,6 +30,7 @@ import type {
   RemoveStudentServiceDTO,
   UpdateClassServiceDTO,
   EnrolledStudentDTO,
+  ClassStudentStatusFilter,
 } from "@/modules/classes/class.dtos.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
@@ -265,7 +266,7 @@ export class ClassService {
     }
 
     const assignments = await this.assignmentRepo.getAssignmentsByClassId(classId)
-    const studentCount = await this.classRepo.getStudentCount(classId)
+    const studentCount = await this.classRepo.getActiveStudentCount(classId)
     const assignmentIds = assignments.map((assignment) => assignment.id)
     const submissionCounts = assignmentIds.length
       ? await this.submissionRepo.getLatestSubmissionCountsByAssignmentIds(assignmentIds)
@@ -320,14 +321,20 @@ export class ClassService {
   }
 
   /** Get all students in a class. */
-  async getClassStudents(classId: number): Promise<EnrolledStudentDTO[]> {
+  async getClassStudents(
+    classId: number,
+    status: ClassStudentStatusFilter = "all",
+  ): Promise<EnrolledStudentDTO[]> {
     const existingClass = await this.classRepo.getClassById(classId)
 
     if (!existingClass) {
       throw new ClassNotFoundError(classId)
     }
 
-    const students = await this.enrollmentRepo.getEnrolledStudentsWithInfo(classId)
+    const students = await this.enrollmentRepo.getEnrolledStudentsWithInfo(
+      classId,
+      status,
+    )
 
     return students.map((studentRow) => ({
       id: studentRow.user.id,
@@ -335,6 +342,7 @@ export class ClassService {
       firstName: studentRow.user.firstName,
       lastName: studentRow.user.lastName,
       avatarUrl: studentRow.user.avatarUrl ?? null,
+      isActive: studentRow.user.isActive,
     }))
   }
 

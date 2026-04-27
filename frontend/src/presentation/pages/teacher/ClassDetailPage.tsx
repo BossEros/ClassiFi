@@ -12,12 +12,21 @@ import { AssignmentsTabContent } from "@/presentation/components/teacher/classDe
 import { StudentsTabContent } from "@/presentation/components/teacher/classDetail/StudentsTabContent";
 import { useAuthStore } from "@/shared/store/useAuthStore";
 import type { ClassTab } from "@/data/api/class.types";
-import { getClassDetailData, deleteClass } from "@/business/services/classService";
+import {
+  getClassDetailData,
+  getClassStudents,
+  deleteClass,
+} from "@/business/services/classService";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery";
 import type { User } from "@/data/api/auth.types";
-import type { Class, Assignment, EnrolledStudent } from "@/data/api/class.types";
+import type {
+  Class,
+  Assignment,
+  EnrolledStudent,
+  ClassStudentStatusFilter,
+} from "@/data/api/class.types";
 import type { Module } from "@/data/api/class.types";
 import type { AssignmentFilter, TeacherAssignmentFilter } from "@/shared/utils/assignmentFilters";
 import { filterAssignments, calculateFilterCounts, filterTeacherAssignmentsByTimeline, calculateTeacherFilterCounts, groupAssignments } from "@/shared/utils/assignmentFilters";
@@ -481,6 +490,10 @@ export function ClassDetailPage() {
     useState<TeacherAssignmentFilter>("all")
   const [currentStudentPage, setCurrentStudentPage] = useState(1)
   const [studentSearchQuery, setStudentSearchQuery] = useState("")
+  const [studentStatusFilter, setStudentStatusFilter] = useState<
+    Extract<ClassStudentStatusFilter, "active" | "inactive">
+  >("active")
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
@@ -599,6 +612,34 @@ export function ClassDetailPage() {
 
     fetchClassData()
   }, [navigate, classId, currentUser])
+
+  useEffect(() => {
+    const shouldLoadFilteredRoster =
+      activeTab === "students" &&
+      !!classId &&
+      (user?.role === "teacher" || user?.role === "admin")
+
+    if (!shouldLoadFilteredRoster) {
+      return
+    }
+
+    const fetchFilteredStudents = async () => {
+      try {
+        setIsLoadingStudents(true)
+        const fetchedStudents = await getClassStudents(
+          parseInt(classId, 10),
+          studentStatusFilter,
+        )
+        setStudents(fetchedStudents)
+      } catch {
+        showToast("Failed to load students. Please try again.", "error")
+      } finally {
+        setIsLoadingStudents(false)
+      }
+    }
+
+    void fetchFilteredStudents()
+  }, [activeTab, classId, studentStatusFilter, user?.role, showToast])
 
   useEffect(() => {
     if (
@@ -865,10 +906,17 @@ export function ClassDetailPage() {
                 studentSearchQuery={studentSearchQuery}
                 currentStudentPage={currentStudentPage}
                 totalStudentPages={totalStudentPages}
+                studentStatusFilter={studentStatusFilter}
+                isLoadingStudents={isLoadingStudents}
                 studentGridTemplate={STUDENT_GRID_TEMPLATE}
                 onStudentSearchQueryChange={(value) => {
                   setStudentSearchQuery(value)
                   setCurrentStudentPage(1)
+                }}
+                onStudentStatusFilterChange={(value) => {
+                  setStudentStatusFilter(value)
+                  setCurrentStudentPage(1)
+                  setStudentSearchQuery("")
                 }}
                 onRemoveStudent={handleRemoveStudentClick}
                 onStudentPageChange={handleStudentPageChange}

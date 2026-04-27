@@ -62,6 +62,9 @@ const gradeStyles = StyleSheet.create({
   rowAlternate: {
     backgroundColor: C.rowAlt,
   },
+  inactiveRow: {
+    backgroundColor: "#fff7ed",
+  },
   rowLast: {
     borderBottomWidth: 0,
   },
@@ -80,6 +83,21 @@ const gradeStyles = StyleSheet.create({
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
     color: C.ink,
+  },
+  inactiveStudentNameText: {
+    color: "#9a3412",
+  },
+  statusText: {
+    marginTop: 2,
+    fontSize: 6.5,
+    fontFamily: "Helvetica-Bold",
+    textTransform: "uppercase",
+  },
+  activeStatusText: {
+    color: C.inkLight,
+  },
+  inactiveStatusText: {
+    color: "#b45309",
   },
   gradeText: {
     fontSize: 8,
@@ -222,12 +240,30 @@ function GradeTableRow({
       style={[
         gradeStyles.row,
         isAlternate ? gradeStyles.rowAlternate : {},
+        !student.isActive ? gradeStyles.inactiveRow : {},
         isLast ? gradeStyles.rowLast : {},
       ]}
       wrap={false}
     >
       <View style={[gradeStyles.cell, { width: studentColWidth }]}>
-        <Text style={gradeStyles.studentNameText}>{student.studentName}</Text>
+        <Text
+          style={[
+            gradeStyles.studentNameText,
+            !student.isActive ? gradeStyles.inactiveStudentNameText : {},
+          ]}
+        >
+          {student.studentName}
+        </Text>
+        <Text
+          style={[
+            gradeStyles.statusText,
+            student.isActive
+              ? gradeStyles.activeStatusText
+              : gradeStyles.inactiveStatusText,
+          ]}
+        >
+          {student.statusLabel}
+        </Text>
       </View>
       {student.grades.map((grade, index) => (
         <View
@@ -277,7 +313,7 @@ export function GradeReportDocument({ data }: { data: GradeReportData }) {
       >
         <ReportHeader
           title={data.title}
-          subtitle="Comprehensive grade summary for all enrolled students across all assignments."
+          subtitle="Comprehensive grade summary for all enrolled students across all assignments. Inactive students are labeled and highlighted."
         />
 
         <View style={pdfStyles.section} wrap={false}>

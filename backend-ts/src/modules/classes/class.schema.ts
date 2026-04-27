@@ -142,6 +142,12 @@ export const TeacherIdQuerySchema = z.object({
 
 export type TeacherIdQuery = z.infer<typeof TeacherIdQuerySchema>
 
+export const ClassStudentsQuerySchema = z.object({
+  status: z.enum(["active", "inactive", "all"]).optional(),
+})
+
+export type ClassStudentsQuery = z.infer<typeof ClassStudentsQuerySchema>
+
 // ============================================================================
 // Response Schemas
 // ============================================================================
@@ -170,6 +176,7 @@ export const StudentResponseSchema = z.object({
   email: z.string(),
   firstName: z.string(),
   lastName: z.string(),
+  isActive: z.boolean(),
 })
 
 export type StudentResponse = z.infer<typeof StudentResponseSchema>

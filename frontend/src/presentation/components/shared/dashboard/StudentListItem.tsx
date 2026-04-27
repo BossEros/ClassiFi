@@ -42,6 +42,16 @@ export function StudentListItem({
   // Preserve the remove callback contract so the trash action can be restored quickly later.
   void onRemove
 
+  const statusLabel = student.isActive ? "Active" : "Inactive"
+  const statusBadgeClassName =
+    variant === "light"
+      ? student.isActive
+        ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+        : "border border-amber-200 bg-amber-50 text-amber-700"
+      : student.isActive
+        ? "border border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
+        : "border border-amber-500/30 bg-amber-500/15 text-amber-300"
+
   if (layoutMode === "card") {
     return (
       <div
@@ -78,6 +88,11 @@ export function StudentListItem({
             >
               {student.email}
             </p>
+            <span
+              className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClassName}`}
+            >
+              {statusLabel}
+            </span>
           </div>
         </div>
       </div>
@@ -127,9 +142,9 @@ export function StudentListItem({
       {/* Role Badge */}
       <div>
         <span
-          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${variant === "light" ? "border border-sky-200 bg-sky-50 text-sky-700" : "border border-teal-500/30 bg-teal-500/20 text-teal-400"}`}
+          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClassName}`}
         >
-          Student
+          {statusLabel}
         </span>
       </div>
 

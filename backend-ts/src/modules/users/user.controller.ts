@@ -35,7 +35,7 @@ type UpdateNotificationPreferencesRequest = z.infer<
 >
 
 /**
- * Registers user routes for profile management, avatar updates, and account deletion.
+ * Registers user routes for profile management, avatar updates, and account assistance.
  *
  * @param app - The Fastify application instance.
  * @returns A promise that resolves when all routes are registered.
@@ -65,17 +65,17 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   /**
    * DELETE /me
-   * Delete the current user's account
+   * Reject self-service account deactivation
    */
   app.delete("/me", {
     handler: async (request, reply) => {
       const authenticatedUserId = request.user!.id
 
-      await userService.deleteOwnAccount(authenticatedUserId)
+      await userService.deactivateOwnAccount(authenticatedUserId)
 
       return reply.send({
         success: true,
-        message: "Your account has been permanently deleted.",
+        message: "Your account has been deactivated.",
       })
     },
   })

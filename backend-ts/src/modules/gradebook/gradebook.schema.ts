@@ -76,6 +76,7 @@ export const GradebookStudentSchema = z.object({
   id: z.number(),
   name: z.string(),
   email: z.string(),
+  isActive: z.boolean(),
   grades: z.array(GradeEntrySchema),
 })
 

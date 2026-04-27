@@ -27,6 +27,7 @@ export interface UpdateUserRepoData {
   lastName?: string
   role?: UserRole
   avatarUrl?: string | null
+  isActive?: boolean
   emailNotificationsEnabled?: boolean
   inAppNotificationsEnabled?: boolean
 }

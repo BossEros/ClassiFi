@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 import {
+  adminActivateUserFormSchema,
   adminCreateUserFormSchema,
-  adminDeleteUserFormSchema,
+  adminDeactivateUserFormSchema,
   adminEditUserFormSchema,
+  createAdminStatusConfirmationFormSchema,
 } from "@/presentation/schemas/admin/adminUserSchemas"
 
 describe("adminUserSchemas", () => {
@@ -52,16 +54,16 @@ describe("adminUserSchemas", () => {
     }
   })
 
-  it("accepts valid delete-user confirmation", () => {
-    const parseResult = adminDeleteUserFormSchema.safeParse({
-      confirmation: "DELETE",
+  it("accepts valid deactivate-user confirmation", () => {
+    const parseResult = adminDeactivateUserFormSchema.safeParse({
+      confirmation: "DEACTIVATE",
     })
 
     expect(parseResult.success).toBe(true)
   })
 
-  it("rejects invalid delete-user confirmation", () => {
-    const parseResult = adminDeleteUserFormSchema.safeParse({
+  it("rejects invalid deactivate-user confirmation", () => {
+    const parseResult = adminDeactivateUserFormSchema.safeParse({
       confirmation: "remove",
     })
 
@@ -69,7 +71,31 @@ describe("adminUserSchemas", () => {
 
     if (!parseResult.success) {
       expect(parseResult.error.issues[0]?.message).toBe(
-        "Please type DELETE to confirm",
+        "Please type DEACTIVATE to confirm",
+      )
+    }
+  })
+
+  it("accepts valid activate-user confirmation", () => {
+    const parseResult = adminActivateUserFormSchema.safeParse({
+      confirmation: "ACTIVATE",
+    })
+
+    expect(parseResult.success).toBe(true)
+  })
+
+  it("rejects deactivate keyword when activation is required", () => {
+    const activationConfirmationSchema =
+      createAdminStatusConfirmationFormSchema("ACTIVATE")
+    const parseResult = activationConfirmationSchema.safeParse({
+      confirmation: "DEACTIVATE",
+    })
+
+    expect(parseResult.success).toBe(false)
+
+    if (!parseResult.success) {
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Please type ACTIVATE to confirm",
       )
     }
   })

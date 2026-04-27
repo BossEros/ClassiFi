@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search, MoreVertical, Mail, Calendar, CheckCircle, XCircle, RefreshCw, Loader2, Trash2, UserPlus, Users, Upload, Download, ChevronLeft, ChevronRight, Filter, ChevronDown, User as UserIcon } from "lucide-react";
+import { Search, MoreVertical, Mail, Calendar, CheckCircle, XCircle, RefreshCw, Loader2, UserPlus, Users, Upload, Download, ChevronLeft, ChevronRight, Filter, ChevronDown, User as UserIcon } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
 import { Avatar } from "@/presentation/components/ui/Avatar";
 import { useAuthStore } from "@/shared/store/useAuthStore";
@@ -16,7 +16,7 @@ import type { FieldErrors } from "react-hook-form";
 import { cn } from "@/shared/utils/cn";
 import { AlertTriangle, X, AlertCircle } from "lucide-react";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
-import { adminDeleteUserFormSchema, type AdminDeleteUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
+import { createAdminStatusConfirmationFormSchema, type AdminDeactivateUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
 import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap";
 import { Shield, Power } from "lucide-react";
 import { adminEditUserFormSchema, type AdminEditUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
@@ -24,8 +24,8 @@ import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { adminCreateUserFormSchema, type AdminCreateUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 
-// Inlined from src/presentation/components/admin/AdminDeleteUserModal.tsx
-interface AdminDeleteUserModalProps {
+// Inlined from src/presentation/components/admin/AdminDeactivateUserModal.tsx
+interface AdminDeactivateUserModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => Promise<void>
@@ -35,48 +35,53 @@ interface AdminDeleteUserModalProps {
 
 
 
-const INITIAL_DELETE_USER_VALUES: AdminDeleteUserFormValues = {
+const INITIAL_DEACTIVATE_USER_VALUES: AdminDeactivateUserFormValues = {
   confirmation: "",
 }
 
 
 
-function AdminDeleteUserModal({
+function AdminDeactivateUserModal({
   isOpen,
   onClose,
   onConfirm,
   onManageClasses,
   user,
-}: AdminDeleteUserModalProps) {
+}: AdminDeactivateUserModalProps) {
+  const confirmationKeyword = user?.isActive ? "DEACTIVATE" : "ACTIVATE"
   const { register, handleSubmit, watch, setValue, reset } = useZodForm({
-    schema: adminDeleteUserFormSchema,
-    defaultValues: INITIAL_DELETE_USER_VALUES,
+    schema: createAdminStatusConfirmationFormSchema(confirmationKeyword),
+    defaultValues: INITIAL_DEACTIVATE_USER_VALUES,
     mode: "onSubmit",
   })
-  const [isDeleting, setIsDeleting] = React.useState(false)
+  const [isDeactivating, setIsDeactivating] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [step, setStep] = React.useState<"warning" | "confirm">("warning")
 
   const confirmationField = register("confirmation")
   const confirmationValue = watch("confirmation")
   const assignedClassCount = user?.assignedClassCount ?? 0
-  const isTeacherDeletionBlocked =
-    user?.role === "teacher" && assignedClassCount > 0
+  const isActivatingAccount = Boolean(user && !user.isActive)
+  const userStatusActionDisplay = user
+    ? getUserStatusActionDisplay(user.role, user.isActive)
+    : null
+  const isTeacherDeactivationBlocked =
+    user?.role === "teacher" && user.isActive && assignedClassCount > 0
 
   // Reset form when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
-      reset(INITIAL_DELETE_USER_VALUES)
+      reset(INITIAL_DEACTIVATE_USER_VALUES)
       setError(null)
       setStep("warning")
-      setIsDeleting(false)
+      setIsDeactivating(false)
     }
   }, [isOpen, reset])
 
   // Close on escape key
   React.useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isDeleting) {
+      if (event.key === "Escape" && !isDeactivating) {
         onClose()
       }
     }
@@ -90,7 +95,7 @@ function AdminDeleteUserModal({
       document.removeEventListener("keydown", handleEscape)
       document.body.style.overflow = "unset"
     }
-  }, [isOpen, onClose, isDeleting])
+  }, [isOpen, onClose, isDeactivating])
 
   const handleContinue = () => {
     setStep("confirm")
@@ -98,19 +103,23 @@ function AdminDeleteUserModal({
 
   const handleValidSubmit = async () => {
     setError(null)
-    setIsDeleting(true)
+    setIsDeactivating(true)
 
     try {
       await onConfirm()
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete user")
-      setIsDeleting(false)
+      setError(
+        err instanceof Error
+          ? err.message
+          : (userStatusActionDisplay?.errorMessage ?? "Failed to update account"),
+      )
+      setIsDeactivating(false)
     }
   }
 
   const handleInvalidSubmit = (
-    validationErrors: FieldErrors<AdminDeleteUserFormValues>,
+    validationErrors: FieldErrors<AdminDeactivateUserFormValues>,
   ) => {
     const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
 
@@ -119,7 +128,8 @@ function AdminDeleteUserModal({
     }
   }
 
-  const isConfirmDisabled = confirmationValue !== "DELETE" || isDeleting
+  const isConfirmDisabled =
+    confirmationValue !== confirmationKeyword || isDeactivating
 
   if (!isOpen || !user) return null
 
@@ -128,25 +138,27 @@ function AdminDeleteUserModal({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={!isDeleting ? onClose : undefined}
+        onClick={!isDeactivating ? onClose : undefined}
       />
 
       {/* Modal */}
       <div
         className={cn(
           "relative w-full max-w-160 mx-4 p-6",
-          "rounded-3xl border border-rose-200 bg-white",
+          isActivatingAccount
+            ? "rounded-3xl border border-teal-200 bg-white"
+            : "rounded-3xl border border-rose-200 bg-white",
           "shadow-xl",
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="delete-user-title"
+        aria-labelledby="deactivate-user-title"
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          disabled={isDeleting}
+          disabled={isDeactivating}
           className={cn(
             "absolute top-4 right-4 cursor-pointer rounded-lg p-1",
             "text-slate-400 hover:bg-slate-100 hover:text-slate-700",
@@ -160,28 +172,43 @@ function AdminDeleteUserModal({
 
         {/* Icon */}
         <div className="flex justify-center mb-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
-            {step === "warning" || isTeacherDeletionBlocked ? (
-              <AlertTriangle className="h-8 w-8 text-rose-600" />
+          <div
+            className={cn(
+              "flex h-16 w-16 items-center justify-center rounded-full",
+              isActivatingAccount ? "bg-teal-100" : "bg-rose-100",
+            )}
+          >
+            {step === "warning" || isTeacherDeactivationBlocked ? (
+              <AlertTriangle
+                className={cn(
+                  "h-8 w-8",
+                  isActivatingAccount ? "text-teal-600" : "text-rose-600",
+                )}
+              />
             ) : (
-              <Trash2 className="h-8 w-8 text-rose-600" />
+              <Power
+                className={cn(
+                  "h-8 w-8",
+                  isActivatingAccount ? "text-teal-600" : "text-rose-600",
+                )}
+              />
             )}
           </div>
         </div>
 
         {/* Title */}
         <h2
-          id="delete-user-title"
+          id="deactivate-user-title"
           className="mb-2 text-center text-xl font-semibold text-slate-900"
         >
-          {isTeacherDeletionBlocked
-            ? "Teacher Deletion Blocked"
+          {isTeacherDeactivationBlocked
+            ? "Teacher Deactivation Blocked"
             : step === "warning"
-              ? "Delete User?"
-              : "Confirm Deletion"}
+              ? (userStatusActionDisplay?.warningTitle ?? "Update Account Status")
+              : (userStatusActionDisplay?.confirmTitle ?? "Confirm Status Update")}
         </h2>
 
-        {isTeacherDeletionBlocked ? (
+        {isTeacherDeactivationBlocked ? (
           <>
             <div className="mb-4 text-center">
               <p className="text-sm text-slate-500">
@@ -198,9 +225,9 @@ function AdminDeleteUserModal({
 
             <div className="mb-6 space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm text-slate-700">
-                This teacher account cannot be deleted yet. Reassign every
-                class to another teacher first, then return here to delete the
-                account safely.
+                This teacher account cannot be deactivated yet. Reassign every
+                class to another teacher first, then return here to deactivate
+                the account safely.
               </p>
               <p className="text-sm text-slate-600">
                 This protects classes, assignments, submissions, and related
@@ -240,35 +267,44 @@ function AdminDeleteUserModal({
             {/* User info */}
             <div className="text-center mb-4">
               <p className="text-sm text-slate-500">
-                You are about to delete{" "}
+                {userStatusActionDisplay?.warningDescription ??
+                  "You are about to update"}{" "}
                 <span className="font-medium text-slate-900">
                   {user.firstName} {user.lastName}
                 </span>
               </p>
             </div>
 
-            <div className="mb-6 space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+            <div
+              className={cn(
+                "mb-6 space-y-3 rounded-2xl p-4",
+                isActivatingAccount
+                  ? "border border-teal-200 bg-teal-50"
+                  : "border border-rose-200 bg-rose-50",
+              )}
+            >
               <p className="text-sm text-slate-600">
-                This action is{" "}
-                <span className="font-semibold text-rose-700">
-                  permanent and irreversible
-                </span>
-                . Deleting this user will remove:
+                {userStatusActionDisplay?.impactDescription}
               </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their profile and personal information
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their submissions and personal account records
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their enrollments and account associations
-                </li>
-              </ul>
+              {user.isActive ? (
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 text-rose-500">&bull;</span>
+                    Their profile and account history
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 text-rose-500">&bull;</span>
+                    Their submissions and grades
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 text-rose-500">&bull;</span>
+                    Their enrollments and class associations
+                  </li>
+                </ul>
+              ) : null}
+              <p className="text-sm text-slate-600">
+                {userStatusActionDisplay?.confirmHint}
+              </p>
             </div>
 
             {/* Actions */}
@@ -289,9 +325,15 @@ function AdminDeleteUserModal({
                 onClick={handleContinue}
                 className={cn(
                   "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
-                  "bg-red-600 text-white",
-                  "hover:bg-red-700 transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+                  isActivatingAccount
+                    ? "bg-teal-600 text-white"
+                    : "bg-red-600 text-white",
+                  isActivatingAccount
+                    ? "hover:bg-teal-700 transition-colors duration-200"
+                    : "hover:bg-red-700 transition-colors duration-200",
+                  isActivatingAccount
+                    ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                    : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
                 )}
               >
                 <AlertTriangle className="h-4 w-4" />
@@ -303,9 +345,9 @@ function AdminDeleteUserModal({
           <>
             {/* Confirmation form */}
             <p className="mb-6 text-center text-sm text-slate-500">
-              To confirm deletion, please type{" "}
+              To confirm this account status change, please type{" "}
               <span className="font-mono font-semibold text-rose-700">
-                DELETE
+                {confirmationKeyword}
               </span>{" "}
               below.
             </p>
@@ -323,10 +365,13 @@ function AdminDeleteUserModal({
                 </div>
               )}
 
-              {/* Type DELETE */}
+              {/* Type confirmation keyword */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-600">
-                  Type <span className="font-mono text-rose-700">DELETE</span>{" "}
+                  Type{" "}
+                  <span className="font-mono text-rose-700">
+                    {confirmationKeyword}
+                  </span>{" "}
                   to confirm
                 </label>
                 <input
@@ -344,12 +389,15 @@ function AdminDeleteUserModal({
                     "w-full px-4 py-3 rounded-lg font-mono",
                     "border border-slate-300 bg-white",
                     "text-slate-900 placeholder-slate-300",
-                    "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
+                    isActivatingAccount
+                      ? "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      : "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
                     "transition-all duration-200",
-                    confirmationValue === "DELETE" && "border-rose-400",
+                    confirmationValue === confirmationKeyword &&
+                      (isActivatingAccount ? "border-teal-400" : "border-rose-400"),
                   )}
-                  placeholder="DELETE"
-                  disabled={isDeleting}
+                  placeholder={confirmationKeyword}
+                  disabled={isDeactivating}
                   autoFocus
                 />
               </div>
@@ -358,7 +406,7 @@ function AdminDeleteUserModal({
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setStep("warning")}
-                  disabled={isDeleting}
+                  disabled={isDeactivating}
                   type="button"
                   className={cn(
                     "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
@@ -376,21 +424,28 @@ function AdminDeleteUserModal({
                   disabled={isConfirmDisabled}
                   className={cn(
                     "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
-                    "bg-red-600 text-white",
-                    "hover:bg-red-700 transition-colors duration-200",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+                    isActivatingAccount
+                      ? "bg-teal-600 text-white"
+                      : "bg-red-600 text-white",
+                    isActivatingAccount
+                      ? "hover:bg-teal-700 transition-colors duration-200"
+                      : "hover:bg-red-700 transition-colors duration-200",
+                    isActivatingAccount
+                      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                   )}
                 >
-                  {isDeleting ? (
+                  {isDeactivating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Deleting...
+                      {userStatusActionDisplay?.submitLoadingLabel ?? "Saving..."}
                     </>
                   ) : (
                     <>
-                      <Trash2 className="w-4 h-4" />
-                      Delete User
+                      <Power className="w-4 h-4" />
+                      {userStatusActionDisplay?.submitButtonLabel ??
+                        "Save Changes"}
                     </>
                   )}
                 </button>
@@ -432,6 +487,21 @@ interface UserStatusDisplay {
   cardIconContainerClassName: string
   cardIconClassName: string
   toggleTrackClassName: string
+}
+
+interface UserStatusActionDisplay {
+  menuLabel: string
+  warningTitle: string
+  confirmTitle: string
+  warningDescription: string
+  impactDescription: string
+  confirmHint: string
+  submitButtonLabel: string
+  submitLoadingLabel: string
+  successToastMessage: string
+  errorMessage: string
+  actionButtonClassName: string
+  actionIconClassName: string
 }
 
 function getUserStatusDisplay(role: string, isActive: boolean): UserStatusDisplay {
@@ -480,6 +550,55 @@ function getUserStatusDisplay(role: string, isActive: boolean): UserStatusDispla
     cardIconContainerClassName: "bg-rose-100",
     cardIconClassName: "text-rose-700",
     toggleTrackClassName: "border-rose-300 bg-rose-200",
+  }
+}
+
+function getUserStatusActionDisplay(
+  role: string,
+  isActive: boolean,
+): UserStatusActionDisplay {
+  const isPendingTeacherApproval = role === "teacher" && !isActive
+
+  if (isActive) {
+    return {
+      menuLabel: "Deactivate User",
+      warningTitle: "Deactivate User?",
+      confirmTitle: "Confirm Deactivation",
+      warningDescription: "You are about to deactivate",
+      impactDescription:
+        "This account will no longer be able to sign in, but academic records are preserved. Deactivation keeps:",
+      confirmHint:
+        "An administrator can reactivate the account later by changing its status back to active.",
+      submitButtonLabel: "Deactivate User",
+      submitLoadingLabel: "Deactivating...",
+      successToastMessage: "User deactivated successfully",
+      errorMessage: "Failed to deactivate user",
+      actionButtonClassName:
+        "group/delete flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-rose-600 transition-all duration-150 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-800 hover:shadow-sm",
+      actionIconClassName: "w-4 h-4 group-hover/delete:animate-bounce",
+    }
+  }
+
+  return {
+    menuLabel: "Activate Account",
+    warningTitle: "Activate Account?",
+    confirmTitle: "Confirm Activation",
+    warningDescription: isPendingTeacherApproval
+      ? "You are about to approve and activate"
+      : "You are about to activate",
+    impactDescription: isPendingTeacherApproval
+      ? "This teacher will be able to sign in and start using ClassiFi once the account is activated."
+      : "This user will be able to sign in again and continue using their existing account and academic records.",
+    confirmHint: isPendingTeacherApproval
+      ? "Activating this account also completes the teacher approval step."
+      : "You can deactivate the account again later if access needs to be removed.",
+    submitButtonLabel: "Activate Account",
+    submitLoadingLabel: "Activating...",
+    successToastMessage: "Account activated successfully",
+    errorMessage: "Failed to activate account",
+    actionButtonClassName:
+      "group/activate flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-teal-700 transition-all duration-150 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-800 hover:shadow-sm",
+    actionIconClassName: "w-4 h-4 group-hover/activate:animate-bounce",
   }
 }
 
@@ -1593,7 +1712,7 @@ export function AdminUsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showBulkCreateModal, setShowBulkCreateModal] = useState(false)
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
-  const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null)
+  const [deactivatingUser, setDeactivatingUser] = useState<AdminUser | null>(null)
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const { isLoading, error, setError, executeRequest } = useRequestState(true)
   const lastAppliedSearchQueryRef = useRef(initialSearchQuery)
@@ -1675,15 +1794,21 @@ export function AdminUsersPage() {
     })
   }
 
-  const handleDeleteUser = async (userId: number) => {
+  const handleToggleUserStatus = async (user: AdminUser) => {
+    const userStatusActionDisplay = getUserStatusActionDisplay(
+      user.role,
+      user.isActive,
+    )
+
     try {
-      setActionLoading(userId)
-      await adminService.deleteUser(userId)
+      setActionLoading(user.id)
+      await adminService.toggleUserStatus(user.id)
       await fetchUsers()
-      setTotal((t) => t - 1)
-      showToast("User deleted successfully", "success")
+      showToast(userStatusActionDisplay.successToastMessage, "success")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete user")
+      setError(
+        err instanceof Error ? err.message : userStatusActionDisplay.errorMessage,
+      )
       throw err
     } finally {
       setActionLoading(null)
@@ -2024,6 +2149,11 @@ export function AdminUsersPage() {
             const user = users.find((u) => u.id === activeDropdown.id)
             if (!user) return null
 
+            const userStatusActionDisplay = getUserStatusActionDisplay(
+              user.role,
+              user.isActive,
+            )
+
             return (
               <div
                 className="fixed z-[100] w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200"
@@ -2054,13 +2184,13 @@ export function AdminUsersPage() {
                   <div className="p-1">
                     <button
                       onClick={() => {
-                        setDeletingUser(user)
+                        setDeactivatingUser(user)
                         setActiveDropdown(null)
                       }}
-                      className="group/delete flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-rose-600 transition-all duration-150 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-800 hover:shadow-sm"
+                      className={userStatusActionDisplay.actionButtonClassName}
                     >
-                      <Trash2 className="w-4 h-4 group-hover/delete:animate-bounce" />
-                      Delete User
+                      <Power className={userStatusActionDisplay.actionIconClassName} />
+                      {userStatusActionDisplay.menuLabel}
                     </button>
                   </div>
                 </div>
@@ -2095,17 +2225,17 @@ export function AdminUsersPage() {
           }}
         />
 
-        <AdminDeleteUserModal
-          isOpen={!!deletingUser}
-          user={deletingUser}
-          onClose={() => setDeletingUser(null)}
+        <AdminDeactivateUserModal
+          isOpen={!!deactivatingUser}
+          user={deactivatingUser}
+          onClose={() => setDeactivatingUser(null)}
           onManageClasses={() => {
-            setDeletingUser(null)
+            setDeactivatingUser(null)
             navigate("/dashboard/classes")
           }}
           onConfirm={async () => {
-            if (deletingUser) {
-              await handleDeleteUser(deletingUser.id)
+            if (deactivatingUser) {
+              await handleToggleUserStatus(deactivatingUser)
             }
           }}
         />

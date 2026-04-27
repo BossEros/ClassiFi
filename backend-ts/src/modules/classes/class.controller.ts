@@ -17,6 +17,7 @@ import {
   GetClassesQuerySchema,
   GetClassByIdQuerySchema,
   TeacherIdQuerySchema,
+  ClassStudentsQuerySchema,
   ClassStudentParamsSchema,
   type CreateClassRequest,
   type UpdateClassRequest,
@@ -25,6 +26,7 @@ import {
   type GetClassesQuery,
   type GetClassByIdQuery,
   type TeacherIdQuery,
+  type ClassStudentsQuery,
   type ClassStudentParams,
 } from "@/modules/classes/class.schema.js"
 import {
@@ -296,12 +298,16 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
    * Get all students in a class
    */
   app.get("/:classId/students", {
-    preHandler: validateParams(ClassIdParamSchema),
+    preHandler: [
+      validateParams(ClassIdParamSchema),
+      validateQuery(ClassStudentsQuerySchema),
+    ],
     handler: async (request, reply) => {
       const { classId: parsedClassId } = request.validatedParams as ClassIdParam
+      const { status = "all" } = request.validatedQuery as ClassStudentsQuery
 
       const enrolledStudentList =
-        await classService.getClassStudents(parsedClassId)
+        await classService.getClassStudents(parsedClassId, status)
 
       return reply.send({
         success: true,
