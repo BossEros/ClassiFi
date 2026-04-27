@@ -398,6 +398,8 @@ Student enrolled-classes query behavior:
 
 - Includes all gradebook students, including inactive students, so historical grade records remain exportable.
 - Adds a `Status` column with `Active` or `Inactive` for downstream filtering and audit clarity.
+- Uses the same rank-based student ordering as the teacher gradebook view: active students first, then points-weighted current-standing percentage descending, with alphabetical name order only as a tie-breaker.
+- Uses the same current-standing average policy as the teacher gradebook view: no submission counts as `0`, submitted-but-ungraded work is excluded until a grade exists, and the percentage is weighted by each assignment's total score.
 
 ### Modules
 

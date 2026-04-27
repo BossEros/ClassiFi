@@ -6,6 +6,7 @@ import type {
   ReportMetadataEntry,
   SummaryMetric,
 } from "./gradeReportTypes"
+import { calculateTeacherGradebookAverage } from "@/presentation/utils/teacherGradebookAverage"
 
 function formatDateTime(date: Date): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -83,15 +84,14 @@ export function buildGradeReportData(
         },
       )
 
-      const validGrades = grades.filter((grade) => grade.score !== "-")
       let average = "-"
+      const averageValue = calculateTeacherGradebookAverage(
+        gradebook.assignments,
+        student.grades,
+      )
 
-      if (validGrades.length > 0) {
-        const averageValue =
-          validGrades.reduce((sum, grade) => sum + grade.percentage, 0) /
-          validGrades.length
-
-        average = `${Math.round(averageValue)}%`
+      if (averageValue !== null) {
+        average = `${averageValue}%`
 
         if (student.isActive) {
           activeStudentAverages.push(averageValue)

@@ -400,9 +400,24 @@ describe("ClassDetailPage - Pagination", () => {
       expect(screen.getAllByText("Active")).not.toHaveLength(0)
     })
 
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: /show active students \(2\)/i,
+        }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", {
+          name: /show inactive students \(1\)/i,
+        }),
+      ).toBeInTheDocument()
+    })
+
     expect(screen.queryByText("Inactive Student")).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole("button", { name: /^Inactive$/i }))
+    await userEvent.click(
+      screen.getByRole("button", { name: /show inactive students \(1\)/i }),
+    )
 
     await waitFor(() => {
       expect(classService.getClassStudents).toHaveBeenCalledWith(1, "inactive")
@@ -410,5 +425,56 @@ describe("ClassDetailPage - Pagination", () => {
     })
 
     expect(screen.queryByText("Active Student One")).not.toBeInTheDocument()
+  })
+
+  it("preserves the roster search query and reuses the cached inactive roster when switching filters", async () => {
+    vi.mocked(classService.getClassDetailData).mockResolvedValue({
+      classInfo: { ...mockClassInfo, studentCount: 3 },
+      assignments: [],
+      students: [
+        createMockStudent(1, "Active Student One", true),
+        createMockStudent(2, "Active Student Two", true),
+      ],
+    })
+    vi.mocked(classService.getClassStudents).mockImplementation(
+      async (_classId, status) => {
+        if (status === "inactive") {
+          return [createMockStudent(3, "Inactive Student", false)] as any
+        }
+
+        return [
+          createMockStudent(1, "Active Student One", true),
+          createMockStudent(2, "Active Student Two", true),
+        ] as any
+      },
+    )
+
+    renderClassDetailPage()
+
+    await waitForClassHeading()
+    await userEvent.click(screen.getByRole("tab", { name: /students/i }))
+
+    const studentSearchInput = screen.getByLabelText(
+      /search students by name or email/i,
+    )
+
+    await userEvent.type(studentSearchInput, "Inactive")
+
+    await waitFor(() => {
+      expect(screen.getByText("No students match your search.")).toBeInTheDocument()
+      expect(classService.getClassStudents).toHaveBeenCalledTimes(1)
+      expect(classService.getClassStudents).toHaveBeenCalledWith(1, "inactive")
+    })
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /show inactive students \(1\)/i }),
+    )
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Inactive Student")).toHaveLength(2)
+    })
+
+    expect(studentSearchInput).toHaveValue("Inactive")
+    expect(classService.getClassStudents).toHaveBeenCalledTimes(1)
   })
 })

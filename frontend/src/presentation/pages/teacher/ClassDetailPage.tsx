@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
@@ -462,6 +462,19 @@ function LeaveClassModal({
 
 const STUDENTS_PER_PAGE = 10
 const STUDENT_GRID_TEMPLATE = "400px 1fr 150px 60px"
+const TEACHER_STUDENT_STATUS_OPTIONS = ["active", "inactive"] as const
+
+type TeacherStudentStatusOption =
+  (typeof TEACHER_STUDENT_STATUS_OPTIONS)[number]
+
+function createTeacherStudentStatusRecord<T>(
+  initialValue: T,
+): Record<TeacherStudentStatusOption, T> {
+  return {
+    active: initialValue,
+    inactive: initialValue,
+  }
+}
 
 /**
  * Displays detailed information about a class including assignments, students, and management options.
@@ -493,6 +506,18 @@ export function ClassDetailPage() {
   const [studentStatusFilter, setStudentStatusFilter] = useState<
     Extract<ClassStudentStatusFilter, "active" | "inactive">
   >("active")
+  const [teacherStudentRosterByStatus, setTeacherStudentRosterByStatus] =
+    useState<Record<TeacherStudentStatusOption, EnrolledStudent[]>>(
+      createTeacherStudentStatusRecord<EnrolledStudent[]>([]),
+    )
+  const [loadedTeacherStudentStatuses, setLoadedTeacherStudentStatuses] =
+    useState<Record<TeacherStudentStatusOption, boolean>>(
+      createTeacherStudentStatusRecord(false),
+    )
+  const [fetchingTeacherStudentStatuses, setFetchingTeacherStudentStatuses] =
+    useState<Record<TeacherStudentStatusOption, boolean>>(
+      createTeacherStudentStatusRecord(false),
+    )
   const [isLoadingStudents, setIsLoadingStudents] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -545,10 +570,24 @@ export function ClassDetailPage() {
     [assignments],
   )
 
+  const studentsForActiveStatus = useMemo(
+    () =>
+      isTeacher ? teacherStudentRosterByStatus[studentStatusFilter] : students,
+    [isTeacher, studentStatusFilter, students, teacherStudentRosterByStatus],
+  )
+
+  const teacherStudentStatusCounts = useMemo(
+    () => ({
+      active: teacherStudentRosterByStatus.active.length,
+      inactive: teacherStudentRosterByStatus.inactive.length,
+    }),
+    [teacherStudentRosterByStatus],
+  )
+
   // Pagination calculations for students
   const filteredStudents = useMemo(
-    () => filterStudentsByQuery(students, studentSearchQuery),
-    [students, studentSearchQuery],
+    () => filterStudentsByQuery(studentsForActiveStatus, studentSearchQuery),
+    [studentsForActiveStatus, studentSearchQuery],
   )
 
   const totalStudentPages = useMemo(
@@ -595,6 +634,15 @@ export function ClassDetailPage() {
         setClassInfo(data.classInfo)
         setAssignments(data.assignments)
         setStudents(data.students)
+        setTeacherStudentRosterByStatus({
+          active: data.students,
+          inactive: [],
+        })
+        setLoadedTeacherStudentStatuses({
+          active: true,
+          inactive: false,
+        })
+        setFetchingTeacherStudentStatuses(createTeacherStudentStatusRecord(false))
 
         // Fetch modules for this class
         try {
@@ -613,6 +661,62 @@ export function ClassDetailPage() {
     fetchClassData()
   }, [navigate, classId, currentUser])
 
+  const loadTeacherStudentRoster = useCallback(
+    async (
+      status: TeacherStudentStatusOption,
+      shouldShowLoadingState: boolean,
+    ) => {
+      if (
+        !classId ||
+        loadedTeacherStudentStatuses[status] ||
+        fetchingTeacherStudentStatuses[status]
+      ) {
+        return
+      }
+
+      setFetchingTeacherStudentStatuses((previousStatuses) => ({
+        ...previousStatuses,
+        [status]: true,
+      }))
+
+      if (shouldShowLoadingState) {
+        setIsLoadingStudents(true)
+      }
+
+      try {
+        const fetchedStudents = await getClassStudents(parseInt(classId, 10), status)
+
+        setTeacherStudentRosterByStatus((previousRoster) => ({
+          ...previousRoster,
+          [status]: fetchedStudents,
+        }))
+        setLoadedTeacherStudentStatuses((previousStatuses) => ({
+          ...previousStatuses,
+          [status]: true,
+        }))
+      } catch {
+        if (shouldShowLoadingState) {
+          showToast("Failed to load students. Please try again.", "error")
+        }
+      } finally {
+        setFetchingTeacherStudentStatuses((previousStatuses) => ({
+          ...previousStatuses,
+          [status]: false,
+        }))
+
+        if (shouldShowLoadingState) {
+          setIsLoadingStudents(false)
+        }
+      }
+    },
+    [
+      classId,
+      fetchingTeacherStudentStatuses,
+      loadedTeacherStudentStatuses,
+      showToast,
+    ],
+  )
+
   useEffect(() => {
     const shouldLoadFilteredRoster =
       activeTab === "students" &&
@@ -623,23 +727,31 @@ export function ClassDetailPage() {
       return
     }
 
-    const fetchFilteredStudents = async () => {
-      try {
-        setIsLoadingStudents(true)
-        const fetchedStudents = await getClassStudents(
-          parseInt(classId, 10),
-          studentStatusFilter,
-        )
-        setStudents(fetchedStudents)
-      } catch {
-        showToast("Failed to load students. Please try again.", "error")
-      } finally {
-        setIsLoadingStudents(false)
-      }
+    const currentStatusIsLoaded = loadedTeacherStudentStatuses[studentStatusFilter]
+
+    if (!currentStatusIsLoaded) {
+      void loadTeacherStudentRoster(studentStatusFilter, true)
     }
 
-    void fetchFilteredStudents()
-  }, [activeTab, classId, studentStatusFilter, user?.role, showToast])
+    const missingBackgroundStatus = TEACHER_STUDENT_STATUS_OPTIONS.find(
+      (statusOption) =>
+        statusOption !== studentStatusFilter &&
+        !loadedTeacherStudentStatuses[statusOption] &&
+        !fetchingTeacherStudentStatuses[statusOption],
+    )
+
+    if (missingBackgroundStatus) {
+      void loadTeacherStudentRoster(missingBackgroundStatus, false)
+    }
+  }, [
+    activeTab,
+    classId,
+    fetchingTeacherStudentStatuses,
+    loadTeacherStudentRoster,
+    loadedTeacherStudentStatuses,
+    studentStatusFilter,
+    user?.role,
+  ])
 
   useEffect(() => {
     if (
@@ -658,10 +770,19 @@ export function ClassDetailPage() {
 
   const handleRemoveStudentSuccess = () => {
     if (studentToRemove) {
-      const updatedStudents = students.filter(
-        (s) => s.id !== studentToRemove.id,
+      const updatedStudents = studentsForActiveStatus.filter(
+        (enrolledStudent) => enrolledStudent.id !== studentToRemove.id,
       )
-      setStudents(updatedStudents)
+
+      if (isTeacher) {
+        setTeacherStudentRosterByStatus((previousRoster) => ({
+          ...previousRoster,
+          [studentStatusFilter]: updatedStudents,
+        }))
+      } else {
+        setStudents(updatedStudents)
+      }
+
       const filteredUpdatedStudents = filterStudentsByQuery(
         updatedStudents,
         studentSearchQuery,
@@ -907,6 +1028,8 @@ export function ClassDetailPage() {
                 currentStudentPage={currentStudentPage}
                 totalStudentPages={totalStudentPages}
                 studentStatusFilter={studentStatusFilter}
+                studentStatusCounts={teacherStudentStatusCounts}
+                loadedStudentStatuses={loadedTeacherStudentStatuses}
                 isLoadingStudents={isLoadingStudents}
                 studentGridTemplate={STUDENT_GRID_TEMPLATE}
                 onStudentSearchQueryChange={(value) => {
@@ -916,7 +1039,6 @@ export function ClassDetailPage() {
                 onStudentStatusFilterChange={(value) => {
                   setStudentStatusFilter(value)
                   setCurrentStudentPage(1)
-                  setStudentSearchQuery("")
                 }}
                 onRemoveStudent={handleRemoveStudentClick}
                 onStudentPageChange={handleStudentPageChange}

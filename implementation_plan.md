@@ -273,3 +273,54 @@ Show the selected student's attempt count for the current assignment in the teac
 - Teacher submission detail shows the selected student's attempt count for that assignment.
 - The student assignment detail view keeps its current history behavior.
 - Assignment-wide submission totals remain unchanged on the submissions table page.
+
+## Teacher Gradebook Rank Ordering Slice
+
+### Goal
+Replace alphabetical teacher gradebook ordering with rank-based ordering that follows the same displayed average semantics used in the gradebook UI.
+
+### Implementation Steps
+1. Add a focused backend ranking utility test that locks the intended ordering and student-rank behavior.
+2. Reuse one backend gradebook ranking helper for both teacher gradebook ordering and the student-rank endpoint to avoid divergent definitions.
+3. Sort active students ahead of inactive historical rows, then sort by rounded average percentage descending, then alphabetically for ties.
+4. Update frontend/backend documentation so the gradebook ordering rule is explicit.
+5. Run required verification commands for the affected backend and consuming frontend build.
+
+### Expected Result
+- Teacher gradebook rows are ordered by class standing instead of alphabetical name order.
+- CSV/PDF exports inherit the same rank-based ordering automatically.
+- Student rank calculations stay aligned with the averages shown in the gradebook.
+
+## Teacher Gradebook Current Standing Policy Slice
+
+### Goal
+Align teacher gradebook averages, rank, and exports with a current-standing policy where missing submissions count as zero immediately, while submitted work awaiting grading is excluded until a score exists.
+
+### Implementation Steps
+1. Add failing backend and frontend regression tests for missing-work zeros and pending-review exclusion.
+2. Reuse a shared backend average helper for rank and CSV exports instead of duplicating average logic.
+3. Reuse a shared frontend teacher-average helper for the gradebook table and PDF export builder.
+4. Update documentation so the teacher gradebook average semantics are explicit.
+5. Run required backend and frontend verification commands.
+
+### Expected Result
+- A student with no submission for an assignment is treated as earning `0` for current standing.
+- A student who submitted but has not been graded yet is not penalized while waiting for grading.
+- Teacher table averages, rank order, CSV export averages, and PDF export averages all match.
+
+## Teacher Gradebook Weighted Standing Slice
+
+### Goal
+Replace the teacher gradebook's equal-weight assignment averaging with a points-weighted current-standing total so assignments with different score caps contribute proportionally.
+
+### Implementation Steps
+1. Add failing regression tests that cover a mixed-total-score example where equal weighting and points weighting diverge.
+2. Update the shared backend ranking/export helper to compute current standing from earned points over countable possible points.
+3. Update the shared frontend teacher-gradebook helper so table and PDF averages match the backend exactly.
+4. Update documentation to state that the teacher `Average` column is a points-weighted current-standing percentage.
+5. Run required backend and frontend verification commands.
+
+### Expected Result
+- Teacher gradebook averages reflect `earned points / countable possible points`.
+- Missing work still counts as zero and pending-review submissions remain excluded.
+- Rank, CSV export, PDF export, and the on-screen table all use the same weighted total.

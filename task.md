@@ -5,6 +5,17 @@
 - [x] Add/update focused backend and frontend tests
 - [x] Run required backend and frontend verification commands
 
+- [x] Add failing tests for teacher current-standing averages and exports
+- [x] Count no-submission work as zero in teacher gradebook averages and rank
+- [x] Exclude submitted-but-ungraded work from teacher averages until grading
+- [x] Align teacher CSV/PDF exports with the same current-standing policy
+- [x] Run required backend and frontend verification commands for the current-standing policy change
+
+- [x] Add failing tests for points-weighted teacher averages
+- [x] Replace equal-weight teacher averages with points-weighted current standing
+- [x] Keep missing-as-zero and pending-review exclusion under the weighted policy
+- [x] Run required backend and frontend verification commands for the weighted policy change
+
 Deactivate account verification notes:
 - `backend-ts`: `npm.cmd run typecheck` passed on 2026-04-26
 - `backend-ts`: `npm.cmd test` passed on 2026-04-26
@@ -168,9 +179,15 @@ Admin account activation confirmation verification notes:
 - [ ] Add scoped backend active-student count helpers without changing admin/historical count semantics
 - [ ] Wire teacher assignment aggregates, module/class assignment DTOs, and calendar counts to active-only totals
 - [ ] Update teacher assignment metrics documentation
-- [ ] Run required backend and frontend verification commands
+- [x] Run required backend and frontend verification commands
 
 - [x] Reproduce the current frontend unit test failures on 2026-04-27
 - [x] Trace the failures to responsive duplicate markup, active-roster fetch behavior, and invalid PDF-byte assertions
 - [x] Update the affected frontend unit tests to assert the current architecture correctly
 - [x] Re-run frontend verification commands
+
+- [x] Add failing backend ranking tests for teacher gradebook ordering
+- [x] Replace alphabetical teacher gradebook ordering with rank-based ordering
+- [x] Align student rank calculation with the gradebook's displayed average semantics
+- [x] Update gradebook documentation for rank-based ordering
+- [ ] Run required backend and frontend verification commands
