@@ -273,3 +273,20 @@ Show the selected student's attempt count for the current assignment in the teac
 - Teacher submission detail shows the selected student's attempt count for that assignment.
 - The student assignment detail view keeps its current history behavior.
 - Assignment-wide submission totals remain unchanged on the submissions table page.
+
+## Teacher Gradebook Rank Ordering Slice
+
+### Goal
+Replace alphabetical teacher gradebook ordering with rank-based ordering that follows the same displayed average semantics used in the gradebook UI.
+
+### Implementation Steps
+1. Add a focused backend ranking utility test that locks the intended ordering and student-rank behavior.
+2. Reuse one backend gradebook ranking helper for both teacher gradebook ordering and the student-rank endpoint to avoid divergent definitions.
+3. Sort active students ahead of inactive historical rows, then sort by rounded average percentage descending, then alphabetically for ties.
+4. Update frontend/backend documentation so the gradebook ordering rule is explicit.
+5. Run required verification commands for the affected backend and consuming frontend build.
+
+### Expected Result
+- Teacher gradebook rows are ordered by class standing instead of alphabetical name order.
+- CSV/PDF exports inherit the same rank-based ordering automatically.
+- Student rank calculations stay aligned with the averages shown in the gradebook.

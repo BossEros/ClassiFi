@@ -398,6 +398,7 @@ Student enrolled-classes query behavior:
 
 - Includes all gradebook students, including inactive students, so historical grade records remain exportable.
 - Adds a `Status` column with `Active` or `Inactive` for downstream filtering and audit clarity.
+- Uses the same rank-based student ordering as the teacher gradebook view: active students first, then rounded average percentage descending, with alphabetical name order only as a tie-breaker.
 
 ### Modules
 

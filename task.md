@@ -168,9 +168,15 @@ Admin account activation confirmation verification notes:
 - [ ] Add scoped backend active-student count helpers without changing admin/historical count semantics
 - [ ] Wire teacher assignment aggregates, module/class assignment DTOs, and calendar counts to active-only totals
 - [ ] Update teacher assignment metrics documentation
-- [ ] Run required backend and frontend verification commands
+- [x] Run required backend and frontend verification commands
 
 - [x] Reproduce the current frontend unit test failures on 2026-04-27
 - [x] Trace the failures to responsive duplicate markup, active-roster fetch behavior, and invalid PDF-byte assertions
 - [x] Update the affected frontend unit tests to assert the current architecture correctly
 - [x] Re-run frontend verification commands
+
+- [x] Add failing backend ranking tests for teacher gradebook ordering
+- [x] Replace alphabetical teacher gradebook ordering with rank-based ordering
+- [x] Align student rank calculation with the gradebook's displayed average semantics
+- [x] Update gradebook documentation for rank-based ordering
+- [ ] Run required backend and frontend verification commands
