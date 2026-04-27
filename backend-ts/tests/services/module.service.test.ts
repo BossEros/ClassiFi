@@ -48,6 +48,7 @@ describe("ModuleService", () => {
     mockClassRepo = {
       getClassById: vi.fn(),
       getStudentCount: vi.fn(),
+      getActiveStudentCount: vi.fn(),
     } as any
 
     mockAssignmentRepo = {
@@ -115,7 +116,7 @@ describe("ModuleService", () => {
       const modules = [createMockModule()]
       mockModuleRepo.getModulesByClassId!.mockResolvedValue(modules)
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue([])
-      mockClassRepo.getStudentCount!.mockResolvedValue(5)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(5)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map(),
       )
@@ -123,6 +124,7 @@ describe("ModuleService", () => {
       const result = await moduleService.getModulesWithAssignments(classId, false)
 
       expect(result).toHaveLength(1)
+      expect(mockClassRepo.getActiveStudentCount).toHaveBeenCalledWith(classId)
       expect(mockModuleRepo.getModulesByClassId).toHaveBeenCalledWith(classId)
       expect(mockModuleRepo.getPublishedModulesByClassId).not.toHaveBeenCalled()
     })
@@ -130,7 +132,7 @@ describe("ModuleService", () => {
     it("should return only published modules for a student", async () => {
       mockModuleRepo.getPublishedModulesByClassId!.mockResolvedValue([])
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue([])
-      mockClassRepo.getStudentCount!.mockResolvedValue(0)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(0)
 
       await moduleService.getModulesWithAssignments(classId, true)
 
@@ -147,7 +149,7 @@ describe("ModuleService", () => {
         { id: 11, moduleId: 2, title: "A2", classId } as any,
         { id: 12, moduleId: 1, title: "A3", classId } as any,
       ])
-      mockClassRepo.getStudentCount!.mockResolvedValue(3)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(3)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map([[10, 2], [11, 1], [12, 0]]),
       )
@@ -162,7 +164,7 @@ describe("ModuleService", () => {
     it("should not fetch submission counts when no assignments exist", async () => {
       mockModuleRepo.getModulesByClassId!.mockResolvedValue([createMockModule()])
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue([])
-      mockClassRepo.getStudentCount!.mockResolvedValue(0)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(0)
 
       await moduleService.getModulesWithAssignments(classId, false)
 
@@ -177,7 +179,7 @@ describe("ModuleService", () => {
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue([
         { id: 10, moduleId: null, title: "Unassigned", classId } as any,
       ])
-      mockClassRepo.getStudentCount!.mockResolvedValue(1)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(1)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map(),
       )

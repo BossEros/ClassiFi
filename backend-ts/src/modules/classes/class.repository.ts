@@ -237,6 +237,17 @@ export class ClassRepository extends BaseRepository<
     return Number(result[0]?.count ?? 0)
   }
 
+  /** Get the number of active students in a class. */
+  async getActiveStudentCount(classId: number): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(enrollments)
+      .innerJoin(users, eq(enrollments.studentId, users.id))
+      .where(and(eq(enrollments.classId, classId), eq(users.isActive, true)))
+
+    return Number(result[0]?.count ?? 0)
+  }
+
   /** Check if a class code already exists */
   async checkClassCodeExists(classCode: string): Promise<boolean> {
     const results = await this.db

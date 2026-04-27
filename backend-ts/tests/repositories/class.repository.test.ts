@@ -43,6 +43,7 @@ vi.mock("../../src/models/index.js", () => ({
     firstName: "firstName",
     lastName: "lastName",
     email: "email",
+    isActive: "isActive",
   },
 }))
 
@@ -269,6 +270,44 @@ describe("ClassRepository", () => {
       const classRepo = new ClassRepository()
 
       const result = await classRepo.getStudentCount(1)
+
+      expect(result).toBe(0)
+    })
+  })
+
+  describe("getActiveStudentCount Logic", () => {
+    it("should return active student count", async () => {
+      const fromMock = vi.fn().mockReturnValue({
+        innerJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 11 }]),
+        }),
+      })
+      const selectMock = vi.fn().mockReturnValue({ from: fromMock })
+      mockDb.select = selectMock
+
+      const { ClassRepository } =
+        await import("../../src/modules/classes/class.repository.js")
+      const classRepo = new ClassRepository()
+
+      const result = await classRepo.getActiveStudentCount(1)
+
+      expect(result).toBe(11)
+    })
+
+    it("should return 0 when no active students", async () => {
+      const fromMock = vi.fn().mockReturnValue({
+        innerJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+        }),
+      })
+      const selectMock = vi.fn().mockReturnValue({ from: fromMock })
+      mockDb.select = selectMock
+
+      const { ClassRepository } =
+        await import("../../src/modules/classes/class.repository.js")
+      const classRepo = new ClassRepository()
+
+      const result = await classRepo.getActiveStudentCount(1)
 
       expect(result).toBe(0)
     })

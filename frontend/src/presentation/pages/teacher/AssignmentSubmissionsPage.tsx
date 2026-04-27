@@ -567,7 +567,10 @@ export function AssignmentSubmissionsPage() {
         let enrolledStudentsCount: number | null = null
         let avatarUrlMapByStudentId: Record<number, string | null> = {}
         try {
-          const classStudents = await getClassStudents(assignmentData.classId)
+          const classStudents = await getClassStudents(
+            assignmentData.classId,
+            "active",
+          )
           enrolledStudentsCount = classStudents.length
           avatarUrlMapByStudentId = classStudents.reduce<
             Record<number, string | null>

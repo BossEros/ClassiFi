@@ -217,6 +217,8 @@ Admin enrollment workspace behavior:
 - **`PairComparison`** and **`PairCodeDiff`**: Side-by-side code comparison surfaces for evidence review.
 - **Teacher PDF exports**: Threshold-aware class report download plus pairwise evidence download built with `@react-pdf/renderer`
 - **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
+- **Teacher gradebook exports**: CSV exports include a `Status` column for `Active` / `Inactive` students. PDF exports include inactive students by default, label them explicitly, highlight their rows subtly, and keep summary metrics scoped to active students only.
+- **Teacher roster status filters**: The class `Students` tab exposes `Active` and `Inactive` filters only. The roster defaults to active students, while inactive/deactivated students are still reviewable through the inactive filter and are labeled with an explicit status badge.
 - **`StudentClassGradesContent`**: Student-only class grades tab that shows personal current grade, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, similarity-deduction breakdowns, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
@@ -605,6 +607,7 @@ Specialized types for the class detail page redesign:
    - Class header displays instructor name, schedule (days and time), and class code
    - Access quick actions: View Gradebook, Edit Class, Delete Class
    - Gradebook provides a read-only grade overview and CSV export (no inline grade override actions)
+   - Inactive/deactivated students remain visible in the gradebook with an `Inactive` status label so historical records remain intact
    - Class code badge is styled with teal colors for easy visibility
 3. **Manage Assignments**:
    - Assignments are organized into **modules** (collapsible sections like "Module 1", "Midterm", "Finals")
@@ -618,6 +621,7 @@ Specialized types for the class detail page redesign:
    - Click assignment cards to view submissions and grade student work
    - In the submissions view, the Instructions card is collapsible from the header chevron to save vertical space
    - Submission metrics are shown as individual cards (`Total Submissions`, `On Time`, `Late`, `Missing`) with status icons
+   - Teacher assignment expectation metrics (`submitted / total`, `Missing`, pending filters, and calendar submission ratios) are scoped to active students only, while existing submissions from inactive students remain visible for review
    - Submissions are listed in a paginated table (`Student Name`, `Status`, `Grade`, `Action`) with 10 rows per page
    - Search includes a leading icon and shares the action bar row with the similarity action button (left search, right action button)
    - Clicking a submissions table row or the `View Details` action opens assignment review for the selected submission (`submissionId` in URL query)
@@ -630,7 +634,8 @@ Specialized types for the class detail page redesign:
    - Edit/delete assignment actions are available from the assignment submissions page dropdown menu (teacher/admin only)
 4. **View Students**:
    - Switch to Students tab to view enrolled students
-   - Manage student enrollments
+   - Use only two roster filters: `Active` and `Inactive`
+   - The default roster view shows active students only, and inactive students appear with a status badge when the inactive filter is selected
 5. **Create New Assignment**:
    - Click "Add Assignment" button (from module card or tab header)
    - Select which module to assign the assignment to via the module selector dropdown

@@ -386,6 +386,18 @@ Student enrolled-classes query behavior:
 - For students: Includes `submittedAt`, `grade`, and `maxGrade` fields
 - `grade` is null if not yet graded
 - `maxGrade` defaults to 100 if not specified
+- For teacher-facing assignment progress, aggregate `studentCount` values are scoped to active students only so pending/missing submission metrics do not include inactive enrollments
+
+**Class Students Response** (`GET /classes/:id/students`):
+
+- Accepts optional query `status=active|inactive|all`
+- Each returned student includes `isActive`
+- This supports the teacher roster rule of defaulting to active students while still allowing explicit review of inactive/deactivated students
+
+**Gradebook CSV Export** (`GET /gradebook/classes/:classId/export`):
+
+- Includes all gradebook students, including inactive students, so historical grade records remain exportable.
+- Adds a `Status` column with `Active` or `Inactive` for downstream filtering and audit clarity.
 
 ### Modules
 
@@ -402,6 +414,7 @@ Student enrolled-classes query behavior:
 - Modules are assignment grouping containers within a class (e.g., "Module 1", "Midterm", "Finals")
 - Every assignment optionally belongs to a module via the `moduleId` foreign key
 - `GET /classes/:classId/modules` returns modules ordered by creation date (ascending), each including its nested assignments with submission counts
+- Teacher-facing module assignment progress uses active-student totals only; inactive students' historical submissions remain accessible through submission review endpoints
 - Deleting a module cascades to all assignments within it
 - Modules support publish/unpublish toggling (`isPublished` boolean)
 - A "General" module is auto-created per class during migration for ungrouped assignments
@@ -462,6 +475,8 @@ Gradebook scoring notes:
 - `grade` is the displayed score returned to clients.
 - Automatic similarity deductions are applied to the automatic grade after test scoring and late penalties.
 - Manual teacher overrides still win as the final displayed score and are stored separately in `override_grade`.
+- Class gradebook rows also include each student's `isActive` flag.
+- Inactive/deactivated students remain in gradebook responses and exports so historical academic records are preserved.
 
 ### Test Cases & Code Testing
 
