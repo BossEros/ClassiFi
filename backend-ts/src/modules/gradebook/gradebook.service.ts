@@ -396,6 +396,7 @@ export class GradebookService {
     const headers = [
       "Student Name",
       "Email",
+      "Status",
       ...gradebook.assignments.map((a) => `${a.name} (/${a.totalScore})`),
       "Average",
     ]
@@ -430,7 +431,15 @@ export class GradebookService {
             )
           : ""
 
-      return [student.name, student.email, ...gradeValues, average.toString()]
+      const statusLabel = student.isActive ? "Active" : "Inactive"
+
+      return [
+        student.name,
+        student.email,
+        statusLabel,
+        ...gradeValues,
+        average.toString(),
+      ]
     })
 
     // Convert to CSV string

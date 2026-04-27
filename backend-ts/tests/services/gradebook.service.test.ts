@@ -398,6 +398,7 @@ describe("GradebookService", () => {
             id: 1,
             name: "John Doe",
             email: "john@test.com",
+            isActive: true,
             grades: [
               {
                 assignmentId: 1,
@@ -417,6 +418,7 @@ describe("GradebookService", () => {
             id: 2,
             name: "Jane Smith",
             email: "jane@test.com",
+            isActive: false,
             grades: [
               {
                 assignmentId: 1,
@@ -441,13 +443,16 @@ describe("GradebookService", () => {
 
       expect(csv).toContain("Student Name")
       expect(csv).toContain("Email")
+      expect(csv).toContain("Status")
       expect(csv).toContain("Assignment 1 (/100)")
       expect(csv).toContain("Assignment 2 (/50)")
       expect(csv).toContain("Average")
       expect(csv).toContain("John Doe")
       expect(csv).toContain("john@test.com")
+      expect(csv).toContain("Active")
       expect(csv).toContain("85")
       expect(csv).toContain("jane@test.com")
+      expect(csv).toContain("Inactive")
     })
 
     it("should handle empty gradebook", async () => {
@@ -460,6 +465,7 @@ describe("GradebookService", () => {
 
       expect(csv).toContain("Student Name")
       expect(csv).toContain("Email")
+      expect(csv).toContain("Status")
       expect(csv).toContain("Average")
     })
   })
