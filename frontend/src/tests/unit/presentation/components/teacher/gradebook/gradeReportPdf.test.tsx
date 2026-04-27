@@ -1,10 +1,46 @@
+import { isValidElement, type ReactNode } from "react"
 import { describe, expect, it } from "vitest"
-import { renderToString } from "@react-pdf/renderer"
 import { GradeReportDocument } from "@/presentation/components/teacher/gradebook/pdf/gradeReportPdf"
 import type { GradeReportData } from "@/presentation/components/teacher/gradebook/pdf/gradeReportTypes"
 
+interface RenderableElementProps {
+  children?: ReactNode
+}
+
+function collectRenderedPdfText(node: ReactNode): string[] {
+  if (node === null || node === undefined || typeof node === "boolean") {
+    return []
+  }
+
+  if (typeof node === "string" || typeof node === "number") {
+    return [String(node)]
+  }
+
+  if (Array.isArray(node)) {
+    return node.flatMap((childNode) => collectRenderedPdfText(childNode))
+  }
+
+  if (!isValidElement(node)) {
+    return []
+  }
+
+  if (typeof node.type === "function") {
+    const renderFunction = node.type as (
+      props: RenderableElementProps,
+    ) => ReactNode
+
+    return collectRenderedPdfText(
+      renderFunction(node.props as RenderableElementProps),
+    )
+  }
+
+  return collectRenderedPdfText(
+    (node.props as RenderableElementProps).children,
+  )
+}
+
 describe("GradeReportDocument", () => {
-  it("renders inactive student labels in the exported PDF", async () => {
+  it("renders inactive student labels in the exported PDF", () => {
     const reportData: GradeReportData = {
       title: "Grade Report - Algorithms",
       reportMetadata: [
@@ -37,11 +73,11 @@ describe("GradeReportDocument", () => {
       ],
     }
 
-    const pdfString = await renderToString(
+    const renderedPdfText = collectRenderedPdfText(
       <GradeReportDocument data={reportData} />,
-    )
+    ).join(" ")
 
-    expect(pdfString).toContain("Inactive Student")
-    expect(pdfString).toContain("Inactive")
+    expect(renderedPdfText).toContain("Inactive Student")
+    expect(renderedPdfText).toContain("Inactive")
   })
 })

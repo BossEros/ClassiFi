@@ -89,7 +89,7 @@ describe("GradebookContent", () => {
       />,
     )
 
-    expect(screen.getByText("Inactive Student")).toBeInTheDocument()
-    expect(screen.getByText("Inactive")).toBeInTheDocument()
+    expect(screen.getAllByText("Inactive Student")).toHaveLength(2)
+    expect(screen.getAllByText("Inactive")).toHaveLength(2)
   })
 })

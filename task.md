@@ -169,3 +169,8 @@ Admin account activation confirmation verification notes:
 - [ ] Wire teacher assignment aggregates, module/class assignment DTOs, and calendar counts to active-only totals
 - [ ] Update teacher assignment metrics documentation
 - [ ] Run required backend and frontend verification commands
+
+- [x] Reproduce the current frontend unit test failures on 2026-04-27
+- [x] Trace the failures to responsive duplicate markup, active-roster fetch behavior, and invalid PDF-byte assertions
+- [x] Update the affected frontend unit tests to assert the current architecture correctly
+- [x] Re-run frontend verification commands

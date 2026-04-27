@@ -78,6 +78,18 @@ const createMockStudent = (
   enrolledAt: new Date().toISOString() as ISODateString,
 })
 
+const mockActiveStudentRoster = (activeStudents: ReturnType<typeof generateMockStudents>) => {
+  vi.mocked(classService.getClassStudents).mockImplementation(
+    async (_classId, status) => {
+      if (status === "inactive") {
+        return []
+      }
+
+      return activeStudents
+    },
+  )
+}
+
 const renderClassDetailPage = () => {
   return render(
     <MemoryRouter initialEntries={["/dashboard/classes/1"]}>
@@ -203,6 +215,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("does not show pagination with 10 or fewer students", async () => {
     const students = generateMockStudents(10)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -225,6 +238,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("shows pagination with more than 10 students", async () => {
     const students = generateMockStudents(25)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -249,6 +263,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("navigates to next page when clicking Next button", async () => {
     const students = generateMockStudents(25)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -275,6 +290,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("navigates to specific page when clicking page number", async () => {
     const students = generateMockStudents(25)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -300,6 +316,7 @@ describe("ClassDetailPage - Pagination", () => {
 
   it("resets to page 1 when switching tabs", async () => {
     const students = generateMockStudents(25)
+    mockActiveStudentRoster(students)
 
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
@@ -344,7 +361,7 @@ describe("ClassDetailPage - Pagination", () => {
     await userEvent.click(studentsTab)
 
     await waitFor(() => {
-      expect(screen.getByText("No students enrolled")).toBeInTheDocument()
+      expect(screen.getByText("No active students")).toBeInTheDocument()
     })
 
     expect(screen.queryByLabelText("Previous page")).not.toBeInTheDocument()

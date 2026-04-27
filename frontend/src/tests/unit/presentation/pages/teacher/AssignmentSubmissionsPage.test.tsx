@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { AssignmentSubmissionsPage } from "@/presentation/pages/teacher/AssignmentSubmissionsPage"
@@ -161,7 +161,9 @@ describe("AssignmentSubmissionsPage", () => {
       expect(classService.getClassStudents).toHaveBeenCalledWith(3, "active")
     })
 
-    expect(screen.getByText("Missing")).toBeInTheDocument()
-    expect(screen.getByText("1")).toBeInTheDocument()
+    const missingMetricContainer = screen.getByText("Missing").parentElement
+
+    expect(missingMetricContainer).not.toBeNull()
+    expect(within(missingMetricContainer as HTMLElement).getByText("1")).toBeInTheDocument()
   })
 })
