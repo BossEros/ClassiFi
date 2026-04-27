@@ -94,7 +94,7 @@ describe("Teacher ClassesPage", () => {
       expect(classService.getAllClasses).toHaveBeenLastCalledWith(9, false)
     })
 
-    const archivedClassCard = screen.getByText("Archived Algorithms")
+    const archivedClassCard = await screen.findByText("Archived Algorithms")
     await user.click(archivedClassCard)
 
     expect(screen.queryByText("Class detail page")).not.toBeInTheDocument()
