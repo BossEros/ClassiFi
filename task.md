@@ -191,3 +191,13 @@ Admin account activation confirmation verification notes:
 - [x] Align student rank calculation with the gradebook's displayed average semantics
 - [x] Update gradebook documentation for rank-based ordering
 - [ ] Run required backend and frontend verification commands
+
+- [x] Inspect teacher gradebook ordering and export flow for a teacher-facing sort toggle
+- [x] Add a `Student Grades` header dropdown for rank-vs-name ordering
+- [x] Reuse one frontend gradebook ordering helper for table, CSV export, and PDF export
+- [x] Add focused frontend tests and update gradebook documentation
+- [ ] Run required frontend verification commands
+
+Teacher gradebook sort toggle verification notes:
+- `frontend`: `npm.cmd run build` passed on 2026-04-28
+- `frontend`: `npm.cmd test -- --run src/tests/unit/presentation/components/teacher/GradebookContent.test.tsx src/tests/unit/presentation/components/teacher/gradebook/gradeReportBuilder.test.ts` is still blocked by environment-level `spawn EPERM` while Vitest loads `vitest.config.ts`
