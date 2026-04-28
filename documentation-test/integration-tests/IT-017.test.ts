@@ -1,19 +1,18 @@
 /**
- * IT-017: Late Submission Applies Grade Penalty
+ * IT-017: Submission Triggers Plagiarism Auto Analysis
  *
- * Module: Assignment Management
- * Unit: Late submission
+ * Module: Similarity Detection
+ * Unit: Submit assignment
  * Date Tested: 4/13/26
- * Description: Verify that a late submission applies a grade penalty.
- * Expected Result: A late penalty is applied to the submission grade.
+ * Description: Verify that a submission triggers plagiarism auto analysis.
+ * Expected Result: The submission is scheduled for plagiarism auto analysis.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-017 Integration Test Pass - Late Submission Applies Grade Penalty
- * Suggested Figure Title (System UI): Assignment Management UI - Late Penalty Reflected In Grade Breakdown
+ * Suggested Figure Title (Test Pass): IT-017 Integration Test Pass - Submission Triggers Plagiarism Auto Analysis
+ * Suggested Figure Title (System UI): Similarity Detection UI - Plagiarism Auto Analysis Scheduled After Successful Submission
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { LatePenaltyService } from "../../backend-ts/src/modules/assignments/late-penalty.service.js"
 import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
 import { createMockAssignment, createMockSubmission } from "../../backend-ts/tests/utils/factories.js"
 
@@ -28,64 +27,51 @@ vi.mock("../../backend-ts/src/shared/supabase.js", () => ({
   },
 }))
 
-describe("IT-017: Late Submission Applies Grade Penalty", () => {
+describe("IT-017: Submission Triggers Plagiarism Auto Analysis", () => {
   let submissionService: SubmissionService
-  let realLatePenaltyService: LatePenaltyService
-  let mockAssignmentRepo: any
-  let mockSubmissionRepo: any
-
-  const pastDeadline = new Date(Date.now() - 12 * 60 * 60 * 1000)
+  let mockPlagiarismAutoAnalysisService: any
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockAssignmentRepo = {
-      getAssignmentById: vi.fn(),
-      getLatePenaltyConfig: vi.fn(),
-      getAssignmentsByClassId: vi.fn().mockResolvedValue([]),
-      getAssignmentsByClassIds: vi.fn().mockResolvedValue([]),
-      updateLastReminderSentAt: vi.fn(),
-    }
-    realLatePenaltyService = new LatePenaltyService(mockAssignmentRepo)
-
-    const createdSubmission = createMockSubmission({
+    const submissionRecord = createMockSubmission({
       id: 1,
       assignmentId: 1,
       studentId: 5,
-      isLate: true,
-      penaltyApplied: 10,
     })
 
-    mockSubmissionRepo = {
-      getLatestSubmission: vi.fn().mockResolvedValue(null),
-      getSubmissionCount: vi.fn().mockResolvedValue(0),
-      getSubmissionHistory: vi.fn().mockResolvedValue([]),
-      createSubmission: vi.fn().mockResolvedValue(createdSubmission),
-      getSubmissionById: vi.fn().mockResolvedValue(createdSubmission),
-      getSubmissionsWithStudentInfo: vi.fn().mockResolvedValue([]),
-      getSubmissionsByStudent: vi.fn().mockResolvedValue([]),
-      saveTeacherFeedback: vi.fn(),
-      updateGrade: vi.fn().mockResolvedValue(undefined),
-      delete: vi.fn(),
-      withContext: vi.fn().mockReturnValue({
-        updateGrade: vi.fn().mockResolvedValue(undefined),
-        updateOriginalGrade: vi.fn().mockResolvedValue(undefined),
-      }),
+    mockPlagiarismAutoAnalysisService = {
+      scheduleFromSubmission: vi.fn().mockResolvedValue(undefined),
     }
 
     submissionService = new SubmissionService(
-      mockSubmissionRepo,
-      mockAssignmentRepo,
-      { isEnrolled: vi.fn().mockResolvedValue(true) } as any,
       {
-        deleteBySubmissionId: vi.fn().mockResolvedValue(undefined),
-        createMany: vi.fn().mockResolvedValue(undefined),
-        calculateScore: vi.fn().mockResolvedValue({
-          passed: 2,
-          total: 2,
-          percentage: 100,
+        getLatestSubmission: vi.fn().mockResolvedValue(null),
+        getSubmissionCount: vi.fn().mockResolvedValue(0),
+        getSubmissionHistory: vi.fn().mockResolvedValue([]),
+        createSubmission: vi.fn().mockResolvedValue(submissionRecord),
+        getSubmissionById: vi.fn().mockResolvedValue(submissionRecord),
+        getSubmissionsWithStudentInfo: vi.fn().mockResolvedValue([]),
+        getSubmissionsByStudent: vi.fn().mockResolvedValue([]),
+        saveTeacherFeedback: vi.fn(),
+        updateGrade: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn(),
+        withContext: vi.fn().mockReturnValue({
+          updateGrade: vi.fn().mockResolvedValue(undefined),
+          updateOriginalGrade: vi.fn().mockResolvedValue(undefined),
         }),
       } as any,
+      {
+        getAssignmentById: vi.fn().mockResolvedValue(
+          createMockAssignment({
+            id: 1,
+            classId: 1,
+            deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          }),
+        ),
+      } as any,
+      { isEnrolled: vi.fn().mockResolvedValue(true) } as any,
+      { deleteBySubmissionId: vi.fn(), createMany: vi.fn() } as any,
       {
         upload: vi.fn().mockResolvedValue("submissions/1/5/1/solution.py"),
         uploadSubmission: vi.fn().mockResolvedValue(
@@ -97,10 +83,21 @@ describe("IT-017: Late Submission Applies Grade Penalty", () => {
         deleteSubmissionFiles: vi.fn(),
         deleteAvatar: vi.fn(),
       } as any,
-      { runTestsForSubmission: vi.fn().mockResolvedValue({ passed: 2, total: 2, percentage: 100 }) } as any,
-      realLatePenaltyService,
+      { runTestsForSubmission: vi.fn().mockResolvedValue({ passed: 1, total: 1, percentage: 100 }) } as any,
+      {
+        calculatePenalty: vi.fn().mockReturnValue({
+          isLate: false,
+          hoursLate: 0,
+          penaltyPercent: 0,
+          isRejected: false,
+        }),
+        getDefaultConfig: vi.fn().mockReturnValue({ tiers: [], rejectAfterHours: null }),
+        applyPenalty: vi.fn((grade: number) => grade),
+        getAssignmentPenaltyConfig: vi.fn(),
+        setAssignmentPenaltyConfig: vi.fn(),
+      } as any,
       { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
-      { scheduleFromSubmission: vi.fn().mockResolvedValue(undefined) } as any,
+      mockPlagiarismAutoAnalysisService,
       { getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()) } as any,
     )
   })
@@ -109,28 +106,16 @@ describe("IT-017: Late Submission Applies Grade Penalty", () => {
     vi.clearAllMocks()
   })
 
-  it("should save a non-zero penalty for a late submission", async () => {
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue(
-      createMockAssignment({
-        id: 1,
-        classId: 1,
-        deadline: pastDeadline,
-        allowLateSubmissions: true,
-        latePenaltyConfig: {
-          tiers: [{ hoursLate: 24, penaltyPercent: 10 }],
-          rejectAfterHours: 120,
-        },
-      }),
-    )
-
+  it("should schedule plagiarism auto analysis after a successful submission", async () => {
     await submissionService.submitAssignment(1, 5, {
       filename: "solution.py",
       data: Buffer.from('print("hello")'),
       mimetype: "text/x-python",
     })
 
-    const createCall = mockSubmissionRepo.createSubmission.mock.calls[0][0]
-    expect(createCall.isLate).toBe(true)
-    expect(createCall.penaltyApplied).toBeGreaterThan(0)
+    expect(
+      mockPlagiarismAutoAnalysisService.scheduleFromSubmission,
+    ).toHaveBeenCalledWith(1)
   })
 })
+

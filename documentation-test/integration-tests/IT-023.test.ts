@@ -1,128 +1,119 @@
 /**
- * IT-023: Student Submits Assignment Successfully
+ * IT-023: Inactive Teacher Login Is Blocked Pending Approval
  *
- * Module: Submission Management
- * Unit: Submit assignment
- * Date Tested: 4/13/26
- * Description: Verify that a student can submit an assignment successfully.
- * Expected Result: The assignment submission is saved successfully.
+ * Module: Authentication
+ * Unit: Login user
+ * Date Tested: 4/16/26
+ * Description: Verify that an inactive teacher account cannot log in before administrator approval.
+ * Expected Result: The system blocks login and shows the pending approval message.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-023 Integration Test Pass - Student Submits Assignment Successfully
- * Suggested Figure Title (System UI): Submission UI - Assignment View with Assignment Submission Success Notification
+ * Suggested Figure Title (Test Pass): IT-023 Integration Test Pass - Inactive Teacher Login Is Blocked Pending Approval
+ * Suggested Figure Title (System UI): Authentication UI - Login Form Showing Pending Administrator Approval Message
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
-import { createMockAssignment, createMockSubmission } from "../../backend-ts/tests/utils/factories.js"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { AuthService } from "../../backend-ts/src/modules/auth/auth.service.js"
+import { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
+import { SupabaseAuthAdapter } from "../../backend-ts/src/services/supabase-auth.adapter.js"
+import type { IEmailService } from "../../backend-ts/src/services/interfaces/email.interface.js"
+import type { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
+import { TeacherApprovalPendingError } from "../../backend-ts/src/shared/errors.js"
+import { createMockTeacher } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (context: unknown) => Promise<unknown>) =>
-    callback({}),
-  ),
+vi.mock("../../backend-ts/src/modules/users/user.repository.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../backend-ts/src/modules/users/user.repository.js")>()
+  return { ...original, UserRepository: vi.fn() }
+})
+vi.mock("../../backend-ts/src/services/supabase-auth.adapter.js")
+vi.mock("../../backend-ts/src/shared/config.js", () => ({
+  settings: { frontendUrl: "http://localhost:3000" },
 }))
 
-describe("IT-023: Student Submits Assignment Successfully", () => {
-  let submissionService: SubmissionService
-  let mockSubmissionRepo: any
-  let mockAssignmentRepo: any
-  let mockEnrollmentRepo: any
-  let mockStorageService: any
-  let mockCodeTestService: any
-  let mockLatePenaltyService: any
-  let mockPlagiarismAutoAnalysisService: any
-  let mockSimilarityRepo: any
+describe("IT-023: Inactive Teacher Login Is Blocked Pending Approval", () => {
+  let authService: AuthService
+  let mockUserRepo: {
+    checkEmailExists: ReturnType<typeof vi.fn>
+    createUser: ReturnType<typeof vi.fn>
+    getUserBySupabaseId: ReturnType<typeof vi.fn>
+    getUserByEmail: ReturnType<typeof vi.fn>
+    getUsersByRole: ReturnType<typeof vi.fn>
+  }
+  let mockAuthAdapter: {
+    signUp: ReturnType<typeof vi.fn>
+    signInWithPassword: ReturnType<typeof vi.fn>
+    getUser: ReturnType<typeof vi.fn>
+    getAdminUserById: ReturnType<typeof vi.fn>
+    generatePasswordRecoveryLink: ReturnType<typeof vi.fn>
+    deleteUser: ReturnType<typeof vi.fn>
+  }
+  let mockEmailService: IEmailService
+  let mockNotificationService: NotificationService
 
   beforeEach(() => {
-    mockSubmissionRepo = {
-      getSubmissionHistory: vi.fn(),
-      createSubmission: vi.fn(),
-      getSubmissionById: vi.fn(),
+    vi.clearAllMocks()
+
+    mockUserRepo = {
+      checkEmailExists: vi.fn(),
+      createUser: vi.fn(),
+      getUserBySupabaseId: vi.fn(),
+      getUserByEmail: vi.fn(),
+      getUsersByRole: vi.fn().mockResolvedValue([]),
+    }
+
+    mockAuthAdapter = {
+      signUp: vi.fn(),
+      signInWithPassword: vi.fn(),
+      getUser: vi.fn(),
+      getAdminUserById: vi.fn(),
+      generatePasswordRecoveryLink: vi.fn(),
+      deleteUser: vi.fn(),
+    }
+
+    mockEmailService = {
+      sendEmail: vi.fn().mockResolvedValue(undefined),
+    }
+
+    mockNotificationService = {
+      createNotification: vi.fn(),
+      sendEmailNotificationIfEnabled: vi.fn(),
       withContext: vi.fn().mockReturnThis(),
-    }
+    } as unknown as NotificationService
 
-    mockAssignmentRepo = {
-      getAssignmentById: vi.fn(),
-    }
-
-    mockEnrollmentRepo = {
-      isEnrolled: vi.fn(),
-    }
-
-    mockStorageService = {
-      uploadSubmission: vi.fn().mockResolvedValue("submissions/1/1/1_solution.py"),
-      deleteSubmissionFiles: vi.fn(),
-    }
-
-    mockCodeTestService = {
-      runTestsForSubmission: vi.fn().mockResolvedValue(true),
-    }
-
-    mockLatePenaltyService = {
-      calculatePenalty: vi.fn().mockReturnValue({
-        isLate: false,
-        hoursLate: 0,
-        penaltyPercent: 0,
-        isRejected: false,
-      }),
-      getDefaultConfig: vi.fn(),
-      applyPenalty: vi.fn((score: number) => score),
-    }
-
-    mockPlagiarismAutoAnalysisService = {
-      scheduleFromSubmission: vi.fn().mockResolvedValue(undefined),
-    }
-
-    mockSimilarityRepo = {
-      getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()),
-    }
-
-    submissionService = new SubmissionService(
-      mockSubmissionRepo,
-      mockAssignmentRepo,
-      mockEnrollmentRepo,
-      {} as any,
-      mockStorageService,
-      mockCodeTestService,
-      mockLatePenaltyService,
-      {
-        createNotification: vi.fn(),
-        sendEmailNotificationIfEnabled: vi.fn(),
-        withContext: vi.fn().mockReturnThis(),
-      } as any,
-      mockPlagiarismAutoAnalysisService,
-      mockSimilarityRepo,
+    authService = new AuthService(
+      mockUserRepo as unknown as UserRepository,
+      mockAuthAdapter as unknown as SupabaseAuthAdapter,
+      mockEmailService,
+      mockNotificationService,
     )
   })
 
-  it("should create and return the new submission", async () => {
-    const validFile = {
-      filename: "solution.py",
-      data: Buffer.from('print("hello")'),
-      mimetype: "text/x-python",
-    }
+  afterEach(() => {
+    vi.resetAllMocks()
+  })
 
-    const assignment = createMockAssignment({
-      id: 1,
-      classId: 1,
-      isActive: true,
-      deadline: new Date("2026-12-31T00:00:00.000Z"),
-      programmingLanguage: "python",
-      allowResubmission: true,
-      maxAttempts: null,
-      totalScore: 100,
+  it("should reject login for a teacher whose account is still inactive", async () => {
+    mockAuthAdapter.signInWithPassword.mockResolvedValue({
+      accessToken: "pending-teacher-token",
+      user: { id: "pending-teacher-supabase-id" },
     })
-    const createdSubmission = createMockSubmission({ id: 50 })
+    mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+      createMockTeacher({
+        supabaseUserId: "pending-teacher-supabase-id",
+        email: "teacher.pending@classifi.com",
+        isActive: false,
+      }),
+    )
 
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
-    mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
-    mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([])
-    mockSubmissionRepo.createSubmission.mockResolvedValue(createdSubmission)
-    mockSubmissionRepo.getSubmissionById.mockResolvedValue(createdSubmission)
+    const loginPromise = authService.loginUser(
+      "teacher.pending@classifi.com",
+      "Password1!",
+    )
 
-    const result = await submissionService.submitAssignment(1, 1, validFile)
-
-    expect(result.id).toBe(50)
-    expect(mockSubmissionRepo.createSubmission).toHaveBeenCalled()
+    await expect(loginPromise).rejects.toThrow(TeacherApprovalPendingError)
+    await expect(loginPromise).rejects.toThrow(
+      "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
+    )
   })
 })
+

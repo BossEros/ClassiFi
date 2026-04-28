@@ -1,118 +1,66 @@
 /**
- * IT-025: Inactive Teacher Login Is Blocked Pending Approval
+ * IT-025: Similarity Result Details Preserve Match Fragments For Highlighted Evidence
  *
- * Module: Authentication
- * Unit: Login user
+ * Module: Similarity Detection
+ * Unit: Get result details
  * Date Tested: 4/16/26
- * Description: Verify that an inactive teacher account cannot log in before administrator approval.
- * Expected Result: The system blocks login and shows the pending approval message.
+ * Description: Verify that result details preserve fragment coordinates for highlighted code evidence.
+ * Expected Result: Fragment selections are returned with line and column boundaries for both files.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-025 Integration Test Pass - Inactive Teacher Login Is Blocked Pending Approval
- * Suggested Figure Title (System UI): Authentication UI - Login Form Showing Pending Administrator Approval Message
+ * Suggested Figure Title (Test Pass): IT-025 Integration Test Pass - Similarity Result Details Preserve Match Fragments
+ * Suggested Figure Title (System UI): Similarity Review UI - Highlighted Matching Code Blocks In Both Editors
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { AuthService } from "../../backend-ts/src/modules/auth/auth.service.js"
-import { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
-import { SupabaseAuthAdapter } from "../../backend-ts/src/services/supabase-auth.adapter.js"
-import type { IEmailService } from "../../backend-ts/src/services/interfaces/email.interface.js"
-import type { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
-import { TeacherApprovalPendingError } from "../../backend-ts/src/shared/errors.js"
-import { createMockTeacher } from "../../backend-ts/tests/utils/factories.js"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { PlagiarismPersistenceService } from "../../backend-ts/src/modules/plagiarism/plagiarism-persistence.service.js"
+import { SimilarityRepository } from "../../backend-ts/src/modules/plagiarism/similarity.repository.js"
+import { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
 
-vi.mock("../../backend-ts/src/modules/users/user.repository.js", async (importOriginal) => {
-  const original = await importOriginal<typeof import("../../backend-ts/src/modules/users/user.repository.js")>()
-  return { ...original, UserRepository: vi.fn() }
-})
-vi.mock("../../backend-ts/src/services/supabase-auth.adapter.js")
-vi.mock("../../backend-ts/src/shared/config.js", () => ({
-  settings: { frontendUrl: "http://localhost:3000" },
-}))
-
-describe("IT-025: Inactive Teacher Login Is Blocked Pending Approval", () => {
-  let authService: AuthService
-  let mockUserRepo: {
-    checkEmailExists: ReturnType<typeof vi.fn>
-    createUser: ReturnType<typeof vi.fn>
-    getUserBySupabaseId: ReturnType<typeof vi.fn>
-    getUserByEmail: ReturnType<typeof vi.fn>
-    getUsersByRole: ReturnType<typeof vi.fn>
+describe("IT-025: Similarity Result Details Preserve Match Fragments For Highlighted Evidence", () => {
+  let plagiarismPersistenceService: PlagiarismPersistenceService
+  let mockSimilarityRepo: {
+    getResultWithFragments: ReturnType<typeof vi.fn>
   }
-  let mockAuthAdapter: {
-    signUp: ReturnType<typeof vi.fn>
-    signInWithPassword: ReturnType<typeof vi.fn>
-    getUser: ReturnType<typeof vi.fn>
-    getAdminUserById: ReturnType<typeof vi.fn>
-    generatePasswordRecoveryLink: ReturnType<typeof vi.fn>
-    deleteUser: ReturnType<typeof vi.fn>
-  }
-  let mockEmailService: IEmailService
-  let mockNotificationService: NotificationService
 
   beforeEach(() => {
-    vi.clearAllMocks()
-
-    mockUserRepo = {
-      checkEmailExists: vi.fn(),
-      createUser: vi.fn(),
-      getUserBySupabaseId: vi.fn(),
-      getUserByEmail: vi.fn(),
-      getUsersByRole: vi.fn().mockResolvedValue([]),
-    }
-
-    mockAuthAdapter = {
-      signUp: vi.fn(),
-      signInWithPassword: vi.fn(),
-      getUser: vi.fn(),
-      getAdminUserById: vi.fn(),
-      generatePasswordRecoveryLink: vi.fn(),
-      deleteUser: vi.fn(),
-    }
-
-    mockEmailService = {
-      sendEmail: vi.fn().mockResolvedValue(undefined),
-    }
-
-    mockNotificationService = {
-      createNotification: vi.fn(),
-      sendEmailNotificationIfEnabled: vi.fn(),
-      withContext: vi.fn().mockReturnThis(),
-    } as unknown as NotificationService
-
-    authService = new AuthService(
-      mockUserRepo as unknown as UserRepository,
-      mockAuthAdapter as unknown as SupabaseAuthAdapter,
-      mockEmailService,
-      mockNotificationService,
-    )
-  })
-
-  afterEach(() => {
-    vi.resetAllMocks()
-  })
-
-  it("should reject login for a teacher whose account is still inactive", async () => {
-    mockAuthAdapter.signInWithPassword.mockResolvedValue({
-      accessToken: "pending-teacher-token",
-      user: { id: "pending-teacher-supabase-id" },
-    })
-    mockUserRepo.getUserBySupabaseId.mockResolvedValue(
-      createMockTeacher({
-        supabaseUserId: "pending-teacher-supabase-id",
-        email: "teacher.pending@classifi.com",
-        isActive: false,
+    mockSimilarityRepo = {
+      getResultWithFragments: vi.fn().mockResolvedValue({
+        result: {
+          id: 601,
+          submission1Id: 301,
+          submission2Id: 302,
+        },
+        fragments: [
+          {
+            id: 1,
+            leftSelection: { startRow: 2, startCol: 0, endRow: 5, endCol: 14 },
+            rightSelection: { startRow: 3, startCol: 0, endRow: 6, endCol: 14 },
+            length: 4,
+          },
+        ],
       }),
-    )
+    }
 
-    const loginPromise = authService.loginUser(
-      "teacher.pending@classifi.com",
-      "Password1!",
+    plagiarismPersistenceService = new PlagiarismPersistenceService(
+      mockSimilarityRepo as unknown as SimilarityRepository,
+      {
+        getSubmissionWithStudent: vi.fn().mockResolvedValue({
+          submission: { id: 301, filePath: "submissions/example.py" },
+          studentName: "Student Example",
+        }),
+      } as unknown as SubmissionRepository,
     )
+  })
 
-    await expect(loginPromise).rejects.toThrow(TeacherApprovalPendingError)
-    await expect(loginPromise).rejects.toThrow(
-      "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
-    )
+  it("should return fragment boundaries for both compared files", async () => {
+    const result = await plagiarismPersistenceService.getResultData(601)
+
+    expect(result).not.toBeNull()
+    expect(result?.fragments).toHaveLength(1)
+    expect(result?.fragments[0].leftSelection.startRow).toBe(2)
+    expect(result?.fragments[0].rightSelection.startRow).toBe(3)
+    expect(result?.fragments[0].length).toBe(4)
   })
 })
+

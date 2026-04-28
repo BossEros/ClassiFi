@@ -20,7 +20,6 @@
 | Plagiarism Detection | Analyze Files | 3/28/26 | TC-018 | Verify that files are analyzed for structural similarity. | Similarity report is shown after analysis. | As Expected | Passed |
 | Plagiarism Detection | Analyze Files | 3/28/26 | TC-019 | Verify error handling when fewer than 2 files are provided. | User sees "At least 2 files are required" message. | As Expected | Passed |
 | Gradebook | Get Gradebook | 3/28/26 | TC-022 | Verify that the class gradebook is retrieved correctly. | Gradebook page shows assignments and student grades. | As Expected | Passed |
-| Gradebook | Override Grade | 3/28/26 | TC-023 | Verify that a teacher can override a student's grade. | Updated grade is shown and student is notified. | As Expected | Passed |
 | Gradebook | Remove Override | 3/28/26 | TC-024 | Verify that a grade override can be removed. | Grade returns to computed score after removing override. | As Expected | Passed |
 | Notification | Create Notification | 3/28/26 | TC-025 | Verify that an in-app notification is created. | New notification appears in the notification list. | As Expected | Passed |
 | Notification | Mark as Read | 3/28/26 | TC-026 | Verify that a notification can be marked as read. | Notification status changes from unread to read. | As Expected | Passed |
@@ -38,4 +37,12 @@
 | Gradebook | Grade Override Notification | 3/28/26 | IT-002 | Verify that overriding a grade triggers notification and email. | Student sees grade update notification and receives email. | As Expected | Passed |
 | Code Testing | Submission Graded Notification | 3/29/26 | IT-003 | Verify that running tests grades the submission and notifies the student. | Student receives a "submission graded" in-app notification and email. | As Expected | Passed |
 | Submission | Teacher Feedback Notification | 3/29/26 | IT-004 | Verify that saving teacher feedback notifies the student. | Student receives a "feedback given" in-app notification and email. | As Expected | Passed |
+| Authentication | Pending Teacher Approval Login | 4/16/26 | IT-023 | Verify that an inactive teacher account is blocked from logging in before administrator approval. | Teacher sees the pending administrator approval message and login is denied. | As Expected | Passed |
+| Similarity Detection | Get Result Details | 4/16/26 | IT-024 | Verify that similarity result details return both compared files for side-by-side review. | Left and right submissions are returned with distinct student file paths. | As Expected | Passed |
+| Similarity Detection | Get Result Details | 4/16/26 | IT-025 | Verify that similarity result details preserve fragment coordinates for highlighted evidence. | Fragment line and column boundaries are returned for both files. | As Expected | Passed |
+| Similarity Detection | Get Report | 4/16/26 | IT-026 | Verify that a reused similarity report returns structural semantic and hybrid scores. | Pair rows expose all scoring dimensions with recomputed summary values. | As Expected | Passed |
+| Similarity Detection | Get Cross-Class Result Details | 4/16/26 | IT-027 | Verify that cross-class result details include submission timestamps for both compared files. | Student names and submission timestamps are returned for both sides. | As Expected | Passed |
+| Similarity Detection | Apply Similarity Penalty | 4/16/26 | IT-028 | Verify that only the highest qualifying similarity match affects each submission. | The strongest qualifying pair determines the deduction and weaker pairs do not stack. | As Expected | Passed |
+| Similarity Detection | Apply Similarity Penalty | 4/16/26 | IT-029 | Verify that no similarity deduction is applied when the assignment penalty is disabled. | Automatic grades are restored without reading similarity pairs. | As Expected | Passed |
+| Similarity Detection | Generate Fragments | 4/16/26 | IT-030 | Verify that exact-copy code produces fragments for side-by-side diff evidence. | At least one fragment spans matching rows in both files. | As Expected | Passed |
 
