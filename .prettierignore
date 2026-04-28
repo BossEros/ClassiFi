@@ -10,7 +10,7 @@ pnpm-lock.yaml
 yarn.lock
 
 # Backend specific
-backend-ts/dist``
+backend-ts/dist
 backend-ts/node_modules
 backend-ts/coverage
 
