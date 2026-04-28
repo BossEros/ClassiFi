@@ -20,6 +20,15 @@ const mockUser = {
   createdAt: new Date(),
 }
 
+const mockStudentUser = {
+  id: "2",
+  email: "student@test.com",
+  firstName: "Test",
+  lastName: "Student",
+  role: "student" as const,
+  createdAt: new Date(),
+}
+
 const mockClassInfo = {
   id: 1,
   teacherId: 1,
@@ -416,6 +425,36 @@ describe("ClassDetailPage - Pagination", () => {
     })
 
     expect(screen.queryByText("Active Student One")).not.toBeInTheDocument()
+  })
+
+  it("hides the active and inactive roster filter from students", async () => {
+    useAuthStore.setState({
+      user: mockStudentUser as any,
+      isAuthenticated: true,
+    })
+
+    vi.mocked(classService.getClassDetailData).mockResolvedValue({
+      classInfo: { ...mockClassInfo, studentCount: 2 },
+      assignments: [],
+      students: [
+        createMockStudent(1, "Active Student One", true),
+        createMockStudent(2, "Active Student Two", true),
+      ],
+    })
+
+    renderClassDetailPage()
+
+    await waitForClassHeading()
+    await userEvent.click(screen.getByRole("tab", { name: /students/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Active Student One")).toHaveLength(2)
+    })
+
+    expect(
+      screen.queryByLabelText(/filter enrolled students by account status/i),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/inactive/i)).not.toBeInTheDocument()
   })
 
   it("preserves the roster search query and reuses the cached inactive roster when switching filters", async () => {
