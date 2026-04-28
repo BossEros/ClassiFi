@@ -65,18 +65,21 @@ export function StudentsTabContent({
 
   const shouldShowRosterEmptyState =
     !isLoadingStudents && students.length === 0 && !studentSearchQuery.trim()
-  const rosterEmptyStateTitle =
-    studentStatusFilter === "inactive"
+  const rosterEmptyStateTitle = isTeacher
+    ? studentStatusFilter === "inactive"
       ? "No inactive students"
       : "No active students"
-  const rosterEmptyStateDescription =
-    studentStatusFilter === "inactive"
+    : "No students enrolled"
+  const rosterEmptyStateDescription = isTeacher
+    ? studentStatusFilter === "inactive"
       ? "There are no deactivated students enrolled in this class right now."
       : "Share the class code with your students so they can join this class."
-  const searchPlaceholder =
-    studentStatusFilter === "inactive"
+    : "Share the class code with your students so they can join this class."
+  const searchPlaceholder = isTeacher
+    ? studentStatusFilter === "inactive"
       ? "Search inactive students..."
       : "Search active students..."
+    : "Search students..."
   const studentStatusOptions = (["active", "inactive"] as const).map(
     (statusOption) => {
       const hasLoadedStatusCount = loadedStudentStatuses[statusOption]
@@ -130,27 +133,29 @@ export function StudentsTabContent({
             />
           </div>
 
-          <div className="group relative w-full sm:w-[170px]">
-            <Filter
-              className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${
-                isLight ? "text-slate-400" : "text-gray-500"
-              }`}
-              aria-hidden="true"
-            />
-            <Select
-              value={studentStatusFilter}
-              onChange={(value) =>
-                onStudentStatusFilterChange(
-                  value as Extract<ClassStudentStatusFilter, "active" | "inactive">,
-                )
-              }
-              options={studentStatusOptions}
-              aria-label="Filter enrolled students by account status"
-              disabled={isLoadingStudents}
-              variant={variant}
-              className="h-11 cursor-pointer pl-9 pr-10 sm:h-10"
-            />
-          </div>
+          {isTeacher && (
+            <div className="group relative w-full sm:w-[200px]">
+              <Filter
+                className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${
+                  isLight ? "text-slate-400" : "text-gray-500"
+                }`}
+                aria-hidden="true"
+              />
+              <Select
+                value={studentStatusFilter}
+                onChange={(value) =>
+                  onStudentStatusFilterChange(
+                    value as Extract<ClassStudentStatusFilter, "active" | "inactive">,
+                  )
+                }
+                options={studentStatusOptions}
+                aria-label="Filter enrolled students by account status"
+                disabled={isLoadingStudents}
+                variant={variant}
+                className="h-11 cursor-pointer pl-9 pr-10 sm:h-10"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -179,7 +184,7 @@ export function StudentsTabContent({
           <p
             className={`text-sm ${isLight ? "text-slate-500" : "text-gray-500"}`}
           >
-            {studentStatusFilter === "active" ? (
+            {!isTeacher || studentStatusFilter === "active" ? (
               <>
                 {rosterEmptyStateDescription}{" "}
                 <span
