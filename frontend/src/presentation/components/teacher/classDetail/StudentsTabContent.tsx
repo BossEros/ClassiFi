@@ -1,6 +1,7 @@
-import { Search, Users } from "lucide-react"
+import { Search, Users, Filter } from "lucide-react"
 import { StudentListItem } from "@/presentation/components/shared/dashboard/StudentListItem"
 import { Pagination } from "@/presentation/components/ui/Pagination"
+import { Select } from "@/presentation/components/ui/Select"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import type {
   EnrolledStudent,
@@ -76,95 +77,80 @@ export function StudentsTabContent({
     studentStatusFilter === "inactive"
       ? "Search inactive students..."
       : "Search active students..."
+  const studentStatusOptions = (["active", "inactive"] as const).map(
+    (statusOption) => {
+      const hasLoadedStatusCount = loadedStudentStatuses[statusOption]
+      const statusCountLabel = hasLoadedStatusCount
+        ? String(studentStatusCounts[statusOption])
+        : "..."
+      const statusLabel = statusOption === "active" ? "Active" : "Inactive"
+
+      return {
+        value: statusOption,
+        label: `${statusLabel} (${statusCountLabel})`,
+      }
+    },
+  )
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
-            <h2
-              className={
-                isLight
-                  ? dashboardTheme.sectionTitle
-                  : "text-lg font-semibold tracking-tight text-white"
-              }
-            >
-              Enrolled Students
-            </h2>
-            <span
-              className={`rounded-full px-3 py-1 text-sm font-medium ${isLight ? "border border-slate-200 bg-slate-100 text-slate-600" : "bg-white/10 text-gray-300"}`}
-            >
-              {students.length}
-            </span>
-          </div>
-
-          <div
-            className={`inline-flex rounded-xl p-1 ${isLight ? "border border-slate-200 bg-slate-100" : "border border-white/10 bg-white/5"}`}
-            role="group"
-            aria-label="Filter enrolled students by account status"
+        <div className="flex items-center gap-3">
+          <h2
+            className={
+              isLight
+                ? dashboardTheme.sectionTitle
+                : "text-lg font-semibold tracking-tight text-white"
+            }
           >
-            {(["active", "inactive"] as const).map((statusOption) => {
-              const isSelected = studentStatusFilter === statusOption
-              const hasLoadedStatusCount = loadedStudentStatuses[statusOption]
-              const statusCountLabel = hasLoadedStatusCount
-                ? String(studentStatusCounts[statusOption])
-                : "..."
-              const statusLabel =
-                statusOption === "active" ? "Active" : "Inactive"
-
-              return (
-                <button
-                  key={statusOption}
-                  type="button"
-                  onClick={() => onStudentStatusFilterChange(statusOption)}
-                  disabled={isLoadingStudents}
-                  aria-pressed={isSelected}
-                  aria-label={`Show ${statusLabel.toLowerCase()} students (${statusCountLabel})`}
-                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                    isSelected
-                      ? isLight
-                        ? "bg-white text-teal-700 shadow-sm"
-                        : "bg-teal-500/20 text-teal-300"
-                      : isLight
-                        ? "text-slate-600 hover:text-slate-900"
-                        : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  <span>{statusLabel}</span>
-                  <span
-                    className={`ml-2 inline-flex min-w-8 justify-center rounded-full px-2 py-0.5 text-xs ${
-                      isSelected
-                        ? isLight
-                          ? "bg-teal-50 text-teal-700"
-                          : "bg-teal-500/20 text-teal-200"
-                        : isLight
-                          ? "bg-white text-slate-500"
-                          : "bg-white/10 text-slate-300"
-                    }`}
-                  >
-                    {statusCountLabel}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+            Enrolled Students
+          </h2>
+          <span
+            className={`rounded-full px-3 py-1 text-sm font-medium ${isLight ? "border border-slate-200 bg-slate-100 text-slate-600" : "bg-white/10 text-gray-300"}`}
+          >
+            {students.length}
+          </span>
         </div>
 
-        <div className="relative w-full sm:w-auto">
-          <label htmlFor="student-search" className="sr-only">
-            Search students by name or email
-          </label>
-          <input
-            id="student-search"
-            type="text"
-            placeholder={searchPlaceholder}
-            value={studentSearchQuery}
-            onChange={(event) => onStudentSearchQueryChange(event.target.value)}
-            className={`h-11 w-full rounded-lg border pl-10 pr-4 text-sm transition-all focus:outline-none focus:ring-2 focus:border-transparent sm:h-10 sm:w-64 ${isLight ? "border-slate-300 bg-slate-50 text-slate-800 shadow-sm placeholder:text-slate-400 hover:border-slate-400 hover:bg-white focus:ring-teal-500/20" : "border-white/10 bg-white/5 text-white placeholder-gray-500 focus:ring-teal-500"}`}
-          />
-          <Search
-            className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-gray-500"}`}
-          />
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+          <div className="relative w-full sm:w-64">
+            <label htmlFor="student-search" className="sr-only">
+              Search students by name or email
+            </label>
+            <input
+              id="student-search"
+              type="text"
+              placeholder={searchPlaceholder}
+              value={studentSearchQuery}
+              onChange={(event) => onStudentSearchQueryChange(event.target.value)}
+              className={`h-11 w-full rounded-lg border pl-10 pr-4 text-sm transition-all focus:outline-none focus:ring-2 focus:border-transparent sm:h-10 ${isLight ? "border-slate-300 bg-slate-50 text-slate-800 shadow-sm placeholder:text-slate-400 hover:border-slate-400 hover:bg-white focus:ring-teal-500/20" : "border-white/10 bg-white/5 text-white placeholder-gray-500 focus:ring-teal-500"}`}
+            />
+            <Search
+              className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-gray-500"}`}
+            />
+          </div>
+
+          <div className="group relative w-full sm:w-[170px]">
+            <Filter
+              className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${
+                isLight ? "text-slate-400" : "text-gray-500"
+              }`}
+              aria-hidden="true"
+            />
+            <Select
+              value={studentStatusFilter}
+              onChange={(value) =>
+                onStudentStatusFilterChange(
+                  value as Extract<ClassStudentStatusFilter, "active" | "inactive">,
+                )
+              }
+              options={studentStatusOptions}
+              aria-label="Filter enrolled students by account status"
+              disabled={isLoadingStudents}
+              variant={variant}
+              className="h-11 cursor-pointer pl-9 pr-10 sm:h-10"
+            />
+          </div>
         </div>
       </div>
 

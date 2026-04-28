@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { GradebookContent } from "@/presentation/components/teacher/gradebook/GradebookContent"
 
 vi.mock("@/presentation/hooks/teacher/useGradebook", () => ({
@@ -21,18 +21,39 @@ vi.mock("@/shared/store/useToastStore", () => ({
 
 import {
   useClassGradebook,
-  useGradebookExport,
 } from "@/presentation/hooks/teacher/useGradebook"
 
+function readBlobTextContent(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader()
+
+    fileReader.onload = () => {
+      resolve(typeof fileReader.result === "string" ? fileReader.result : "")
+    }
+
+    fileReader.onerror = () => {
+      reject(fileReader.error ?? new Error("Failed to read blob text content"))
+    }
+
+    fileReader.readAsText(blob)
+  })
+}
+
 describe("GradebookContent", () => {
+  const originalCreateObjectUrl = window.URL.createObjectURL
+  const originalRevokeObjectUrl = window.URL.revokeObjectURL
+
   beforeEach(() => {
     vi.clearAllMocks()
+    window.URL.createObjectURL = vi.fn(() => "blob:gradebook-export")
+    window.URL.revokeObjectURL = vi.fn()
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+  })
 
-    vi.mocked(useGradebookExport).mockReturnValue({
-      exportCSV: vi.fn(),
-      isExporting: false,
-      error: null,
-    })
+  afterEach(() => {
+    window.URL.createObjectURL = originalCreateObjectUrl
+    window.URL.revokeObjectURL = originalRevokeObjectUrl
+    vi.restoreAllMocks()
   })
 
   it("shows an inactive status label for inactive students kept in the gradebook", () => {
@@ -338,5 +359,206 @@ describe("GradebookContent", () => {
     )
 
     expect(screen.getAllByText("64%").length).toBeGreaterThan(0)
+  })
+
+  it("defaults to rank order and lets teachers switch to last-name order", () => {
+    vi.mocked(useClassGradebook).mockReturnValue({
+      gradebook: {
+        assignments: [
+          {
+            id: 1,
+            name: "Quiz 1",
+            totalScore: 100,
+            deadline: null,
+          },
+        ],
+        students: [
+          {
+            id: 1,
+            name: "Zoe Zimmerman",
+            email: "zoe@student.test",
+            isActive: true,
+            grades: [
+              {
+                assignmentId: 1,
+                submissionId: 11,
+                grade: 100,
+                gradeBreakdown: {
+                  originalGrade: 100,
+                  latePenaltyPercent: 0,
+                  similarityPenaltyPercent: 0,
+                  similarityScore: null,
+                  finalGrade: 100,
+                  effectiveGrade: 100,
+                  isOverridden: false,
+                },
+                isOverridden: false,
+                overrideReason: null,
+                submittedAt: null,
+              },
+            ],
+          },
+          {
+            id: 2,
+            name: "Amy Anderson",
+            email: "amy@student.test",
+            isActive: true,
+            grades: [
+              {
+                assignmentId: 1,
+                submissionId: 12,
+                grade: 60,
+                gradeBreakdown: {
+                  originalGrade: 60,
+                  latePenaltyPercent: 0,
+                  similarityPenaltyPercent: 0,
+                  similarityScore: null,
+                  finalGrade: 60,
+                  effectiveGrade: 60,
+                  isOverridden: false,
+                },
+                isOverridden: false,
+                overrideReason: null,
+                submittedAt: null,
+              },
+            ],
+          },
+        ],
+      } as any,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+
+    const { container } = render(
+      <GradebookContent
+        classId={1}
+        classCode="ABC123"
+        className="Algorithms"
+        teacherName="Test Teacher"
+        variant="light"
+      />,
+    )
+
+    const studentNameCells = () =>
+      Array.from(
+        container.querySelectorAll("table tbody tr td:first-child p"),
+      ).map((cell) => cell.textContent?.trim())
+
+    expect(studentNameCells()).toEqual(["Zoe Zimmerman", "Amy Anderson"])
+
+    fireEvent.change(screen.getByLabelText("Sort student grades"), {
+      target: { value: "name" },
+    })
+
+    expect(studentNameCells()).toEqual(["Amy Anderson", "Zoe Zimmerman"])
+  })
+
+  it("exports CSV using the selected last-name order", async () => {
+    let exportedBlob: Blob | null = null
+    window.URL.createObjectURL = vi.fn((blob: Blob) => {
+      exportedBlob = blob
+      return "blob:gradebook-export"
+    })
+
+    vi.mocked(useClassGradebook).mockReturnValue({
+      gradebook: {
+        assignments: [
+          {
+            id: 1,
+            name: "Quiz 1",
+            totalScore: 100,
+            deadline: null,
+          },
+        ],
+        students: [
+          {
+            id: 1,
+            name: "Zoe Zimmerman",
+            email: "zoe@student.test",
+            isActive: true,
+            grades: [
+              {
+                assignmentId: 1,
+                submissionId: 11,
+                grade: 100,
+                gradeBreakdown: {
+                  originalGrade: 100,
+                  latePenaltyPercent: 0,
+                  similarityPenaltyPercent: 0,
+                  similarityScore: null,
+                  finalGrade: 100,
+                  effectiveGrade: 100,
+                  isOverridden: false,
+                },
+                isOverridden: false,
+                overrideReason: null,
+                submittedAt: null,
+              },
+            ],
+          },
+          {
+            id: 2,
+            name: "Amy Anderson",
+            email: "amy@student.test",
+            isActive: true,
+            grades: [
+              {
+                assignmentId: 1,
+                submissionId: 12,
+                grade: 60,
+                gradeBreakdown: {
+                  originalGrade: 60,
+                  latePenaltyPercent: 0,
+                  similarityPenaltyPercent: 0,
+                  similarityScore: null,
+                  finalGrade: 60,
+                  effectiveGrade: 60,
+                  isOverridden: false,
+                },
+                isOverridden: false,
+                overrideReason: null,
+                submittedAt: null,
+              },
+            ],
+          },
+        ],
+      } as any,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+
+    render(
+      <GradebookContent
+        classId={1}
+        classCode="ABC123"
+        className="Algorithms"
+        teacherName="Test Teacher"
+        variant="light"
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText("Sort student grades"), {
+      target: { value: "name" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: /export/i }))
+    fireEvent.click(screen.getByRole("button", { name: "Export as CSV" }))
+
+    await waitFor(() => {
+      expect(exportedBlob).not.toBeNull()
+    })
+
+    if (!exportedBlob) {
+      throw new Error("Expected CSV export blob to be created")
+    }
+
+    const csvContent = await readBlobTextContent(exportedBlob as Blob)
+    const amyRowIndex = csvContent.indexOf('"Amy Anderson"')
+    const zoeRowIndex = csvContent.indexOf('"Zoe Zimmerman"')
+
+    expect(amyRowIndex).toBeGreaterThan(-1)
+    expect(zoeRowIndex).toBeGreaterThan(-1)
+    expect(amyRowIndex).toBeLessThan(zoeRowIndex)
   })
 })

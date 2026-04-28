@@ -339,4 +339,81 @@ describe("buildGradeReportData", () => {
       ]),
     )
   })
+
+  it("uses the caller-provided student order for PDF rows", () => {
+    const rankFirstStudent = {
+      id: 1,
+      name: "Rank First",
+      email: "rank-first@student.test",
+      isActive: true,
+      grades: [
+        {
+          assignmentId: 1,
+          submissionId: 11,
+          grade: 100,
+          gradeBreakdown: {
+            originalGrade: 100,
+            latePenaltyPercent: 0,
+            similarityPenaltyPercent: 0,
+            similarityScore: null,
+            finalGrade: 100,
+            effectiveGrade: 100,
+            isOverridden: false,
+          },
+          isOverridden: false,
+          overrideReason: null,
+          submittedAt: null,
+        },
+      ],
+    }
+
+    const nameFirstStudent = {
+      id: 2,
+      name: "Amy First",
+      email: "amy-first@student.test",
+      isActive: true,
+      grades: [
+        {
+          assignmentId: 1,
+          submissionId: 22,
+          grade: 80,
+          gradeBreakdown: {
+            originalGrade: 80,
+            latePenaltyPercent: 0,
+            similarityPenaltyPercent: 0,
+            similarityScore: null,
+            finalGrade: 80,
+            effectiveGrade: 80,
+            isOverridden: false,
+          },
+          isOverridden: false,
+          overrideReason: null,
+          submittedAt: null,
+        },
+      ],
+    }
+
+    const reportData = buildGradeReportData({
+      className: "Algorithms",
+      classCode: "ALG-101",
+      teacherName: "Teacher One",
+      gradebook: {
+        assignments: [
+          {
+            id: 1,
+            name: "Quiz 1",
+            totalScore: 100,
+            deadline: null,
+          },
+        ],
+        students: [rankFirstStudent, nameFirstStudent],
+      },
+      students: [nameFirstStudent, rankFirstStudent],
+    })
+
+    expect(reportData.studentRows.map((studentRow) => studentRow.studentName)).toEqual([
+      "Amy First",
+      "Rank First",
+    ])
+  })
 })

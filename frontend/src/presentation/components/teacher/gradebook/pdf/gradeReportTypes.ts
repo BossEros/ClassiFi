@@ -1,4 +1,4 @@
-import type { ClassGradebook } from "@/data/api/gradebook.types"
+import type { ClassGradebook, GradebookStudent } from "@/data/api/gradebook.types"
 import type {
   ReportMetadataEntry,
   SummaryMetric,
@@ -35,6 +35,7 @@ export interface GradeReportData {
 
 export interface GradeReportBuilderOptions {
   gradebook: ClassGradebook
+  students?: GradebookStudent[]
   className?: string
   classCode?: string
   teacherName?: string

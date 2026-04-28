@@ -400,24 +400,15 @@ describe("ClassDetailPage - Pagination", () => {
       expect(screen.getAllByText("Active")).not.toHaveLength(0)
     })
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", {
-          name: /show active students \(2\)/i,
-        }),
-      ).toBeInTheDocument()
-      expect(
-        screen.getByRole("button", {
-          name: /show inactive students \(1\)/i,
-        }),
-      ).toBeInTheDocument()
-    })
+    const statusFilterSelect = screen.getByLabelText(
+      /filter enrolled students by account status/i,
+    )
+
+    expect(statusFilterSelect).toBeInTheDocument()
 
     expect(screen.queryByText("Inactive Student")).not.toBeInTheDocument()
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /show inactive students \(1\)/i }),
-    )
+    await userEvent.selectOptions(statusFilterSelect, "inactive")
 
     await waitFor(() => {
       expect(classService.getClassStudents).toHaveBeenCalledWith(1, "inactive")
@@ -466,8 +457,9 @@ describe("ClassDetailPage - Pagination", () => {
       expect(classService.getClassStudents).toHaveBeenCalledWith(1, "inactive")
     })
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /show inactive students \(1\)/i }),
+    await userEvent.selectOptions(
+      screen.getByLabelText(/filter enrolled students by account status/i),
+      "inactive",
     )
 
     await waitFor(() => {
