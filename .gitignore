@@ -211,3 +211,9 @@ manifesto/
 /task.md
 /evaluation-results/
 /validation-training/
+
+# Local editor / AI tooling
+/.vscode/
+/.agent/
+/skills-lock.json
+/.github/hooks/
