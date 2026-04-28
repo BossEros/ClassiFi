@@ -1,21 +1,20 @@
 /**
- * IT-016: Test Execution Grades Submission And Notifies Student
+ * IT-016: Late Submission Applies Grade Penalty
  *
- * Module: Code Submission
- * Unit: Run tests
+ * Module: Assignment Management
+ * Unit: Late submission
  * Date Tested: 4/13/26
- * Description: Verify that running tests grades the submission and notifies the student.
- * Expected Result: The student receives a grade notification and email.
+ * Description: Verify that a late submission applies a grade penalty.
+ * Expected Result: A late penalty is applied to the submission grade.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-016 Integration Test Pass - Test Execution Grades Submission And Notifies Student
- * Suggested Figure Title (System UI): Code Submission UI - Student receives Assignment Graded Notification
+ * Suggested Figure Title (Test Pass): IT-016 Integration Test Pass - Late Submission Applies Grade Penalty
+ * Suggested Figure Title (System UI): Assignment Management UI - Late Penalty Reflected In Grade Breakdown
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { container } from "tsyringe"
-import { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
-import { CodeTestService } from "../../backend-ts/src/modules/test-cases/code-test.service.js"
+import { LatePenaltyService } from "../../backend-ts/src/modules/assignments/late-penalty.service.js"
+import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
 import { createMockAssignment, createMockSubmission } from "../../backend-ts/tests/utils/factories.js"
 
 vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
@@ -23,93 +22,61 @@ vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
     callback({}),
   ),
 }))
-vi.mock("../../backend-ts/src/shared/database.js", () => ({
-  db: {
-    transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
-      callback({}),
-    ),
+vi.mock("../../backend-ts/src/shared/supabase.js", () => ({
+  supabase: {
+    storage: { from: vi.fn(() => ({ upload: vi.fn(), createSignedUrl: vi.fn() })) },
   },
 }))
 
-describe("IT-016: Test Execution Grades Submission And Notifies Student", () => {
-  let codeTestService: CodeTestService
-  let mockNotificationRepo: any
-  let mockEmailService: any
+describe("IT-016: Late Submission Applies Grade Penalty", () => {
+  let submissionService: SubmissionService
+  let realLatePenaltyService: LatePenaltyService
+  let mockAssignmentRepo: any
+  let mockSubmissionRepo: any
+
+  const pastDeadline = new Date(Date.now() - 12 * 60 * 60 * 1000)
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockNotificationRepo = {
-      create: vi.fn(),
-      findById: vi.fn(),
-      findByUserId: vi.fn(),
-      countByUserId: vi.fn(),
-      countUnreadByUserId: vi.fn(),
-      markAsRead: vi.fn(),
-      markAllAsReadByUserId: vi.fn(),
+    mockAssignmentRepo = {
+      getAssignmentById: vi.fn(),
+      getLatePenaltyConfig: vi.fn(),
+      getAssignmentsByClassId: vi.fn().mockResolvedValue([]),
+      getAssignmentsByClassIds: vi.fn().mockResolvedValue([]),
+      updateLastReminderSentAt: vi.fn(),
+    }
+    realLatePenaltyService = new LatePenaltyService(mockAssignmentRepo)
+
+    const createdSubmission = createMockSubmission({
+      id: 1,
+      assignmentId: 1,
+      studentId: 5,
+      isLate: true,
+      penaltyApplied: 10,
+    })
+
+    mockSubmissionRepo = {
+      getLatestSubmission: vi.fn().mockResolvedValue(null),
+      getSubmissionCount: vi.fn().mockResolvedValue(0),
+      getSubmissionHistory: vi.fn().mockResolvedValue([]),
+      createSubmission: vi.fn().mockResolvedValue(createdSubmission),
+      getSubmissionById: vi.fn().mockResolvedValue(createdSubmission),
+      getSubmissionsWithStudentInfo: vi.fn().mockResolvedValue([]),
+      getSubmissionsByStudent: vi.fn().mockResolvedValue([]),
+      saveTeacherFeedback: vi.fn(),
+      updateGrade: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn(),
-      withContext: vi.fn().mockReturnThis(),
-    }
-
-    const mockUserRepo = {
-      getUserById: vi.fn().mockResolvedValue({
-        id: 10,
-        email: "student@test.com",
-        emailNotificationsEnabled: true,
-        inAppNotificationsEnabled: true,
+      withContext: vi.fn().mockReturnValue({
+        updateGrade: vi.fn().mockResolvedValue(undefined),
+        updateOriginalGrade: vi.fn().mockResolvedValue(undefined),
       }),
-      withContext: vi.fn().mockReturnThis(),
     }
 
-    mockEmailService = { sendEmail: vi.fn().mockResolvedValue(undefined) }
-
-    const notificationService = new NotificationService(
-      mockNotificationRepo,
-      mockUserRepo as any,
-      mockEmailService,
-    )
-
-    codeTestService = new CodeTestService(
-      {
-        executeBatch: vi.fn().mockResolvedValue([
-          {
-            stdout: "4",
-            stderr: "",
-            exitCode: 0,
-            executionTimeMs: 10,
-            memoryUsedKb: 512,
-          },
-          {
-            stdout: "9",
-            stderr: "",
-            exitCode: 0,
-            executionTimeMs: 10,
-            memoryUsedKb: 512,
-          },
-        ]),
-      } as any,
-      {
-        getByAssignmentId: vi.fn().mockResolvedValue([
-          {
-            id: 1,
-            assignmentId: 1,
-            name: "Test 1",
-            input: "2",
-            expectedOutput: "4",
-            isHidden: false,
-            timeLimit: 2,
-          },
-          {
-            id: 2,
-            assignmentId: 1,
-            name: "Test 2",
-            input: "3",
-            expectedOutput: "9",
-            isHidden: false,
-            timeLimit: 2,
-          },
-        ]),
-      } as any,
+    submissionService = new SubmissionService(
+      mockSubmissionRepo,
+      mockAssignmentRepo,
+      { isEnrolled: vi.fn().mockResolvedValue(true) } as any,
       {
         deleteBySubmissionId: vi.fn().mockResolvedValue(undefined),
         createMany: vi.fn().mockResolvedValue(undefined),
@@ -120,58 +87,51 @@ describe("IT-016: Test Execution Grades Submission And Notifies Student", () => 
         }),
       } as any,
       {
-        getSubmissionById: vi.fn().mockResolvedValue(
-          createMockSubmission({
-            id: 1,
-            assignmentId: 1,
-            studentId: 10,
-            filePath: "submissions/1/code.py",
-          }),
+        upload: vi.fn().mockResolvedValue("submissions/1/5/1/solution.py"),
+        uploadSubmission: vi.fn().mockResolvedValue(
+          "submissions/1/5/1/solution.py",
         ),
-        withContext: vi.fn().mockReturnValue({
-          updateGrade: vi.fn().mockResolvedValue(undefined),
-          updateOriginalGrade: vi.fn().mockResolvedValue(undefined),
-        }),
+        download: vi.fn(),
+        deleteFiles: vi.fn(),
+        getSignedUrl: vi.fn().mockResolvedValue("https://example.com/signed-url"),
+        deleteSubmissionFiles: vi.fn(),
+        deleteAvatar: vi.fn(),
       } as any,
-      {
-        getAssignmentById: vi.fn().mockResolvedValue(
-          createMockAssignment({
-            id: 1,
-            assignmentName: "Functions Exercise",
-            totalScore: 100,
-          }),
-        ),
-      } as any,
-      {
-        download: vi.fn().mockResolvedValue("def square(n): return n * n"),
-      } as any,
-      notificationService,
+      { runTestsForSubmission: vi.fn().mockResolvedValue({ passed: 2, total: 2, percentage: 100 }) } as any,
+      realLatePenaltyService,
+      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
+      { scheduleFromSubmission: vi.fn().mockResolvedValue(undefined) } as any,
+      { getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()) } as any,
     )
-
-    mockNotificationRepo.create.mockImplementation(async (data: any) => ({
-      id: 1,
-      userId: data.userId,
-      type: data.type,
-      title: data.title,
-      message: data.message,
-      metadata: data.metadata,
-      isRead: false,
-      readAt: null,
-      createdAt: new Date(),
-    }))
   })
 
   afterEach(() => {
-    container.clearInstances()
+    vi.clearAllMocks()
   })
 
-  it("should notify the student after grading the submission", async () => {
-    const result = await codeTestService.runTestsForSubmission(1)
-
-    expect(result.passed).toBe(2)
-    expect(mockNotificationRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 10, type: "SUBMISSION_GRADED" }),
+  it("should save a non-zero penalty for a late submission", async () => {
+    mockAssignmentRepo.getAssignmentById.mockResolvedValue(
+      createMockAssignment({
+        id: 1,
+        classId: 1,
+        deadline: pastDeadline,
+        allowLateSubmissions: true,
+        latePenaltyConfig: {
+          tiers: [{ hoursLate: 24, penaltyPercent: 10 }],
+          rejectAfterHours: 120,
+        },
+      }),
     )
-    expect(mockEmailService.sendEmail).toHaveBeenCalledTimes(1)
+
+    await submissionService.submitAssignment(1, 5, {
+      filename: "solution.py",
+      data: Buffer.from('print("hello")'),
+      mimetype: "text/x-python",
+    })
+
+    const createCall = mockSubmissionRepo.createSubmission.mock.calls[0][0]
+    expect(createCall.isLate).toBe(true)
+    expect(createCall.penaltyApplied).toBeGreaterThan(0)
   })
 })
+

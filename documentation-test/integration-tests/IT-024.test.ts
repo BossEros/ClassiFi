@@ -1,89 +1,73 @@
 /**
- * IT-024: Teacher Reads Assignments In Class
+ * IT-024: Similarity Result Details Return Both Files For Side-By-Side Comparison
  *
- * Module: Assignment Management
- * Unit: View assignments
- * Date Tested: 4/13/26
- * Description: Verify that a teacher can view assignments in a class.
- * Expected Result: The class assignments are displayed successfully.
+ * Module: Similarity Detection
+ * Unit: Get result details
+ * Date Tested: 4/16/26
+ * Description: Verify that result details return both compared submissions for side-by-side review.
+ * Expected Result: The system returns left and right submission records with distinct file paths.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-024 Integration Test Pass - Teacher Reads Assignments In Class
- * Suggested Figure Title (System UI): Assignment Management UI - Class View With Modules And Assignments
+ * Suggested Figure Title (Test Pass): IT-024 Integration Test Pass - Similarity Result Details Return Both Files
+ * Suggested Figure Title (System UI): Similarity Review UI - Side-By-Side Comparison Panel Showing Both Student Files
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { MockedObject } from "vitest"
-import { ClassService } from "../../backend-ts/src/modules/classes/class.service.js"
-import type { ClassRepository } from "../../backend-ts/src/modules/classes/class.repository.js"
-import type { AssignmentRepository } from "../../backend-ts/src/modules/assignments/assignment.repository.js"
-import type { EnrollmentRepository } from "../../backend-ts/src/modules/enrollments/enrollment.repository.js"
-import type { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
-import type { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
-import type { StorageService } from "../../backend-ts/src/services/storage.service.js"
+import { PlagiarismPersistenceService } from "../../backend-ts/src/modules/plagiarism/plagiarism-persistence.service.js"
+import { SimilarityRepository } from "../../backend-ts/src/modules/plagiarism/similarity.repository.js"
+import { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
 
-describe("IT-024: Teacher Reads Assignments In Class", () => {
-  let classService: ClassService
-  let mockClassRepo: Partial<MockedObject<ClassRepository>>
-  let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
-  let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
+describe("IT-024: Similarity Result Details Return Both Files For Side-By-Side Comparison", () => {
+  let plagiarismPersistenceService: PlagiarismPersistenceService
+  let mockSimilarityRepo: {
+    getResultWithFragments: ReturnType<typeof vi.fn>
+  }
+  let mockSubmissionRepo: {
+    getSubmissionWithStudent: ReturnType<typeof vi.fn>
+  }
 
   beforeEach(() => {
-    mockClassRepo = {
-      getStudentCount: vi.fn(),
-    } as any
-
-    mockAssignmentRepo = {
-      getAssignmentsByClassId: vi.fn(),
-    } as any
+    mockSimilarityRepo = {
+      getResultWithFragments: vi.fn().mockResolvedValue({
+        result: {
+          id: 501,
+          submission1Id: 101,
+          submission2Id: 202,
+        },
+        fragments: [],
+      }),
+    }
 
     mockSubmissionRepo = {
-      getLatestSubmissionCountsByAssignmentIds: vi.fn(),
-      getSubmissionsByClass: vi.fn(),
-      getLatestSubmissionsByStudentAndAssignmentIds: vi.fn(),
-    } as any
+      getSubmissionWithStudent: vi.fn().mockImplementation(async (submissionId: number) => {
+        if (submissionId === 101) {
+          return {
+            submission: { id: 101, filePath: "submissions/student-a.py" },
+            studentName: "Student A",
+          }
+        }
 
-    classService = new ClassService(
-      mockClassRepo as ClassRepository,
-      mockAssignmentRepo as AssignmentRepository,
-      { isEnrolled: vi.fn(), unenrollStudent: vi.fn(), getEnrolledStudentsWithInfo: vi.fn() } as unknown as EnrollmentRepository,
-      { getUserById: vi.fn() } as unknown as UserRepository,
-      mockSubmissionRepo as SubmissionRepository,
-      { deleteSubmissionFiles: vi.fn(), deleteAssignmentInstructionsImage: vi.fn() } as unknown as StorageService,
-      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn() } as any,
+        return {
+          submission: { id: 202, filePath: "submissions/student-b.py" },
+          studentName: "Student B",
+        }
+      }),
+    }
+
+    plagiarismPersistenceService = new PlagiarismPersistenceService(
+      mockSimilarityRepo as unknown as SimilarityRepository,
+      mockSubmissionRepo as unknown as SubmissionRepository,
     )
   })
 
-  it("should return the assignments for the selected class", async () => {
-    mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue([
-      {
-        id: 11,
-        classId: 1,
-        assignmentName: "Intro Quiz",
-        instructions: "Answer the questions",
-        instructionsImageUrl: null,
-        programmingLanguage: "python",
-        deadline: null,
-        allowResubmission: true,
-        maxAttempts: null,
-        createdAt: new Date("2026-01-01T00:00:00.000Z"),
-        isActive: true,
-        templateCode: null,
-        totalScore: 100,
-        scheduledDate: null,
-        allowLateSubmissions: false,
-        latePenaltyConfig: null,
-        lastReminderSentAt: null,
-      } as any,
-    ])
-    mockClassRepo.getStudentCount!.mockResolvedValue(30)
-    mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
-      new Map([[11, 12]]),
-    )
+  it("should return both compared submissions with distinct file paths", async () => {
+    const result = await plagiarismPersistenceService.getResultData(501)
 
-    const result = await classService.getClassAssignments(1)
-
-    expect(result).toHaveLength(1)
-    expect(result[0].assignmentName).toBe("Intro Quiz")
+    expect(result).not.toBeNull()
+    expect(result?.submission1?.submission.filePath).toBe("submissions/student-a.py")
+    expect(result?.submission2?.submission.filePath).toBe("submissions/student-b.py")
+    expect(result?.submission1?.studentName).toBe("Student A")
+    expect(result?.submission2?.studentName).toBe("Student B")
   })
 })
+

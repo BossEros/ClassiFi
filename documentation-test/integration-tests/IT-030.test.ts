@@ -1,119 +1,60 @@
 /**
- * IT-030: Similarity Penalty Uses Highest Qualifying Match Per Submission
+ * IT-030: Detector Returns Exact-Copy Fragments For Side-By-Side Diff Evidence
  *
  * Module: Similarity Detection
- * Unit: Apply similarity penalty
+ * Unit: Generate fragments
  * Date Tested: 4/16/26
- * Description: Verify that only the highest qualifying similarity match affects each latest submission.
- * Expected Result: The strongest pair determines the deduction while weaker pairs do not stack.
+ * Description: Verify that exact-copy code produces fragment coordinates that can be used in a side-by-side diff view.
+ * Expected Result: The detector returns at least one fragment spanning matching rows in both files.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-030 Integration Test Pass - Similarity Penalty Uses Highest Qualifying Match
- * Suggested Figure Title (System UI): Grade Breakdown UI - Similarity Deduction Showing Only The Highest Matching Pair
+ * Suggested Figure Title (Test Pass): IT-030 Integration Test Pass - Detector Returns Exact-Copy Fragments
+ * Suggested Figure Title (System UI): Similarity Review UI - Diff Panel Highlighting A Long Matching Fragment
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { SimilarityPenaltyService } from "../../backend-ts/src/modules/plagiarism/similarity-penalty.service.js"
-import type { AssignmentRepository } from "../../backend-ts/src/modules/assignments/assignment.repository.js"
-import type { SimilarityRepository } from "../../backend-ts/src/modules/plagiarism/similarity.repository.js"
-import type { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
-import type { ClassRepository } from "../../backend-ts/src/modules/classes/class.repository.js"
-import type { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
-import type { PlagiarismPersistenceService } from "../../backend-ts/src/modules/plagiarism/plagiarism-persistence.service.js"
-import type { TestResultRepository } from "../../backend-ts/src/modules/test-cases/test-result.repository.js"
-import type { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
+import { describe, expect, it } from "vitest"
+import { File, PlagiarismDetector } from "../../backend-ts/src/lib/plagiarism/index.js"
 
-describe("IT-030: Similarity Penalty Uses Highest Qualifying Match Per Submission", () => {
-  let similarityPenaltyService: SimilarityPenaltyService
-  let mockAssignmentRepo: { getAssignmentById: ReturnType<typeof vi.fn> }
-  let mockSimilarityRepo: { getResultsByReport: ReturnType<typeof vi.fn> }
-  let mockSubmissionRepo: {
-    getSubmissionsByAssignment: ReturnType<typeof vi.fn>
-    updateGrade: ReturnType<typeof vi.fn>
-    updateSimilarityPenalty: ReturnType<typeof vi.fn>
-  }
-  let mockTestResultRepo: { calculateScore: ReturnType<typeof vi.fn> }
-
-  beforeEach(() => {
-    mockAssignmentRepo = {
-      getAssignmentById: vi.fn(),
-    }
-    mockSimilarityRepo = {
-      getResultsByReport: vi.fn(),
-    }
-    mockSubmissionRepo = {
-      getSubmissionsByAssignment: vi.fn(),
-      updateGrade: vi.fn().mockResolvedValue(undefined),
-      updateSimilarityPenalty: vi.fn().mockResolvedValue(undefined),
-    }
-    mockTestResultRepo = {
-      calculateScore: vi.fn(),
-    }
-
-    similarityPenaltyService = new SimilarityPenaltyService(
-      mockAssignmentRepo as unknown as AssignmentRepository,
-      mockSimilarityRepo as unknown as SimilarityRepository,
-      mockSubmissionRepo as unknown as SubmissionRepository,
-      { getClassById: vi.fn() } as unknown as ClassRepository,
-      { getUserById: vi.fn() } as unknown as UserRepository,
-      { getReusableAssignmentReportId: vi.fn() } as unknown as PlagiarismPersistenceService,
-      mockTestResultRepo as unknown as TestResultRepository,
-      {
-        createNotification: vi.fn().mockResolvedValue(null),
-        sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
-      } as unknown as NotificationService,
-    )
-  })
-
-  it("should apply only the strongest qualifying pair to the affected submission", async () => {
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue({
-      id: 1,
-      enableSimilarityPenalty: true,
-      totalScore: 100,
-      similarityPenaltyConfig: {
-        warningThreshold: 0.75,
-        deductionBands: [
-          { id: "b1", minHybridScore: 0.85, penaltyPercent: 5 },
-          { id: "b2", minHybridScore: 0.90, penaltyPercent: 10 },
-          { id: "b3", minHybridScore: 0.95, penaltyPercent: 20 },
-        ],
-        maxPenaltyPercent: 20,
-        applyHighestPairOnly: true,
-      },
+describe("IT-030: Detector Returns Exact-Copy Fragments For Side-By-Side Diff Evidence", () => {
+  it("should generate fragment coordinates for a copied code block", async () => {
+    const detector = new PlagiarismDetector({
+      language: "python",
+      minFragmentLength: 2,
     })
-    mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([
-      { id: 31, grade: null, penaltyApplied: 10, submittedAt: new Date("2026-01-01T10:00:00Z") },
-      { id: 32, grade: null, penaltyApplied: 0, submittedAt: new Date("2026-01-01T11:00:00Z") },
-      { id: 33, grade: null, penaltyApplied: 0, submittedAt: new Date("2026-01-01T12:00:00Z") },
-    ])
-    mockSimilarityRepo.getResultsByReport.mockResolvedValue([
-      {
-        submission1Id: 31,
-        submission2Id: 32,
-        hybridScore: "0.860000",
-        leftCovered: 0,
-        rightCovered: 0,
-        leftTotal: 0,
-        rightTotal: 0,
-        longestFragment: 0,
-      },
-      {
-        submission1Id: 31,
-        submission2Id: 33,
-        hybridScore: "0.960000",
-        leftCovered: 0,
-        rightCovered: 0,
-        leftTotal: 0,
-        rightTotal: 0,
-        longestFragment: 0,
-      },
-    ])
-    mockTestResultRepo.calculateScore.mockResolvedValue({ passed: 9, total: 10 })
+    const files = [
+      new File(
+        "student-a.py",
+        [
+          "def solve(values):",
+          "    total = 0",
+          "    for value in values:",
+          "        total = total + value",
+          "    return total",
+        ].join("\n"),
+        { submissionId: "1" },
+      ),
+      new File(
+        "student-b.py",
+        [
+          "def solve(values):",
+          "    total = 0",
+          "    for value in values:",
+          "        total = total + value",
+          "    return total",
+        ].join("\n"),
+        { submissionId: "2" },
+      ),
+    ]
 
-    await similarityPenaltyService.applyAssignmentPenaltyFromReport(1, 99)
+    const report = await detector.analyze(files)
+    const pair = report.getPairs()[0]
+    const fragments = report.getFragments(pair)
 
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(31, 80)
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(32, 85)
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(33, 70)
+    expect(fragments.length).toBeGreaterThan(0)
+    expect(fragments[0].leftSelection.startRow).toBe(0)
+    expect(fragments[0].rightSelection.startRow).toBe(0)
+    expect(fragments[0].leftSelection.endRow).toBeGreaterThanOrEqual(4)
+    expect(fragments[0].rightSelection.endRow).toBeGreaterThanOrEqual(4)
   })
 })
+

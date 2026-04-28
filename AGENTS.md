@@ -481,5 +481,5 @@ Use these accounts for browser-based testing or login flows.
 
 | Role        | Email                   | Password     |
 | :---------- | :---------------------- | :----------- |
-| **Teacher** | `namisvilan@gmail.com`  | `Qwerty123!` |
-| **Student** | `marfiezeros@gmail.com` | `Qwerty123!` |
+| **Teacher** | `teacher@gmail.com`     | `Qwerty123!` |
+| **Student** | `marfiezeros@gmail.com` | `Qwerty1234!` |

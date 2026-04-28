@@ -1,152 +1,85 @@
 /**
- * IT-029: Cross-Class Similarity Result Details Include Submission Timestamps
+ * IT-029: Similarity Deduction Is Skipped When Assignment Penalty Is Disabled
  *
  * Module: Similarity Detection
- * Unit: Get cross-class result details
+ * Unit: Apply similarity penalty
  * Date Tested: 4/16/26
- * Description: Verify that cross-class comparison details include both students and submission timestamps.
- * Expected Result: Left and right result details expose student identity and submission time context.
+ * Description: Verify that similarity deductions are skipped when the assignment disables the penalty feature.
+ * Expected Result: The automatic grade is restored without querying similarity results.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-029 Integration Test Pass - Cross-Class Result Details Include Submission Timestamps
- * Suggested Figure Title (System UI): Cross-Class Similarity UI - Comparison Panel Showing Student Names And Submission Times
- */ 
+ * Suggested Figure Title (Test Pass): IT-029 Integration Test Pass - Similarity Deduction Is Skipped When Disabled
+ * Suggested Figure Title (System UI): Assignment Detail UI - Similarity Policy Disabled And No Deduction Shown In Grade Breakdown
+ */
 
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { SimilarityPenaltyService } from "../../backend-ts/src/modules/plagiarism/similarity-penalty.service.js"
+import type { AssignmentRepository } from "../../backend-ts/src/modules/assignments/assignment.repository.js"
+import type { SimilarityRepository } from "../../backend-ts/src/modules/plagiarism/similarity.repository.js"
+import type { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
+import type { ClassRepository } from "../../backend-ts/src/modules/classes/class.repository.js"
+import type { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
+import type { PlagiarismPersistenceService } from "../../backend-ts/src/modules/plagiarism/plagiarism-persistence.service.js"
+import type { TestResultRepository } from "../../backend-ts/src/modules/test-cases/test-result.repository.js"
+import type { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
 
-vi.mock("../../backend-ts/src/shared/database.js", () => ({
-  db: {
-    transaction: vi.fn(async (callback: (transaction: unknown) => Promise<unknown>) =>
-      callback({}),
-    ),
-  },
-}))
-
-vi.mock("../../backend-ts/src/modules/plagiarism/plagiarism.mapper.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../backend-ts/src/modules/plagiarism/plagiarism.mapper.js")>()
-  return {
-    ...actual,
-    createPlagiarismDetector: vi.fn(),
-  }
-})
-
-import { CrossClassSimilarityService } from "../../backend-ts/src/modules/plagiarism/cross-class-similarity.service.js"
-
-describe("IT-029: Cross-Class Similarity Result Details Include Submission Timestamps", () => {
-  let crossClassSimilarityService: CrossClassSimilarityService
-  let mockSimilarityRepo: {
-    getResultWithFragments: ReturnType<typeof vi.fn>
-    getReportById: ReturnType<typeof vi.fn>
-    getCrossClassResultsWithContext: ReturnType<typeof vi.fn>
-  }
+describe("IT-029: Similarity Deduction Is Skipped When Assignment Penalty Is Disabled", () => {
+  let similarityPenaltyService: SimilarityPenaltyService
+  let mockAssignmentRepo: { getAssignmentById: ReturnType<typeof vi.fn> }
+  let mockSimilarityRepo: { getResultsByReport: ReturnType<typeof vi.fn> }
   let mockSubmissionRepo: {
-    getSubmissionWithStudent: ReturnType<typeof vi.fn>
+    getSubmissionsByAssignment: ReturnType<typeof vi.fn>
+    updateGrade: ReturnType<typeof vi.fn>
+    updateSimilarityPenalty: ReturnType<typeof vi.fn>
   }
-  let mockFileService: {
-    fetchSubmissionFiles: ReturnType<typeof vi.fn>
-    downloadSubmissionFiles: ReturnType<typeof vi.fn>
-  }
+  let mockTestResultRepo: { calculateScore: ReturnType<typeof vi.fn> }
 
   beforeEach(() => {
+    mockAssignmentRepo = {
+      getAssignmentById: vi.fn(),
+    }
     mockSimilarityRepo = {
-      getResultWithFragments: vi.fn().mockResolvedValue({
-        result: {
-          id: 1886,
-          reportId: 400,
-          submission1Id: 101,
-          submission2Id: 201,
-          structuralScore: "0.9100",
-          semanticScore: "0.8300",
-          hybridScore: "0.8860",
-          overlap: 18,
-          longestFragment: 6,
-        },
-        fragments: [],
-      }),
-      getReportById: vi.fn().mockResolvedValue({
-        id: 400,
-        assignmentId: 104,
-        teacherId: 47,
-        reportType: "cross-class",
-      }),
-      getCrossClassResultsWithContext: vi.fn().mockResolvedValue([
-        {
-          result: {
-            id: 1886,
-            reportId: 400,
-            submission1Id: 101,
-            submission2Id: 201,
-            structuralScore: "0.9100",
-            semanticScore: "0.8300",
-            hybridScore: "0.8860",
-            overlap: 18,
-            longestFragment: 6,
-          },
-          submission1StudentName: "John Doe",
-          submission1SubmittedAt: new Date("2026-03-31T09:00:00.000Z"),
-          submission2StudentName: "Jane Smith",
-          submission2SubmittedAt: new Date("2026-03-31T10:30:00.000Z"),
-          submission1ClassName: "BSCS 3A",
-          submission2ClassName: "BSCS 3B",
-          submission1ClassCode: "3A",
-          submission2ClassCode: "3B",
-          submission1AssignmentName: "FizzBuzz",
-          submission2AssignmentName: "FizzBuzz",
-        },
-      ]),
+      getResultsByReport: vi.fn(),
     }
-
     mockSubmissionRepo = {
-      getSubmissionWithStudent: vi.fn().mockImplementation(async (submissionId: number) => {
-        if (submissionId === 101) {
-          return {
-            submission: {
-              id: 101,
-              filePath: "submissions/101.py",
-              submittedAt: new Date("2026-03-31T09:00:00.000Z"),
-            },
-            studentName: "John Doe",
-            className: "BSCS 3A",
-            assignmentName: "FizzBuzz",
-          }
-        }
-
-        return {
-          submission: {
-            id: 201,
-            filePath: "submissions/201.py",
-            submittedAt: new Date("2026-03-31T10:30:00.000Z"),
-          },
-          studentName: "Jane Smith",
-          className: "BSCS 3B",
-          assignmentName: "FizzBuzz",
-        }
-      }),
+      getSubmissionsByAssignment: vi.fn(),
+      updateGrade: vi.fn().mockResolvedValue(undefined),
+      updateSimilarityPenalty: vi.fn().mockResolvedValue(undefined),
+    }
+    mockTestResultRepo = {
+      calculateScore: vi.fn(),
     }
 
-    mockFileService = {
-      fetchSubmissionFiles: vi.fn(),
-      downloadSubmissionFiles: vi
-        .fn()
-        .mockResolvedValue(["print('left')", "print('right')"]),
-    }
-
-    crossClassSimilarityService = new CrossClassSimilarityService(
-      { getAssignmentById: vi.fn(), getAssignmentsByClassIds: vi.fn() } as never,
-      { getClassesByTeacher: vi.fn() } as never,
-      mockSubmissionRepo as never,
-      mockSimilarityRepo as never,
-      mockFileService as never,
-      { getEmbedding: vi.fn() } as never,
+    similarityPenaltyService = new SimilarityPenaltyService(
+      mockAssignmentRepo as unknown as AssignmentRepository,
+      mockSimilarityRepo as unknown as SimilarityRepository,
+      mockSubmissionRepo as unknown as SubmissionRepository,
+      { getClassById: vi.fn() } as unknown as ClassRepository,
+      { getUserById: vi.fn() } as unknown as UserRepository,
+      { getReusableAssignmentReportId: vi.fn() } as unknown as PlagiarismPersistenceService,
+      mockTestResultRepo as unknown as TestResultRepository,
+      {
+        createNotification: vi.fn().mockResolvedValue(null),
+        sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
+      } as unknown as NotificationService,
     )
   })
 
-  it("should return submission timestamps with both compared files", async () => {
-    const result = await crossClassSimilarityService.getResultDetails(1886, 47)
+  it("should restore the automatic grade without reading similarity pairs", async () => {
+    mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+      id: 1,
+      enableSimilarityPenalty: false,
+      totalScore: 100,
+    })
+    mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([
+      { id: 41, grade: null, penaltyApplied: 0 },
+    ])
+    mockTestResultRepo.calculateScore.mockResolvedValue({ passed: 7, total: 10 })
 
-    expect(result.leftFile.studentName).toBe("John Doe")
-    expect(result.leftFile.submittedAt).toBe("2026-03-31T09:00:00.000Z")
-    expect(result.rightFile.studentName).toBe("Jane Smith")
-    expect(result.rightFile.submittedAt).toBe("2026-03-31T10:30:00.000Z")
+    await similarityPenaltyService.applyAssignmentPenaltyFromReport(1, 99)
+
+    expect(mockSimilarityRepo.getResultsByReport).not.toHaveBeenCalled()
+    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(41, 70)
   })
 })
+
