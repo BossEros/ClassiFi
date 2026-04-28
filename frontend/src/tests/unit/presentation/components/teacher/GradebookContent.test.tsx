@@ -23,6 +23,22 @@ import {
   useClassGradebook,
 } from "@/presentation/hooks/teacher/useGradebook"
 
+function readBlobTextContent(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader()
+
+    fileReader.onload = () => {
+      resolve(typeof fileReader.result === "string" ? fileReader.result : "")
+    }
+
+    fileReader.onerror = () => {
+      reject(fileReader.error ?? new Error("Failed to read blob text content"))
+    }
+
+    fileReader.readAsText(blob)
+  })
+}
+
 describe("GradebookContent", () => {
   const originalCreateObjectUrl = window.URL.createObjectURL
   const originalRevokeObjectUrl = window.URL.revokeObjectURL
@@ -537,7 +553,7 @@ describe("GradebookContent", () => {
       throw new Error("Expected CSV export blob to be created")
     }
 
-    const csvContent = await (exportedBlob as Blob).text()
+    const csvContent = await readBlobTextContent(exportedBlob as Blob)
     const amyRowIndex = csvContent.indexOf('"Amy Anderson"')
     const zoeRowIndex = csvContent.indexOf('"Zoe Zimmerman"')
 
