@@ -1,120 +1,109 @@
 /**
- * IT-018: Submission Triggers Plagiarism Auto Analysis
+ * IT-018: Teacher Creates Assignment Successfully
  *
- * Module: Similarity Detection
- * Unit: Submit assignment
+ * Module: Assignment Management
+ * Unit: Create assignment
  * Date Tested: 4/13/26
- * Description: Verify that a submission triggers plagiarism auto analysis.
- * Expected Result: The submission is scheduled for plagiarism auto analysis.
+ * Description: Verify that a teacher can create an assignment successfully.
+ * Expected Result: A new assignment is created successfully.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-018 Integration Test Pass - Submission Triggers Plagiarism Auto Analysis
- * Suggested Figure Title (System UI): Similarity Detection UI - Plagiarism Auto Analysis Scheduled After Successful Submission
+ * Suggested Figure Title (Test Pass): IT-018 Integration Test Pass - Teacher Creates Assignment Successfully
+ * Suggested Figure Title (System UI): Assignment Management UI - Class View with Updated Assignment List and Create Assignment Success Notification
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
-import { createMockAssignment, createMockSubmission } from "../../backend-ts/tests/utils/factories.js"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { MockedObject } from "vitest"
+import { AssignmentService } from "../../backend-ts/src/modules/assignments/assignment.service.js"
+import type { ClassRepository } from "../../backend-ts/src/modules/classes/class.repository.js"
+import type { AssignmentRepository } from "../../backend-ts/src/modules/assignments/assignment.repository.js"
+import type { TestCaseRepository } from "../../backend-ts/src/repositories/test-case.repository.js"
+import type { EnrollmentRepository } from "../../backend-ts/src/modules/enrollments/enrollment.repository.js"
+import type { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
+import type { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
+import type { StorageService } from "../../backend-ts/src/services/storage.service.js"
+import type { ModuleRepository } from "../../backend-ts/src/modules/modules/module.repository.js"
+import { createMockAssignment, createMockClass } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) =>
-    callback({}),
-  ),
-}))
-vi.mock("../../backend-ts/src/shared/supabase.js", () => ({
-  supabase: {
-    storage: { from: vi.fn(() => ({ upload: vi.fn(), createSignedUrl: vi.fn() })) },
-  },
-}))
-
-describe("IT-018: Submission Triggers Plagiarism Auto Analysis", () => {
-  let submissionService: SubmissionService
-  let mockPlagiarismAutoAnalysisService: any
+describe("IT-018: Teacher Creates Assignment Successfully", () => {
+  let assignmentService: AssignmentService
+  let mockClassRepo: Partial<MockedObject<ClassRepository>>
+  let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
+  let mockEnrollmentRepo: Partial<MockedObject<EnrollmentRepository>>
+  let mockModuleRepo: Partial<MockedObject<ModuleRepository>>
 
   beforeEach(() => {
-    vi.clearAllMocks()
-
-    const submissionRecord = createMockSubmission({
-      id: 1,
-      assignmentId: 1,
-      studentId: 5,
-    })
-
-    mockPlagiarismAutoAnalysisService = {
-      scheduleFromSubmission: vi.fn().mockResolvedValue(undefined),
+    mockClassRepo = {
+      getClassById: vi.fn(),
     }
 
-    submissionService = new SubmissionService(
+    mockAssignmentRepo = {
+      createAssignment: vi.fn(),
+      getAssignmentById: vi.fn(),
+      getAssignmentsByClassId: vi.fn(),
+      updateAssignment: vi.fn(),
+      deleteAssignment: vi.fn(),
+    }
+
+    mockEnrollmentRepo = {
+      getEnrolledStudentsWithInfo: vi.fn().mockResolvedValue([]),
+    }
+
+    mockModuleRepo = {
+      getModuleById: vi.fn().mockResolvedValue({
+        id: 1,
+        classId: 1,
+        name: "Module 1",
+        isPublished: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    }
+
+    assignmentService = new AssignmentService(
+      mockAssignmentRepo as AssignmentRepository,
+      mockClassRepo as ClassRepository,
+      {} as TestCaseRepository,
+      mockEnrollmentRepo as EnrollmentRepository,
+      {} as SubmissionRepository,
+      mockModuleRepo as ModuleRepository,
+      { deleteAssignmentInstructionsImage: vi.fn() } as unknown as StorageService,
       {
-        getLatestSubmission: vi.fn().mockResolvedValue(null),
-        getSubmissionCount: vi.fn().mockResolvedValue(0),
-        getSubmissionHistory: vi.fn().mockResolvedValue([]),
-        createSubmission: vi.fn().mockResolvedValue(submissionRecord),
-        getSubmissionById: vi.fn().mockResolvedValue(submissionRecord),
-        getSubmissionsWithStudentInfo: vi.fn().mockResolvedValue([]),
-        getSubmissionsByStudent: vi.fn().mockResolvedValue([]),
-        saveTeacherFeedback: vi.fn(),
-        updateGrade: vi.fn().mockResolvedValue(undefined),
-        delete: vi.fn(),
-        withContext: vi.fn().mockReturnValue({
-          updateGrade: vi.fn().mockResolvedValue(undefined),
-          updateOriginalGrade: vi.fn().mockResolvedValue(undefined),
-        }),
-      } as any,
-      {
-        getAssignmentById: vi.fn().mockResolvedValue(
-          createMockAssignment({
-            id: 1,
-            classId: 1,
-            deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          }),
-        ),
-      } as any,
-      { isEnrolled: vi.fn().mockResolvedValue(true) } as any,
-      { deleteBySubmissionId: vi.fn(), createMany: vi.fn() } as any,
-      {
-        upload: vi.fn().mockResolvedValue("submissions/1/5/1/solution.py"),
-        uploadSubmission: vi.fn().mockResolvedValue(
-          "submissions/1/5/1/solution.py",
-        ),
-        download: vi.fn(),
-        deleteFiles: vi.fn(),
-        getSignedUrl: vi.fn().mockResolvedValue("https://example.com/signed-url"),
-        deleteSubmissionFiles: vi.fn(),
-        deleteAvatar: vi.fn(),
-      } as any,
-      { runTestsForSubmission: vi.fn().mockResolvedValue({ passed: 1, total: 1, percentage: 100 }) } as any,
-      {
-        calculatePenalty: vi.fn().mockReturnValue({
-          isLate: false,
-          hoursLate: 0,
-          penaltyPercent: 0,
-          isRejected: false,
-        }),
-        getDefaultConfig: vi.fn().mockReturnValue({ tiers: [], rejectAfterHours: null }),
-        applyPenalty: vi.fn((grade: number) => grade),
-        getAssignmentPenaltyConfig: vi.fn(),
-        setAssignmentPenaltyConfig: vi.fn(),
-      } as any,
-      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
-      mockPlagiarismAutoAnalysisService,
-      { getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()) } as any,
+        createNotification: vi.fn(),
+        sendEmailNotificationIfEnabled: vi.fn(),
+      } as unknown as NotificationService,
     )
   })
 
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
+  it("should create and return the assignment", async () => {
+    const classData = createMockClass({ id: 1, teacherId: 1 })
+    const createdAssignment = createMockAssignment({ id: 20, classId: 1 })
 
-  it("should schedule plagiarism auto analysis after a successful submission", async () => {
-    await submissionService.submitAssignment(1, 5, {
-      filename: "solution.py",
-      data: Buffer.from('print("hello")'),
-      mimetype: "text/x-python",
+    mockClassRepo.getClassById!.mockResolvedValue(classData)
+    mockAssignmentRepo.createAssignment!.mockResolvedValue(createdAssignment)
+
+    const result = await assignmentService.createAssignment({
+      classId: 1,
+      teacherId: 1,
+      moduleId: 1,
+      assignmentName: "Essay 1",
+      instructions: "Write an essay",
+      programmingLanguage: "python",
+      deadline: new Date("2026-12-31T00:00:00.000Z"),
+      allowResubmission: true,
+      maxAttempts: null,
+      templateCode: null,
+      totalScore: 100,
+      scheduledDate: null,
+      allowLateSubmissions: false,
+      latePenaltyConfig: null,
+      instructionsImageUrl: null,
+      enableSimilarityPenalty: false,
+      similarityPenaltyConfig: null,
     })
 
-    expect(
-      mockPlagiarismAutoAnalysisService.scheduleFromSubmission,
-    ).toHaveBeenCalledWith(1)
+    expect(result.id).toBe(20)
+    expect(mockAssignmentRepo.createAssignment).toHaveBeenCalled()
   })
 })
+

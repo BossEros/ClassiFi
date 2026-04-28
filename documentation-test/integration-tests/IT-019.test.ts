@@ -1,108 +1,97 @@
 /**
- * IT-019: Teacher Creates Assignment Successfully
+ * IT-019: Teacher Sets Grade Successfully
  *
- * Module: Assignment Management
- * Unit: Create assignment
+ * Module: Gradebook
+ * Unit: Set grade
  * Date Tested: 4/13/26
- * Description: Verify that a teacher can create an assignment successfully.
- * Expected Result: A new assignment is created successfully.
+ * Description: Verify that a teacher can set a manual grade.
+ * Expected Result: The manual grade is saved successfully.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-019 Integration Test Pass - Teacher Creates Assignment Successfully
- * Suggested Figure Title (System UI): Assignment Management UI - Class View with Updated Assignment List and Create Assignment Success Notification
- */
+ * Suggested Figure Title (Test Pass): IT-019 Integration Test Pass - Teacher Sets Grade Successfully
+ * Suggested Figure Title (System UI): Gradebook UI - Assignment View with Set Grade Success Notification
+ */ 
 
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { MockedObject } from "vitest"
-import { AssignmentService } from "../../backend-ts/src/modules/assignments/assignment.service.js"
-import type { ClassRepository } from "../../backend-ts/src/modules/classes/class.repository.js"
-import type { AssignmentRepository } from "../../backend-ts/src/modules/assignments/assignment.repository.js"
-import type { TestCaseRepository } from "../../backend-ts/src/repositories/test-case.repository.js"
-import type { EnrollmentRepository } from "../../backend-ts/src/modules/enrollments/enrollment.repository.js"
-import type { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
-import type { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
-import type { StorageService } from "../../backend-ts/src/services/storage.service.js"
-import type { ModuleRepository } from "../../backend-ts/src/modules/modules/module.repository.js"
-import { createMockAssignment, createMockClass } from "../../backend-ts/tests/utils/factories.js"
+import { GradebookService } from "../../backend-ts/src/modules/gradebook/gradebook.service.js"
+import { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
 
-describe("IT-019: Teacher Creates Assignment Successfully", () => {
-  let assignmentService: AssignmentService
-  let mockClassRepo: Partial<MockedObject<ClassRepository>>
-  let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
-  let mockEnrollmentRepo: Partial<MockedObject<EnrollmentRepository>>
-  let mockModuleRepo: Partial<MockedObject<ModuleRepository>>
+vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
+  withTransaction: vi.fn(async (callback: (context: unknown) => Promise<unknown>) =>
+    callback({}),
+  ),
+}))
+
+describe("IT-019: Teacher Sets Grade Successfully", () => {
+  let gradebookService: GradebookService
+  let mockSubmissionRepo: any
+  let mockAssignmentRepo: any
+  let mockNotificationRepo: any
+  let mockUserRepo: any
+  let mockEmailService: any
 
   beforeEach(() => {
-    mockClassRepo = {
-      getClassById: vi.fn(),
+    mockSubmissionRepo = {
+      getSubmissionById: vi.fn(),
+      setManualGrade: vi.fn(),
+      withContext: vi.fn().mockReturnThis(),
     }
 
     mockAssignmentRepo = {
-      createAssignment: vi.fn(),
       getAssignmentById: vi.fn(),
-      getAssignmentsByClassId: vi.fn(),
-      updateAssignment: vi.fn(),
-      deleteAssignment: vi.fn(),
     }
 
-    mockEnrollmentRepo = {
-      getEnrolledStudentsWithInfo: vi.fn().mockResolvedValue([]),
+    mockNotificationRepo = {
+      create: vi.fn().mockResolvedValue({ id: 1 }),
+      withContext: vi.fn().mockReturnThis(),
     }
-
-    mockModuleRepo = {
-      getModuleById: vi.fn().mockResolvedValue({
-        id: 1,
-        classId: 1,
-        name: "Module 1",
-        isPublished: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+    mockUserRepo = {
+      getUserById: vi.fn().mockResolvedValue({
+        id: 5,
+        email: "student@test.com",
+        emailNotificationsEnabled: true,
+        inAppNotificationsEnabled: true,
       }),
+      withContext: vi.fn().mockReturnThis(),
+    }
+    mockEmailService = {
+      sendEmail: vi.fn().mockResolvedValue(undefined),
     }
 
-    assignmentService = new AssignmentService(
-      mockAssignmentRepo as AssignmentRepository,
-      mockClassRepo as ClassRepository,
-      {} as TestCaseRepository,
-      mockEnrollmentRepo as EnrollmentRepository,
-      {} as SubmissionRepository,
-      mockModuleRepo as ModuleRepository,
-      { deleteAssignmentInstructionsImage: vi.fn() } as unknown as StorageService,
-      {
-        createNotification: vi.fn(),
-        sendEmailNotificationIfEnabled: vi.fn(),
-      } as unknown as NotificationService,
+    const notificationService = new NotificationService(
+      mockNotificationRepo,
+      mockUserRepo,
+      mockEmailService,
+    )
+
+    gradebookService = new GradebookService(
+      {} as any,
+      mockSubmissionRepo,
+      mockAssignmentRepo,
+      {} as any,
+      {} as any,
+      notificationService,
+      {} as any,
+      { scheduleFromSubmission: vi.fn().mockResolvedValue(undefined) } as any,
     )
   })
 
-  it("should create and return the assignment", async () => {
-    const classData = createMockClass({ id: 1, teacherId: 1 })
-    const createdAssignment = createMockAssignment({ id: 20, classId: 1 })
-
-    mockClassRepo.getClassById!.mockResolvedValue(classData)
-    mockAssignmentRepo.createAssignment!.mockResolvedValue(createdAssignment)
-
-    const result = await assignmentService.createAssignment({
-      classId: 1,
-      teacherId: 1,
-      moduleId: 1,
-      assignmentName: "Essay 1",
-      instructions: "Write an essay",
-      programmingLanguage: "python",
-      deadline: new Date("2026-12-31T00:00:00.000Z"),
-      allowResubmission: true,
-      maxAttempts: null,
-      templateCode: null,
+  it("should save the manual grade for the submission", async () => {
+    mockSubmissionRepo.getSubmissionById.mockResolvedValue({
+      id: 1,
+      assignmentId: 10,
+      studentId: 5,
+      penaltyApplied: 0,
+    })
+    mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+      id: 10,
+      assignmentName: "Quiz 1",
       totalScore: 100,
-      scheduledDate: null,
-      allowLateSubmissions: false,
-      latePenaltyConfig: null,
-      instructionsImageUrl: null,
-      enableSimilarityPenalty: false,
-      similarityPenaltyConfig: null,
     })
 
-    expect(result.id).toBe(20)
-    expect(mockAssignmentRepo.createAssignment).toHaveBeenCalled()
+    await gradebookService.setManualGrade(1, 92)
+
+    expect(mockSubmissionRepo.setManualGrade).toHaveBeenCalledWith(1, 92, 92)
   })
 })
+
