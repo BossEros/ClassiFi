@@ -339,8 +339,24 @@ describe("classRepository", () => {
 
   describe("getAllEnrolledStudentsForClassId", () => {
     const mockStudents = [
-      { id: 1, firstName: "John", lastName: "Doe" },
-      { id: 2, firstName: "Jane", lastName: "Smith" },
+      {
+        id: 1,
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@student.test",
+        avatarUrl: null,
+        isActive: true,
+        enrolledAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: 2,
+        firstName: "Jane",
+        lastName: "Smith",
+        email: "jane@student.test",
+        avatarUrl: null,
+        isActive: true,
+        enrolledAt: "2026-01-02T00:00:00.000Z",
+      },
     ]
 
     it("fetches all students for a class", async () => {
@@ -377,6 +393,30 @@ describe("classRepository", () => {
       expect(apiClient.get).toHaveBeenCalledWith(
         "/classes/1/students?status=inactive",
       )
+    })
+
+    it("normalizes snake-case enrollment timestamps from the class roster API", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: {
+          success: true,
+          students: [
+            {
+              id: 3,
+              firstName: "Snake",
+              lastName: "Case",
+              email: "snake@student.test",
+              avatarUrl: null,
+              isActive: true,
+              enrolled_at: "2026-02-03T00:00:00.000Z",
+            },
+          ],
+        },
+        status: 200,
+      })
+
+      const result = await classRepository.getAllEnrolledStudentsForClassId(1)
+
+      expect(result[0]?.enrolledAt).toBe("2026-02-03T00:00:00.000Z")
     })
 
     it("throws error when API fails", async () => {

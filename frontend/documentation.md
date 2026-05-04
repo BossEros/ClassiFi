@@ -220,6 +220,7 @@ Admin enrollment workspace behavior:
 - Teacher gradebook `Average` now represents a points-weighted current standing: assignments with no submission yet count as `0`, submitted work awaiting grading is excluded until a score exists, and the final percentage is computed from earned points over countable possible points.
 - **Teacher gradebook exports**: CSV exports include a `Status` column for `Active` / `Inactive` students. PDF exports include inactive students by default, label them explicitly, highlight their rows subtly, and keep summary metrics scoped to active students only. Both CSV and PDF follow the currently selected teacher gradebook sort order (`Rank` or `Last Name`).
 - **Teacher roster status filters**: The class `Students` tab exposes `Active` and `Inactive` filters only. The roster defaults to active students, while inactive/deactivated students are still reviewable through the inactive filter and are labeled with an explicit status badge.
+- **Teacher class-list exports**: The class `Students` tab provides a gradebook-style export menu with CSV and PDF downloads for the full currently filtered roster, including student name, email, account status, and enrollment date.
 - **`StudentClassGradesContent`**: Student-only class grades tab that shows personal current grade, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, similarity-deduction breakdowns, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
@@ -639,6 +640,7 @@ Specialized types for the class detail page redesign:
    - Switch to Students tab to view enrolled students
    - Use only two roster filters: `Active` and `Inactive`
    - The default roster view shows active students only, and inactive students appear with a status badge when the inactive filter is selected
+   - Use the `Export` menu to download the currently filtered class list as CSV or PDF
 5. **Create New Assignment**:
    - Click "Add Assignment" button (from module card or tab header)
    - Select which module to assign the assignment to via the module selector dropdown

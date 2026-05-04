@@ -392,6 +392,7 @@ Student enrolled-classes query behavior:
 
 - Accepts optional query `status=active|inactive|all`
 - Each returned student includes `isActive`
+- Each returned student includes `enrolledAt` as an ISO timestamp from the enrollment record
 - This supports the teacher roster rule of defaulting to active students while still allowing explicit review of inactive/deactivated students
 
 **Gradebook CSV Export** (`GET /gradebook/classes/:classId/export`):

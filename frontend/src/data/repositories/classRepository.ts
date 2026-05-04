@@ -16,6 +16,22 @@ import type {
   GenerateCodeResponse,
 } from "@/data/api/class.types"
 
+interface RawEnrolledStudent extends Omit<EnrolledStudent, "enrolledAt"> {
+  enrolledAt?: EnrolledStudent["enrolledAt"]
+  enrolled_at?: EnrolledStudent["enrolledAt"]
+}
+
+function mapRawEnrolledStudentToEnrolledStudent(
+  student: RawEnrolledStudent,
+): EnrolledStudent {
+  const enrolledAt = student.enrolledAt ?? student.enrolled_at ?? ""
+
+  return {
+    ...student,
+    enrolledAt: enrolledAt as EnrolledStudent["enrolledAt"],
+  }
+}
+
 /**
  * Creates a new class by sending the class data to the backend API.
  *
@@ -158,7 +174,9 @@ export async function getAllEnrolledStudentsForClassId(
     ? `/classes/${classId}/students?status=${status}`
     : `/classes/${classId}/students`
 
-  const apiResponse = await apiClient.get<StudentListResponse>(
+  const apiResponse = await apiClient.get<
+    Omit<StudentListResponse, "students"> & { students: RawEnrolledStudent[] }
+  >(
     rosterApiUrl,
   )
   const data = unwrapApiResponse(
@@ -167,7 +185,7 @@ export async function getAllEnrolledStudentsForClassId(
     "students",
   )
 
-  return data.students
+  return data.students.map(mapRawEnrolledStudentToEnrolledStudent)
 }
 
 /**

@@ -10,6 +10,7 @@ import { ClassTabs } from "@/presentation/components/shared/dashboard/ClassTabs"
 import { ClassCalendarTab } from "@/presentation/components/shared/calendar";
 import { AssignmentsTabContent } from "@/presentation/components/teacher/classDetail/AssignmentsTabContent";
 import { StudentsTabContent } from "@/presentation/components/teacher/classDetail/StudentsTabContent";
+import { buildClassListReportData, ClassListReportDocument } from "@/presentation/components/teacher/classDetail/pdf/classListReportPdf";
 import { useAuthStore } from "@/shared/store/useAuthStore";
 import type { ClassTab } from "@/data/api/class.types";
 import {
@@ -33,6 +34,8 @@ import { filterAssignments, calculateFilterCounts, filterTeacherAssignmentsByTim
 import { filterStudentsByQuery } from "@/presentation/pages/teacher/classDetail.helpers";
 import { getModulesByClassId, createModule, renameModule, toggleModulePublish, deleteModule } from "@/business/services/moduleService";
 import { mergeModuleAssignmentsWithLatestAssignmentState } from "@/presentation/utils/mergeModuleAssignments";
+import { downloadPdfDocument } from "@/presentation/utils/pdfDownload";
+import { downloadTeacherClassListCsvFile } from "@/presentation/utils/teacherClassListCsv";
 import { X, LogOut, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/presentation/components/ui/Button";
 import { leaveClass } from "@/business/services/studentDashboardService";
@@ -476,6 +479,30 @@ function createTeacherStudentStatusRecord<T>(
   }
 }
 
+function sanitizeExportFileNameSegment(value: string | undefined): string {
+  if (!value?.trim()) {
+    return "class"
+  }
+
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
+function getRosterScopeLabel(
+  studentStatusFilter: TeacherStudentStatusOption,
+  studentSearchQuery: string,
+): string {
+  const statusLabel =
+    studentStatusFilter === "active" ? "Active students" : "Inactive students"
+
+  return studentSearchQuery.trim()
+    ? `${statusLabel} matching search`
+    : statusLabel
+}
+
 /**
  * Displays detailed information about a class including assignments, students, and management options.
  *
@@ -519,6 +546,8 @@ export function ClassDetailPage() {
       createTeacherStudentStatusRecord(false),
     )
   const [isLoadingStudents, setIsLoadingStudents] = useState(false)
+  const [isExportingClassListCsv, setIsExportingClassListCsv] = useState(false)
+  const [isDownloadingClassListPdf, setIsDownloadingClassListPdf] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
@@ -805,6 +834,62 @@ export function ClassDetailPage() {
     setCurrentStudentPage(page)
   }
 
+  const handleExportClassListCsv = () => {
+    if (!classInfo || filteredStudents.length === 0) {
+      return
+    }
+
+    try {
+      setIsExportingClassListCsv(true)
+      const classFileNameSegment = sanitizeExportFileNameSegment(
+        classInfo.classCode || String(classInfo.id),
+      )
+      downloadTeacherClassListCsvFile(
+        filteredStudents,
+        `class-list-${classFileNameSegment}-${studentStatusFilter}.csv`,
+      )
+      showToast("Class list exported successfully")
+    } catch {
+      showToast("Failed to export class list", "error")
+    } finally {
+      setIsExportingClassListCsv(false)
+    }
+  }
+
+  const handleDownloadClassListPdf = async () => {
+    if (!classInfo || filteredStudents.length === 0) {
+      return
+    }
+
+    try {
+      setIsDownloadingClassListPdf(true)
+      const classFileNameSegment = sanitizeExportFileNameSegment(
+        classInfo.classCode || String(classInfo.id),
+      )
+      const reportData = buildClassListReportData({
+        students: filteredStudents,
+        className: classInfo.className,
+        classCode: classInfo.classCode,
+        teacherName: classInfo.teacherName,
+        rosterScopeLabel: getRosterScopeLabel(
+          studentStatusFilter,
+          studentSearchQuery,
+        ),
+      })
+
+      await downloadPdfDocument({
+        document: <ClassListReportDocument data={reportData} />,
+        fileName: `class-list-${classFileNameSegment}-${studentStatusFilter}.pdf`,
+      })
+
+      showToast("Class list downloaded successfully")
+    } catch {
+      showToast("Failed to download class list", "error")
+    } finally {
+      setIsDownloadingClassListPdf(false)
+    }
+  }
+
   const handleTabChange = (tab: ClassTab) => {
     setActiveTab(tab)
     // Reset to page 1 when switching to students tab
@@ -1042,6 +1127,12 @@ export function ClassDetailPage() {
                 }}
                 onRemoveStudent={handleRemoveStudentClick}
                 onStudentPageChange={handleStudentPageChange}
+                onExportCsv={handleExportClassListCsv}
+                onDownloadPdf={() => {
+                  void handleDownloadClassListPdf()
+                }}
+                isExportingCsv={isExportingClassListCsv}
+                isDownloadingPdf={isDownloadingClassListPdf}
                 variant={isLightClassView ? "light" : "dark"}
               />
             )}
