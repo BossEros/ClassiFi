@@ -657,7 +657,7 @@ Specialized types for the class detail page redesign:
    - Use the graph and table together; they share one threshold and selection flow.
 3. **Compare Code**:
    - View matched code fragments highlighted in both files
-   - Review Match View fragment labels that explain the evidence category, such as shared imports, identifier names, control-flow structure, function structure, or matched code structure
+   - Review backend-generated Match View fragment labels that explain visible similarity evidence in one neutral sentence. Comment-only matched fragments are labeled as comment text, and deterministic fallback labels remain available when AI labels are disabled or unavailable.
    - Review backend-generated Diff View hover labels that explain what changed inside smaller highlighted line/segment targets. Comment-only changes are labeled as comment changes instead of code renames. AI-assisted labels are shown only after backend validation; deterministic fallback labels remain available when AI labels are disabled or unavailable.
    - Use synchronized scrolling to navigate through matches
    - Click on fragments in the table to jump to specific matches

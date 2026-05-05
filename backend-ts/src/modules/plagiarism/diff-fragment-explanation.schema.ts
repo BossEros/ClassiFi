@@ -17,7 +17,7 @@ export const DiffFragmentExplanationSchema = z
   .object({
     category: DiffFragmentExplanationCategorySchema,
     label: z.string().trim().min(1).max(80),
-    reasons: z.array(z.string().trim().min(1).max(220)).min(1).max(3),
+    reasons: z.array(z.string().trim().min(1).max(500)).min(1).max(3),
     confidence: z.number().min(0).max(1),
     source: DiffFragmentExplanationSourceSchema,
   })

@@ -176,6 +176,60 @@ describe("PairCodeDiff", () => {
     )
   })
 
+  it("renders the hover explanation as one punctuated sentence", async () => {
+    render(
+      <PairCodeDiff
+        leftFile={{
+          id: 1,
+          path: "Left.py",
+          filename: "Left.py",
+          content: "roman_dict = {'I': 1}",
+          lineCount: 1,
+          studentName: "Ava Sinclair",
+        }}
+        rightFile={{
+          id: 2,
+          path: "Right.py",
+          filename: "Right.py",
+          content: "values = {'I': 1}",
+          lineCount: 1,
+          studentName: "Alexander Cross",
+        }}
+        fragments={[
+          {
+            ...renamedIdentifierFragment,
+            leftSelection: { startRow: 0, startCol: 0, endRow: 0, endCol: 10 },
+            rightSelection: { startRow: 0, startCol: 0, endRow: 0, endCol: 6 },
+            diffExplanation: {
+              category: "identifier_renaming",
+              label: "Dictionary Variable Renamed",
+              reasons: [
+                "Left code uses roman_dict while right code uses values",
+                "The dictionary initialization and contents remain identical.",
+              ],
+              confidence: 0.94,
+              source: "ai",
+            },
+          },
+        ]}
+        language="python"
+        variant="light"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(monacoMockState.hoverMessages.length).toBeGreaterThan(0)
+    })
+
+    expect(monacoMockState.hoverMessages.join("\n")).toContain(
+      [
+        "**Dictionary Variable Renamed**",
+        "",
+        "Left code uses roman_dict while right code uses values.",
+      ].join("\n"),
+    )
+  })
+
   it("uses backend diff explanation targets for smaller hover labels", async () => {
     render(
       <PairCodeDiff

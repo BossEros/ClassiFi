@@ -4,6 +4,7 @@ export type FragmentExplanationCategory =
   | "control_flow"
   | "function_structure"
   | "code_structure"
+  | "comment_text"
 
 export interface FragmentExplanation {
   category: FragmentExplanationCategory

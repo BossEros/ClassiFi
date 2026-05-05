@@ -8,6 +8,10 @@ import {
   ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
 import { buildDiffFragmentExplanation } from "./diffFragmentExplanation"
+import {
+  PLAGIARISM_MONACO_HOVER_CSS,
+  formatFragmentExplanationHoverMessage,
+} from "./fragmentExplanationHover"
 import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
 import { getTemporalOrder } from "@/presentation/utils/timeUtils"
 
@@ -74,6 +78,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       minimap: { enabled: false },
       renderSideBySide: !isTabletOrBelow,
       originalEditable: false,
+      fixedOverflowWidgets: true,
     })
 
     // Assign to ref for external access
@@ -292,6 +297,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
           backgroundColor: isLight ? "#ffffff" : "#0f172a",
         }}
       />
+      <style>{PLAGIARISM_MONACO_HOVER_CSS}</style>
     </div>
   )
 }
@@ -311,7 +317,7 @@ function createFragmentHoverDecoration(
     },
     options: {
       hoverMessage: {
-        value: `**${explanation.label}**\n\n${explanation.reasons.join("\n")}`,
+        value: formatFragmentExplanationHoverMessage(explanation),
       },
     },
   }

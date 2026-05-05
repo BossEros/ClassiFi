@@ -11,6 +11,17 @@ import {
   buildFallbackDiffFragmentExplanation,
   type DiffCodeSelection,
 } from "@/modules/plagiarism/diff-fragment-explanation-fallback.js"
+import { normalizeFragmentReasonSentence } from "@/modules/plagiarism/fragment-label-text.js"
+import {
+  createAiFragmentLabelBatchJsonSchema,
+  createConfiguredAiFragmentLabelProvider,
+  type AiFragmentLabelBatchItem,
+  type AiFragmentLabelProvider,
+} from "@/modules/plagiarism/ai-fragment-label-provider.js"
+
+export {
+  parseAiFragmentLabelBatchOutput as parseProviderBatchOutput,
+} from "@/modules/plagiarism/ai-fragment-label-provider.js"
 
 export interface ExplainDiffFragmentInput {
   leftContent: string
@@ -37,11 +48,6 @@ export interface ExplainDiffFragmentsInput {
   language?: string
 }
 
-export interface DiffFragmentExplanationBatchItem {
-  targetId: string
-  explanation: unknown
-}
-
 export interface ExplainDiffFragmentTarget {
   targetId: string
   parentFragmentId: number
@@ -55,7 +61,7 @@ export interface ExplainDiffFragmentTarget {
 export interface DiffExplanationProvider {
   explainBatch(
     input: ExplainDiffFragmentsInput,
-  ): Promise<DiffFragmentExplanationBatchItem[]>
+  ): Promise<AiFragmentLabelBatchItem[]>
 }
 
 interface DiffFragmentExplanationServiceOptions {
@@ -65,32 +71,23 @@ interface DiffFragmentExplanationServiceOptions {
   cacheMaxEntries?: number
 }
 
-interface OpenAiStructuredOutputResponse {
-  output_parsed?: unknown
-  output_text?: string
-  output?: Array<{
-    content?: Array<{
-      type?: string
-      text?: string
-      refusal?: string
-    }>
-  }>
-}
-
-interface AnthropicMessagesResponse {
-  content?: Array<{
-    type?: string
-    name?: string
-    input?: unknown
-    text?: string
-  }>
-}
-
 const logger = createLogger("DiffFragmentExplanationService")
 const DEFAULT_MINIMUM_CONFIDENCE = 0.7
 const DEFAULT_CACHE_MAX_ENTRIES = 250
 const DIFF_CONTEXT_RADIUS_LINES = 3
-const DIFF_EXPLANATION_TOOL_NAME = "create_diff_fragment_explanations"
+const DIFF_LABEL_SYSTEM_INSTRUCTIONS = [
+  "You label code diff fragments for teachers reviewing similarity evidence.",
+  "Return neutral evidence only. Do not accuse either student.",
+  "Use the surrounding context to distinguish executable-code changes from comments or documentation.",
+  "If a target changes only a comment, use category comment_changed.",
+  "Be concrete: name exact identifiers, function names, literals, operators, or values when they are visible.",
+  "For renames or substitutions, write compact left-to-right mappings such as `roman_dict` -> `values`, `total` -> `result`, and `i` -> `index`.",
+  "Avoid vague role-only wording like 'the accumulator', 'the dictionary', or 'the index variable' unless you also name the exact code text.",
+  "If several details changed, name the most important two to four exact mappings or values instead of summarizing generically.",
+  "Use a concise label and exactly one simple explanation sentence.",
+  "The sentence should explain the exact difference in plain language and no more than about 35 words.",
+  "Do not over-explain; keep the sentence direct and professional.",
+] as const
 
 /**
  * Generates stable, validated explanations for highlighted diff fragments.
@@ -110,8 +107,8 @@ export class DiffFragmentExplanationService {
   >()
 
   constructor(options: DiffFragmentExplanationServiceOptions = {}) {
-    this.enabled = options.enabled ?? settings.aiDiffLabelsEnabled
-    this.provider = options.provider ?? createConfiguredProvider()
+    this.enabled = options.enabled ?? settings.aiFragmentLabelsEnabled
+    this.provider = options.provider ?? createConfiguredDiffExplanationProvider()
     this.minimumConfidence =
       options.minimumConfidence ?? DEFAULT_MINIMUM_CONFIDENCE
     this.cacheMaxEntries =
@@ -236,6 +233,8 @@ export class DiffFragmentExplanationService {
         error: serializeProviderError(error),
       })
 
+      this.setCachedExplanations(cacheKey, fallbackTargets)
+
       return fallbackTargets
     }
   }
@@ -285,243 +284,57 @@ export function groupDiffExplanationTargetsByFragmentId(
   return targetsByFragmentId
 }
 
-class OpenAiDiffExplanationProvider implements DiffExplanationProvider {
-  private readonly apiKey: string
-  private readonly model: string
-  private readonly timeoutMs: number
+function createConfiguredDiffExplanationProvider(): DiffExplanationProvider | null {
+  const aiProvider = createConfiguredAiFragmentLabelProvider()
 
-  constructor(apiKey: string, model: string, timeoutMs: number) {
-    this.apiKey = apiKey
-    this.model = model
-    this.timeoutMs = timeoutMs
-  }
+  if (!aiProvider) return null
 
-  async explainBatch(
-    input: ExplainDiffFragmentsInput,
-  ): Promise<DiffFragmentExplanationBatchItem[]> {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: this.model,
-        input: [
-          {
-            role: "system",
-            content: [
-              "You label code diff fragments for teachers reviewing similarity evidence.",
-              "Return neutral evidence only. Do not accuse either student.",
-              "Use the surrounding context to distinguish executable-code changes from comments or documentation.",
-              "If a target changes only a comment, use category comment_changed.",
-              "Use concise labels and one to three concrete reasons.",
-            ].join(" "),
-          },
-          {
-            role: "user",
-            content: JSON.stringify({
-              language: input.language ?? "unknown",
-              fragments: buildProviderFragmentPayloads(input),
-            }),
-          },
-        ],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "diff_fragment_explanations",
-            strict: true,
-            schema: createDiffExplanationBatchJsonSchema({
-              includeArrayBounds: true,
-            }),
-          },
-        },
-      }),
-      signal: AbortSignal.timeout(this.timeoutMs),
-    })
-
-    if (!response.ok) {
-      throw new Error(`OpenAI diff label request failed with ${response.status}`)
-    }
-
-    const payload = (await response.json()) as OpenAiStructuredOutputResponse
-    const parsedOutput = parseOpenAiStructuredOutput(payload)
-
-    return parseProviderBatchOutput(parsedOutput)
-  }
+  return new SharedDiffExplanationProvider(aiProvider)
 }
 
-class AnthropicDiffExplanationProvider implements DiffExplanationProvider {
-  private readonly apiKey: string
-  private readonly model: string
-  private readonly timeoutMs: number
+class SharedDiffExplanationProvider implements DiffExplanationProvider {
+  private readonly provider: AiFragmentLabelProvider
 
-  constructor(apiKey: string, model: string, timeoutMs: number) {
-    this.apiKey = apiKey
-    this.model = model
-    this.timeoutMs = timeoutMs
+  constructor(provider: AiFragmentLabelProvider) {
+    this.provider = provider
   }
 
-  async explainBatch(
+  explainBatch(
     input: ExplainDiffFragmentsInput,
-  ): Promise<DiffFragmentExplanationBatchItem[]> {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": this.apiKey,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: this.model,
-        max_tokens: 1024,
-        system: [
-          "You label code diff fragments for teachers reviewing similarity evidence.",
-          "Return neutral evidence only. Do not accuse either student.",
-          "Use the surrounding context to distinguish executable-code changes from comments or documentation.",
-          "If a target changes only a comment, use category comment_changed.",
-          "The tool input must be exactly an object with a fragments array.",
-          "Every fragments item must include the same targetId provided in the request.",
-          "Use the provided tool exactly once with concise labels and one to three concrete reasons.",
-        ].join(" "),
-        messages: [
-          {
-            role: "user",
-            content: JSON.stringify({
-              language: input.language ?? "unknown",
-              fragments: buildProviderFragmentPayloads(input),
-            }),
-          },
-        ],
-        tools: [
-          {
-            name: DIFF_EXPLANATION_TOOL_NAME,
-            description:
-              "Create neutral, structured labels explaining what changed in highlighted code diff fragments.",
-            input_schema: createDiffExplanationBatchJsonSchema({
-              includeArrayBounds: false,
-            }),
-            strict: true,
-          },
-        ],
-        tool_choice: {
-          type: "tool",
-          name: DIFF_EXPLANATION_TOOL_NAME,
-        },
+  ): Promise<AiFragmentLabelBatchItem[]> {
+    return this.provider.generateLabels({
+      taskName: "diff_view_fragment_labels",
+      language: input.language,
+      fragments: buildProviderFragmentPayloads(input),
+      systemInstructions: [...DIFF_LABEL_SYSTEM_INSTRUCTIONS],
+      responseFormatName: "diff_fragment_explanations",
+      jsonSchema: createDiffExplanationBatchJsonSchema({
+        includeArrayBounds: true,
       }),
-      signal: AbortSignal.timeout(this.timeoutMs),
     })
-
-    if (!response.ok) {
-      throw new Error(
-        `Anthropic diff label request failed with ${response.status}: ${await response.text()}`,
-      )
-    }
-
-    const payload = (await response.json()) as AnthropicMessagesResponse
-    const toolInput = parseAnthropicToolInput(payload)
-
-    return parseProviderBatchOutput(toolInput)
-  }
-}
-
-function createConfiguredProvider(): DiffExplanationProvider | null {
-  switch (settings.aiDiffLabelsProvider) {
-    case "anthropic":
-      if (!settings.anthropicApiKey) {
-        if (settings.aiDiffLabelsEnabled) {
-          logger.warn("AI diff labels enabled without ANTHROPIC_API_KEY")
-        }
-
-        return null
-      }
-
-      return new AnthropicDiffExplanationProvider(
-        settings.anthropicApiKey,
-        settings.aiDiffLabelsModel,
-        settings.aiDiffLabelsTimeoutMs,
-      )
-    case "openai":
-      if (!settings.openAiApiKey) {
-        if (settings.aiDiffLabelsEnabled) {
-          logger.warn("AI diff labels enabled without OPENAI_API_KEY")
-        }
-
-        return null
-      }
-
-      return new OpenAiDiffExplanationProvider(
-        settings.openAiApiKey,
-        settings.aiDiffLabelsModel,
-        settings.aiDiffLabelsTimeoutMs,
-      )
   }
 }
 
 function createDiffExplanationBatchJsonSchema(options: {
   includeArrayBounds: boolean
 }): Record<string, unknown> {
-  return {
-    type: "object",
-    description:
-      "Container for all diff explanation labels. The response must use this wrapper and place every label inside fragments.",
-    additionalProperties: false,
-    required: ["fragments"],
-    properties: {
-      fragments: {
-        type: "array",
-        description:
-          "One label per requested target. Use the exact targetId values from the request.",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          required: ["targetId", "category", "label", "reasons", "confidence"],
-          properties: {
-            targetId: {
-              type: "string",
-              description:
-                "The exact targetId from the corresponding request fragment.",
-            },
-            category: {
-              type: "string",
-              description:
-                "The most specific neutral category for this target. Use comment_changed for comment-only changes.",
-              enum: [
-                "identifier_renaming",
-                "conditional_logic_changed",
-                "loop_logic_changed",
-                "output_logic_changed",
-                "statement_added",
-                "statement_removed",
-                "comment_changed",
-                "code_changed",
-              ],
-            },
-            label: {
-              type: "string",
-              description: "A short neutral teacher-facing label.",
-            },
-            reasons: {
-              type: "array",
-              description:
-                "One to three concrete evidence reasons. Do not accuse either student.",
-              items: { type: "string" },
-              ...(options.includeArrayBounds
-                ? {
-                    minItems: 1,
-                    maxItems: 3,
-                  }
-                : {}),
-            },
-            confidence: {
-              type: "number",
-              description: "Confidence from 0 to 1.",
-            },
-          },
-        },
-      },
-    },
-  }
+  return createAiFragmentLabelBatchJsonSchema({
+    categories: [
+      "identifier_renaming",
+      "conditional_logic_changed",
+      "loop_logic_changed",
+      "output_logic_changed",
+      "statement_added",
+      "statement_removed",
+      "comment_changed",
+      "code_changed",
+    ],
+    labelDescription:
+      "A short neutral teacher-facing label in title case. Keep it under eight words.",
+    reasonDescription:
+      "Exactly one simple, professional sentence explaining the exact left-to-right difference. Name exact identifiers, functions, literals, operators, or values when visible. Prefer compact mappings like `oldName` -> `newName`. Do not accuse either student or over-explain.",
+    includeArrayBounds: options.includeArrayBounds,
+  })
 }
 
 function buildFallbackExplanationMap(
@@ -641,7 +454,7 @@ function buildFallbackTarget(
 function mergeProviderExplanationsWithFallbackTargets(input: {
   fallbackTargets: DiffFragmentExplanationTarget[]
   explanationTargets: ExplainDiffFragmentTarget[]
-  providerExplanations: DiffFragmentExplanationBatchItem[]
+  providerExplanations: AiFragmentLabelBatchItem[]
   minimumConfidence: number
 }): DiffFragmentExplanationTarget[] {
   const explanationTargetByTargetId = new Map(
@@ -694,9 +507,21 @@ function mergeProviderExplanationsWithFallbackTargets(input: {
 
     return {
       ...fallbackTarget,
-      explanation: parsedExplanation.data,
+      explanation: normalizeDiffFragmentExplanation(parsedExplanation.data),
     }
   })
+}
+
+function normalizeDiffFragmentExplanation(
+  explanation: DiffFragmentExplanation,
+): DiffFragmentExplanation {
+  return {
+    ...explanation,
+    label: explanation.label.trim(),
+    reasons: [
+      normalizeFragmentReasonSentence(explanation.reasons[0], explanation.label),
+    ],
+  }
 }
 
 interface SelectedLineSegment {
@@ -907,39 +732,6 @@ function buildProviderFragmentPayloads(input: ExplainDiffFragmentsInput): Array<
   }))
 }
 
-export function parseProviderBatchOutput(
-  payload: unknown,
-): DiffFragmentExplanationBatchItem[] {
-  const rawFragments = extractProviderFragmentPayloads(payload)
-
-  return rawFragments.map((rawFragment) => {
-    const fragmentPayload = coerceObjectPayload(rawFragment)
-    const targetId = fragmentPayload.targetId
-
-    if (typeof targetId !== "string") {
-      throw new Error("AI structured output included a fragment without targetId")
-    }
-
-    const { targetId: _targetId, ...rawExplanation } = fragmentPayload
-
-    return { targetId, explanation: { ...rawExplanation, source: "ai" } }
-  })
-}
-
-function extractProviderFragmentPayloads(payload: unknown): unknown[] {
-  if (Array.isArray(payload)) return payload
-
-  const objectPayload = coerceObjectPayload(payload)
-
-  if (Array.isArray(objectPayload.fragments)) return objectPayload.fragments
-  if (Array.isArray(objectPayload.targets)) return objectPayload.targets
-  if (Array.isArray(objectPayload.labels)) return objectPayload.labels
-
-  if (typeof objectPayload.targetId === "string") return [objectPayload]
-
-  throw new Error("AI structured output did not include a fragments array")
-}
-
 function serializeProviderError(error: unknown): Record<string, unknown> {
   if (error instanceof Error) {
     return {
@@ -950,52 +742,6 @@ function serializeProviderError(error: unknown): Record<string, unknown> {
   }
 
   return { value: error }
-}
-
-function parseOpenAiStructuredOutput(
-  payload: OpenAiStructuredOutputResponse,
-): unknown {
-  if (payload.output_parsed) return payload.output_parsed
-
-  if (payload.output_text) {
-    return JSON.parse(payload.output_text)
-  }
-
-  for (const outputItem of payload.output ?? []) {
-    for (const contentItem of outputItem.content ?? []) {
-      if (contentItem.refusal) {
-        throw new Error("OpenAI refused to generate a diff explanation")
-      }
-
-      if (contentItem.type === "output_text" && contentItem.text) {
-        return JSON.parse(contentItem.text)
-      }
-    }
-  }
-
-  throw new Error("OpenAI response did not contain structured output")
-}
-
-function parseAnthropicToolInput(payload: AnthropicMessagesResponse): unknown {
-  const toolUseBlock = payload.content?.find(
-    (contentBlock) =>
-      contentBlock.type === "tool_use" &&
-      contentBlock.name === DIFF_EXPLANATION_TOOL_NAME,
-  )
-
-  if (!toolUseBlock) {
-    throw new Error("Anthropic response did not contain expected tool output")
-  }
-
-  return toolUseBlock.input
-}
-
-function coerceObjectPayload(payload: unknown): Record<string, unknown> {
-  if (typeof payload === "object" && payload !== null && !Array.isArray(payload)) {
-    return payload as Record<string, unknown>
-  }
-
-  throw new Error("AI structured output was not an object")
 }
 
 function extractSelectedCode(content: string, selection: DiffCodeSelection): string {

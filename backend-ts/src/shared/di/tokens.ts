@@ -48,5 +48,6 @@ export const DI_TOKENS = {
     semanticSimilarityClient: "SemanticSimilarityClient",
     crossClassSimilarity: "CrossClassSimilarityService",
     diffFragmentExplanation: "DiffFragmentExplanationService",
+    matchFragmentExplanation: "MatchFragmentExplanationService",
   },
 } as const

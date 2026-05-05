@@ -140,6 +140,7 @@ export const FragmentExplanationSchema = z.object({
     "control_flow",
     "function_structure",
     "code_structure",
+    "comment_text",
   ]),
   label: z.string(),
   reasons: z.array(z.string()),

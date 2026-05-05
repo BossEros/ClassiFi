@@ -13,6 +13,7 @@ import {
   DiffFragmentExplanationService,
   groupDiffExplanationTargetsByFragmentId,
 } from "@/modules/plagiarism/diff-fragment-explanation.service.js"
+import { MatchFragmentExplanationService } from "@/modules/plagiarism/match-fragment-explanation.service.js"
 import {
   computeSemanticScoresFromEmbeddings,
   type SemanticScorePairEntry,
@@ -26,7 +27,6 @@ import {
   createPlagiarismDetector,
   type PlagiarismFragmentDTO,
 } from "@/modules/plagiarism/plagiarism.mapper.js"
-import { explainMatchedFragment } from "@/modules/plagiarism/plagiarism-fragment-explanation.js"
 import {
   buildPairSimilarityScoreBreakdown,
   formatSimilarityScore,
@@ -178,6 +178,8 @@ export class CrossClassSimilarityService {
     private semanticClient: SemanticSimilarityClient,
     @inject(DI_TOKENS.services.diffFragmentExplanation)
     private diffExplanationService: DiffFragmentExplanationService,
+    @inject(DI_TOKENS.services.matchFragmentExplanation)
+    private matchExplanationService: MatchFragmentExplanationService,
   ) {}
 
   /**
@@ -1136,15 +1138,23 @@ export class CrossClassSimilarityService {
         endCol: fragment.rightEndCol,
       },
     }))
-    const diffExplanationTargets =
+    const [matchExplanationsByFragmentId, diffExplanationTargets] =
       leftContent && rightContent
-        ? await this.diffExplanationService.explainDiffFragmentTargets({
-            leftContent,
-            rightContent,
-            language,
-            fragments: fragmentSelections,
-          })
-        : []
+        ? await Promise.all([
+            this.matchExplanationService.explainMatchFragments({
+              leftContent,
+              rightContent,
+              language,
+              fragments: fragmentSelections,
+            }),
+            this.diffExplanationService.explainDiffFragmentTargets({
+              leftContent,
+              rightContent,
+              language,
+              fragments: fragmentSelections,
+            }),
+          ])
+        : [new Map(), []]
     const diffExplanationTargetsByFragmentId =
       groupDiffExplanationTargetsByFragmentId(diffExplanationTargets)
 
@@ -1168,15 +1178,7 @@ export class CrossClassSimilarityService {
         leftSelection,
         rightSelection,
         length: fragment.length,
-        explanation:
-          leftContent && rightContent
-            ? explainMatchedFragment({
-                leftContent,
-                rightContent,
-                leftSelection,
-                rightSelection,
-              })
-            : undefined,
+        explanation: matchExplanationsByFragmentId.get(fragment.id),
         diffExplanation:
           diffExplanationTargetsByFragmentId.get(fragment.id)?.[0]?.explanation,
         diffExplanationTargets:

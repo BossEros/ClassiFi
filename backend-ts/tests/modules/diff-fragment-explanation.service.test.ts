@@ -166,6 +166,69 @@ describe("DiffFragmentExplanationService", () => {
     })
   })
 
+  it("normalizes provider output into one complete explanation sentence", async () => {
+    const provider: DiffExplanationProvider = {
+      explainBatch: async () => [
+        {
+          targetId: "0:0",
+          explanation: {
+            category: "identifier_renaming",
+            label: "Dictionary Variable Renamed",
+            reasons: [
+              "Left code uses roman_dict while right code uses values",
+              "The dictionary initialization and contents remain identical.",
+            ],
+            confidence: 0.94,
+            source: "ai",
+          },
+        },
+      ],
+    }
+    const service = new DiffFragmentExplanationService({
+      enabled: true,
+      provider,
+      minimumConfidence: 0.7,
+    })
+
+    const explanation = await service.explainDiffFragment(input)
+
+    expect(explanation.reasons).toEqual([
+      "Left code uses roman_dict while right code uses values.",
+    ])
+  })
+
+  it("keeps specific AI diff labels even when the raw reason is slightly long", async () => {
+    const provider: DiffExplanationProvider = {
+      explainBatch: async () => [
+        {
+          targetId: "0:0",
+          explanation: {
+            category: "identifier_renaming",
+            label: "Variables Renamed",
+            reasons: [
+              "The addition statement changes `roman_dict` to `values`, `total` to `result`, and `i` to `index`, while preserving the same lookup and accumulation operation with the updated variable names in the right snippet.",
+            ],
+            confidence: 0.94,
+            source: "ai",
+          },
+        },
+      ],
+    }
+    const service = new DiffFragmentExplanationService({
+      enabled: true,
+      provider,
+      minimumConfidence: 0.7,
+    })
+
+    const explanation = await service.explainDiffFragment(input)
+    const reason = explanation.reasons[0] ?? ""
+
+    expect(explanation.source).toBe("ai")
+    expect(reason).toContain("`roman_dict` to `values`")
+    expect(reason).toContain("`total` to `result`")
+    expect(reason.length).toBeLessThanOrEqual(260)
+  })
+
   it("requests all fragments from the provider in one pair-level batch", async () => {
     let providerCallCount = 0
     const provider: DiffExplanationProvider = {
@@ -497,6 +560,28 @@ describe("DiffFragmentExplanationService", () => {
       label: "Accumulator Renamed",
     })
   })
+
+  it("caches fallback targets after provider failures to avoid repeated slow calls", async () => {
+    let providerCallCount = 0
+    const failingProvider: DiffExplanationProvider = {
+      explainBatch: async () => {
+        providerCallCount += 1
+        throw new Error("Anthropic tool input was empty")
+      },
+    }
+    const service = new DiffFragmentExplanationService({
+      enabled: true,
+      provider: failingProvider,
+      minimumConfidence: 0.7,
+    })
+
+    const firstTargets = await service.explainDiffFragmentTargets(batchInput)
+    const secondTargets = await service.explainDiffFragmentTargets(batchInput)
+
+    expect(providerCallCount).toBe(1)
+    expect(firstTargets[0]?.explanation.source).toBe("fallback")
+    expect(secondTargets[0]?.explanation.source).toBe("fallback")
+  })
 })
 
 describe("parseProviderBatchOutput", () => {
@@ -525,6 +610,44 @@ describe("parseProviderBatchOutput", () => {
         },
       },
     ])
+  })
+
+  it("accepts common provider wrapper keys when the model omits fragments", () => {
+    const parsedOutput = parseProviderBatchOutput({
+      explanations: [
+        {
+          targetId: "101:0",
+          category: "identifier_renaming",
+          label: "Accumulator Renamed",
+          reasons: ["The accumulator changed names."],
+          confidence: 0.92,
+        },
+      ],
+    })
+
+    expect(parsedOutput[0]?.targetId).toBe("101:0")
+    expect(parsedOutput[0]?.explanation).toMatchObject({
+      source: "ai",
+      label: "Accumulator Renamed",
+    })
+  })
+
+  it("accepts a nested tool-name wrapper around the fragments array", () => {
+    const parsedOutput = parseProviderBatchOutput({
+      create_diff_fragment_explanations: {
+        fragments: [
+          {
+            targetId: "101:0",
+            category: "identifier_renaming",
+            label: "Accumulator Renamed",
+            reasons: ["The accumulator changed names."],
+            confidence: 0.92,
+          },
+        ],
+      },
+    })
+
+    expect(parsedOutput[0]?.targetId).toBe("101:0")
   })
 
   it("accepts a direct array when the provider omits the fragments wrapper", () => {
@@ -556,5 +679,37 @@ describe("parseProviderBatchOutput", () => {
 
     expect(parsedOutput).toHaveLength(1)
     expect(parsedOutput[0]?.targetId).toBe("101:0")
+  })
+
+  it("accepts fenced JSON text output from text-only providers", () => {
+    const parsedOutput = parseProviderBatchOutput(`
+      \`\`\`json
+      {
+        "fragments": [
+          {
+            "targetId": "101:0",
+            "category": "identifier_renaming",
+            "label": "Accumulator Renamed",
+            "reasons": ["The accumulator changed names."],
+            "confidence": 0.92
+          }
+        ]
+      }
+      \`\`\`
+    `)
+
+    expect(parsedOutput[0]?.targetId).toBe("101:0")
+    expect(parsedOutput[0]?.explanation).toMatchObject({
+      source: "ai",
+      label: "Accumulator Renamed",
+    })
+  })
+
+  it("reports available keys when the provider output shape is unsupported", () => {
+    expect(() =>
+      parseProviderBatchOutput({
+        explanationText: "The accumulator was renamed.",
+      }),
+    ).toThrow(/Available keys: explanationText/)
   })
 })

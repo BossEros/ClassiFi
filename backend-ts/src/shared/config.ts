@@ -96,6 +96,22 @@ const EnvSchema = z
         (v) => Number.isInteger(v) && v > 0,
         "AI_DIFF_LABELS_TIMEOUT_MS must be a positive integer",
       ),
+    AI_FRAGMENT_LABELS_ENABLED: z
+      .string()
+      .optional()
+      .transform((v) =>
+        v === undefined ? undefined : v === "true" || v === "True",
+      ),
+    AI_FRAGMENT_LABELS_PROVIDER: z.enum(["openai", "anthropic"]).optional(),
+    AI_FRAGMENT_LABELS_MODEL: z.string().optional(),
+    AI_FRAGMENT_LABELS_TIMEOUT_MS: z
+      .string()
+      .optional()
+      .transform((v) => (v === undefined ? undefined : Number(v)))
+      .refine(
+        (v) => v === undefined || (Number.isInteger(v) && v > 0),
+        "AI_FRAGMENT_LABELS_TIMEOUT_MS must be a positive integer",
+      ),
     OPENAI_API_KEY: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
 
@@ -243,10 +259,18 @@ export const settings = {
   semanticSimilarityMaxRetries: env.SEMANTIC_SIMILARITY_MAX_RETRIES,
   plagiarismStructuralWeight: env.PLAGIARISM_STRUCTURAL_WEIGHT,
   plagiarismSemanticWeight: env.PLAGIARISM_SEMANTIC_WEIGHT,
-  aiDiffLabelsEnabled: env.AI_DIFF_LABELS_ENABLED,
-  aiDiffLabelsProvider: env.AI_DIFF_LABELS_PROVIDER,
-  aiDiffLabelsModel: env.AI_DIFF_LABELS_MODEL,
-  aiDiffLabelsTimeoutMs: env.AI_DIFF_LABELS_TIMEOUT_MS,
+  aiFragmentLabelsEnabled:
+    env.AI_FRAGMENT_LABELS_ENABLED ?? env.AI_DIFF_LABELS_ENABLED,
+  aiFragmentLabelsProvider:
+    env.AI_FRAGMENT_LABELS_PROVIDER ?? env.AI_DIFF_LABELS_PROVIDER,
+  aiFragmentLabelsModel: env.AI_FRAGMENT_LABELS_MODEL ?? env.AI_DIFF_LABELS_MODEL,
+  aiFragmentLabelsTimeoutMs:
+    env.AI_FRAGMENT_LABELS_TIMEOUT_MS ?? env.AI_DIFF_LABELS_TIMEOUT_MS,
+  aiDiffLabelsEnabled: env.AI_FRAGMENT_LABELS_ENABLED ?? env.AI_DIFF_LABELS_ENABLED,
+  aiDiffLabelsProvider: env.AI_FRAGMENT_LABELS_PROVIDER ?? env.AI_DIFF_LABELS_PROVIDER,
+  aiDiffLabelsModel: env.AI_FRAGMENT_LABELS_MODEL ?? env.AI_DIFF_LABELS_MODEL,
+  aiDiffLabelsTimeoutMs:
+    env.AI_FRAGMENT_LABELS_TIMEOUT_MS ?? env.AI_DIFF_LABELS_TIMEOUT_MS,
   openAiApiKey: env.OPENAI_API_KEY,
   anthropicApiKey: env.ANTHROPIC_API_KEY,
 

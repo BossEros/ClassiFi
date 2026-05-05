@@ -80,7 +80,7 @@ describe("PairComparison", () => {
       name: "Previous fragment",
     })
     expect(
-      screen.queryByLabelText("Selected fragment explanation"),
+      screen.queryByLabelText("Editor fragment explanation"),
     ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Next fragment" }))
@@ -93,7 +93,7 @@ describe("PairComparison", () => {
       previousFragmentButton.parentElement,
     ).not.toHaveTextContent(/structural fingerprint/i)
     expect(
-      screen.queryByLabelText("Selected fragment explanation"),
+      screen.queryByLabelText("Editor fragment explanation"),
     ).not.toBeInTheDocument()
     expect(
       screen.getByText(/Click or hover over a highlighted block to see its evidence label/i),

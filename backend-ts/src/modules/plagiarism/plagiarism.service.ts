@@ -9,6 +9,7 @@ import {
   DiffFragmentExplanationService,
   groupDiffExplanationTargetsByFragmentId,
 } from "@/modules/plagiarism/diff-fragment-explanation.service.js"
+import { MatchFragmentExplanationService } from "@/modules/plagiarism/match-fragment-explanation.service.js"
 import {
   computeSemanticScoresFromEmbeddings,
   type SemanticScorePairEntry,
@@ -22,7 +23,6 @@ import {
   type PlagiarismFragmentDTO,
   type PlagiarismSummaryDTO,
 } from "@/modules/plagiarism/plagiarism.mapper.js"
-import { explainMatchedFragment } from "@/modules/plagiarism/plagiarism-fragment-explanation.js"
 import {
   buildPairSimilarityScoreBreakdown,
   normalizeSubmissionPair,
@@ -123,6 +123,8 @@ export class PlagiarismService {
     private semanticClient: SemanticSimilarityClient,
     @inject(DI_TOKENS.services.diffFragmentExplanation)
     private diffExplanationService: DiffFragmentExplanationService,
+    @inject(DI_TOKENS.services.matchFragmentExplanation)
+    private matchExplanationService: MatchFragmentExplanationService,
   ) {}
 
   /** Get pair details with fragments. */
@@ -224,13 +226,21 @@ export class PlagiarismService {
         endCol: fragment.rightEndCol,
       },
     }))
-    const diffExplanationTargets =
-      await this.diffExplanationService.explainDiffFragmentTargets({
-        leftContent,
-        rightContent,
-        language: assignment?.programmingLanguage,
-        fragments: fragmentSelections,
-      })
+    const [matchExplanationsByFragmentId, diffExplanationTargets] =
+      await Promise.all([
+        this.matchExplanationService.explainMatchFragments({
+          leftContent,
+          rightContent,
+          language: assignment?.programmingLanguage,
+          fragments: fragmentSelections,
+        }),
+        this.diffExplanationService.explainDiffFragmentTargets({
+          leftContent,
+          rightContent,
+          language: assignment?.programmingLanguage,
+          fragments: fragmentSelections,
+        }),
+      ])
     const diffExplanationTargetsByFragmentId = groupDiffExplanationTargetsByFragmentId(
       diffExplanationTargets,
     )
@@ -242,12 +252,7 @@ export class PlagiarismService {
         leftSelection: fragmentSelection.leftSelection,
         rightSelection: fragmentSelection.rightSelection,
         length: fragment.length,
-        explanation: explainMatchedFragment({
-          leftContent,
-          rightContent,
-          leftSelection: fragmentSelection.leftSelection,
-          rightSelection: fragmentSelection.rightSelection,
-        }),
+        explanation: matchExplanationsByFragmentId.get(fragment.id),
         diffExplanation:
           diffExplanationTargetsByFragmentId.get(fragment.id)?.[0]?.explanation,
         diffExplanationTargets:

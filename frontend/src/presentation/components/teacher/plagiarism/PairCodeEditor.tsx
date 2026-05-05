@@ -7,6 +7,10 @@ import {
   CLASSIFI_PLAGIARISM_LIGHT_THEME,
   ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
+import {
+  PLAGIARISM_MONACO_HOVER_CSS,
+  formatFragmentExplanationHoverMessage,
+} from "./fragmentExplanationHover"
 
 interface PairCodeEditorProps {
   /** Which side of the comparison (left or right file) */
@@ -258,7 +262,9 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
           hoverMessage:
             sel.fragment !== "ignored" && sel.fragment.explanation
               ? {
-                  value: `**${sel.fragment.explanation.label}**\n\n${sel.fragment.explanation.reasons.join("\n")}`,
+                  value: formatFragmentExplanationHoverMessage(
+                    sel.fragment.explanation,
+                  ),
                 }
               : undefined,
         },
@@ -288,24 +294,6 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     [getRegion],
   )
 
-  const showSelectedFragmentHover = useCallback(
-    (fragment: MatchFragment) => {
-      if (!editorRef.current || !fragment.explanation) return
-
-      const region = getRegion(fragment)
-      editorRef.current.setPosition({
-        lineNumber: region.startRow + 1,
-        column: Math.max(region.startCol + 1, 1),
-      })
-      editorRef.current.trigger(
-        "classifi.fragmentExplanation",
-        "editor.action.showHover",
-        undefined,
-      )
-    },
-    [getRegion],
-  )
-
   // Initialize editor (only depends on file content and language)
   useEffect(() => {
     if (!containerRef.current) return
@@ -326,6 +314,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       minimap: { enabled: false },
       contextmenu: false,
       scrollBeyondLastLine: false,
+      fixedOverflowWidgets: true,
     })
 
     return () => {
@@ -452,16 +441,6 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     }
   }, [selectedFragment, scrollToFragment])
 
-  useEffect(() => {
-    if (!selectedFragment?.explanation || hoveredFragment) return
-
-    const animationFrameId = window.requestAnimationFrame(() => {
-      showSelectedFragmentHover(selectedFragment)
-    })
-
-    return () => window.cancelAnimationFrame(animationFrameId)
-  }, [hoveredFragment, selectedFragment, showSelectedFragmentHover])
-
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* File info header */}
@@ -567,6 +546,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
           background-color: ${MATCH_COLORS.matchIgnored};
           box-shadow: inset 0 0 0 1px ${MATCH_COLORS.matchIgnoredOutline};
         }
+        ${PLAGIARISM_MONACO_HOVER_CSS}
       `}</style>
     </div>
   )
