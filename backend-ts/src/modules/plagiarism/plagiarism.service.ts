@@ -122,9 +122,9 @@ export class PlagiarismService {
     @inject(DI_TOKENS.services.semanticSimilarityClient)
     private semanticClient: SemanticSimilarityClient,
     @inject(DI_TOKENS.services.diffFragmentExplanation)
-    private diffExplanationService: DiffFragmentExplanationService,
+    private diffExplanationService: DiffFragmentExplanationService = new DiffFragmentExplanationService(),
     @inject(DI_TOKENS.services.matchFragmentExplanation)
-    private matchExplanationService: MatchFragmentExplanationService,
+    private matchExplanationService: MatchFragmentExplanationService = new MatchFragmentExplanationService(),
   ) {}
 
   /** Get pair details with fragments. */

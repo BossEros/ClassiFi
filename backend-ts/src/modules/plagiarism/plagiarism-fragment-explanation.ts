@@ -138,7 +138,7 @@ export function explainMatchedFragment(
     return {
       category: "identifier_names",
       label: "Shared Identifier Names",
-      reasons: [`Both fragments use ${formatValueList(sharedIdentifiers)}`],
+      reasons: [`Both fragments use ${formatCommaValueList(sharedIdentifiers)}`],
     }
   }
 
@@ -245,4 +245,8 @@ function formatValueList(values: string[]): string {
   if (visibleValues.length === 2) return `${visibleValues[0]} and ${visibleValues[1]}`
 
   return visibleValues.join(", ")
+}
+
+function formatCommaValueList(values: string[]): string {
+  return values.slice(0, 4).join(", ")
 }

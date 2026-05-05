@@ -177,7 +177,7 @@ export const StudentResponseSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   isActive: z.boolean(),
-  enrolledAt: z.string(),
+  enrolledAt: z.string().optional(),
 })
 
 export type StudentResponse = z.infer<typeof StudentResponseSchema>

@@ -170,18 +170,6 @@ export function buildDiffFragmentExplanation(
   }
 
   if (
-    hasChangedLoopCondition(leftSnippet, rightSnippet)
-  ) {
-    return {
-      category: "loop_condition_changed",
-      label: "Loop Condition Changed",
-      reasons: [
-        "Both submissions use a loop, but the right submission changes the loop boundary or condition.",
-      ],
-    }
-  }
-
-  if (
     identifierRenames.length > 0 &&
     haveSimilarTokenShapeIgnoringIdentifiers(leftTokens, rightTokens)
   ) {
@@ -190,6 +178,18 @@ export function buildDiffFragmentExplanation(
       label: "Identifier Renaming With Same Logic",
       reasons: [
         `The right submission renames ${formatRenameList(identifierRenames)} while preserving the same code shape.`,
+      ],
+    }
+  }
+
+  if (
+    hasChangedLoopCondition(leftSnippet, rightSnippet)
+  ) {
+    return {
+      category: "loop_condition_changed",
+      label: "Loop Condition Changed",
+      reasons: [
+        "Both submissions use a loop, but the right submission changes the loop boundary or condition.",
       ],
     }
   }

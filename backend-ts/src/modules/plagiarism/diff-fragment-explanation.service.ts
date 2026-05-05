@@ -137,7 +137,13 @@ export class DiffFragmentExplanationService {
       ],
     })
 
-    return explanationTargets[0]?.explanation ?? buildFallbackDiffFragmentExplanation(input)
+    const firstTargetExplanation = explanationTargets[0]?.explanation
+
+    if (!firstTargetExplanation || firstTargetExplanation.source === "fallback") {
+      return buildFallbackDiffFragmentExplanation(input)
+    }
+
+    return firstTargetExplanation
   }
 
   /**
@@ -159,7 +165,17 @@ export class DiffFragmentExplanationService {
       )
 
       if (firstFragmentTarget) {
-        explanationsByFragmentId.set(fragment.fragmentId, firstFragmentTarget.explanation)
+        const fragmentFallbackExplanation = fallbackExplanationsByFragmentId.get(
+          fragment.fragmentId,
+        )
+        const fragmentExplanation =
+          firstFragmentTarget.explanation.source === "fallback"
+            ? fragmentFallbackExplanation
+            : firstFragmentTarget.explanation
+
+        if (fragmentExplanation) {
+          explanationsByFragmentId.set(fragment.fragmentId, fragmentExplanation)
+        }
       }
     }
 
