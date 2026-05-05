@@ -318,7 +318,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
               fontWeight: 600,
             }}
           >
-            Added
+            Yellow-Green
           </span>
           <span style={{ color: legendTextColor, fontSize: "12px" }}>
             Yellow-green marks code present only in the right file.
