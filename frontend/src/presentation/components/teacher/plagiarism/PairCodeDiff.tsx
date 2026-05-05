@@ -39,7 +39,7 @@ interface PairCodeDiffProps {
  * Monaco diff editor showing differences between two files.
  *
  * Shows a side-by-side diff view highlighting:
- * - Added lines (green)
+ * - Code only in the right submission (yellow-green Monaco inserted color)
  * - Removed lines (red)
  * - Unchanged lines (normal)
  */
@@ -321,7 +321,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
             Added
           </span>
           <span style={{ color: legendTextColor, fontSize: "12px" }}>
-            Green marks code present only in the right file.
+            Yellow-green marks code present only in the right file.
           </span>
         </div>
 
