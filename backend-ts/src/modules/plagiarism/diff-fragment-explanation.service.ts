@@ -204,16 +204,6 @@ export class DiffFragmentExplanationService {
       return fallbackTargets
     }
 
-    const providerTargets = explanationTargets.filter(
-      (target) => !target.isCommentOnly,
-    )
-
-    if (providerTargets.length === 0) {
-      this.setCachedExplanations(createDiffExplanationCacheKey(input), fallbackTargets)
-
-      return fallbackTargets
-    }
-
     const cacheKey = createDiffExplanationCacheKey(input)
     const cachedExplanations = this.explanationsByPairCacheKey.get(cacheKey)
 
@@ -224,7 +214,7 @@ export class DiffFragmentExplanationService {
     try {
       const providerExplanations = await this.provider.explainBatch({
         ...input,
-        fragments: providerTargets.map((target) => ({
+        fragments: explanationTargets.map((target) => ({
           fragmentId: target.parentFragmentId,
           targetId: target.targetId,
           leftSelection: target.leftSelection,

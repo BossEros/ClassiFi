@@ -50,6 +50,7 @@ interface AnthropicMessagesResponse {
 }
 
 const logger = createLogger("AiFragmentLabelProvider")
+const ANTHROPIC_FRAGMENT_LABEL_MAX_OUTPUT_TOKENS = 4096
 const PROVIDER_FRAGMENT_ARRAY_KEYS = [
   "fragments",
   "explanations",
@@ -149,7 +150,7 @@ class AnthropicFragmentLabelProvider implements AiFragmentLabelProvider {
       },
       body: JSON.stringify({
         model: this.model,
-        max_tokens: 1024,
+        max_tokens: ANTHROPIC_FRAGMENT_LABEL_MAX_OUTPUT_TOKENS,
         system: [
           ...input.systemInstructions,
           "Return only valid JSON that matches the requested schema.",

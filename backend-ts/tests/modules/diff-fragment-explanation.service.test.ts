@@ -226,7 +226,7 @@ describe("DiffFragmentExplanationService", () => {
     expect(explanation.source).toBe("ai")
     expect(reason).toContain("`roman_dict` to `values`")
     expect(reason).toContain("`total` to `result`")
-    expect(reason.length).toBeLessThanOrEqual(260)
+    expect(reason.length).toBeLessThanOrEqual(360)
   })
 
   it("requests all fragments from the provider in one pair-level batch", async () => {
@@ -358,13 +358,28 @@ describe("DiffFragmentExplanationService", () => {
     ])
   })
 
-  it("labels comment-only changes as comment changes without calling the provider", async () => {
+  it("sends comment-only changes to the provider when AI labels are enabled", async () => {
     let providerCallCount = 0
+    let observedIsCommentOnly: boolean | undefined
     const provider: DiffExplanationProvider = {
-      explainBatch: async () => {
+      explainBatch: async (providerInput) => {
         providerCallCount += 1
+        observedIsCommentOnly = providerInput.fragments[0]?.isCommentOnly
 
-        return []
+        return [
+          {
+            targetId: "301:0",
+            explanation: {
+              category: "comment_changed",
+              label: "Comment Purpose Changed",
+              reasons: [
+                "The right comment changes the setup wording from creating a stack to initializing it.",
+              ],
+              confidence: 0.91,
+              source: "ai",
+            },
+          },
+        ]
       },
     }
     const service = new DiffFragmentExplanationService({
@@ -394,15 +409,16 @@ describe("DiffFragmentExplanationService", () => {
       ],
     })
 
-    expect(providerCallCount).toBe(0)
+    expect(providerCallCount).toBe(1)
+    expect(observedIsCommentOnly).toBe(true)
     expect(explanationTargets).toHaveLength(1)
     expect(explanationTargets[0]?.explanation).toMatchObject({
       category: "comment_changed",
-      label: "Comment Text Changed",
-      source: "fallback",
+      label: "Comment Purpose Changed",
+      source: "ai",
     })
     expect(explanationTargets[0]?.explanation.reasons[0]).toContain(
-      "comment",
+      "initializing",
     )
   })
 

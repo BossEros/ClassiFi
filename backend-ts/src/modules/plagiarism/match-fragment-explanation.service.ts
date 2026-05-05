@@ -64,6 +64,7 @@ const MATCH_LABEL_SYSTEM_INSTRUCTIONS = [
   "You label matched code fragments for teachers reviewing similarity evidence.",
   "Return neutral evidence only. Do not accuse either student or infer intent.",
   "Describe why the two highlighted fragments look similar based only on visible code.",
+  "Comments may provide useful context; if the highlighted fragments are only comments, use category comment_text and explain the comment similarity.",
   "Be concrete: name exact identifiers, function names, literals, operators, or control structures when they are visible.",
   "Avoid vague role-only wording like 'the accumulator' or 'the dictionary' unless you also name the exact code text.",
   "For renamed identifiers, include compact mappings such as `roman_dict` -> `values`, `total` -> `result`, and `i` -> `index`.",
@@ -133,19 +134,11 @@ export class MatchFragmentExplanationService {
       return cloneExplanationMap(cachedExplanations)
     }
 
-    const providerTargets = matchTargets.filter((target) => !target.isCommentOnly)
-
-    if (providerTargets.length === 0) {
-      this.setCachedExplanations(cacheKey, fallbackExplanations)
-
-      return fallbackExplanations
-    }
-
     try {
       const providerExplanations = await this.provider.generateLabels({
         taskName: "match_view_fragment_labels",
         language: input.language,
-        fragments: providerTargets.map((target) => ({
+        fragments: matchTargets.map((target) => ({
           targetId: target.targetId,
           leftSnippet: target.leftSnippet,
           rightSnippet: target.rightSnippet,
@@ -266,7 +259,7 @@ function mergeProviderExplanationsWithFallbacks(input: {
   for (const providerExplanation of input.providerExplanations) {
     const matchTarget = matchTargetByTargetId.get(providerExplanation.targetId)
 
-    if (!matchTarget || matchTarget.isCommentOnly) continue
+    if (!matchTarget) continue
 
     const parsedExplanation = AiMatchFragmentExplanationSchema.safeParse(
       providerExplanation.explanation,
