@@ -61,18 +61,19 @@ export interface DiffFragmentExplanation {
 
 export interface DiffFragmentExplanationTarget {
   targetId: string
+  targetKind?: "changed" | "added" | "removed"
   leftSelection: {
     startRow: number
     startCol: number
     endRow: number
     endCol: number
-  }
+  } | null
   rightSelection: {
     startRow: number
     startCol: number
     endRow: number
     endCol: number
-  }
+  } | null
   explanation: DiffFragmentExplanation
 }
 
@@ -130,6 +131,7 @@ export interface ResultDetailsResponse {
     diffExplanation?: DiffFragmentExplanation
     diffExplanationTargets?: DiffFragmentExplanationTarget[]
   }>
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
   leftFile: {
     filename: string
     content: string

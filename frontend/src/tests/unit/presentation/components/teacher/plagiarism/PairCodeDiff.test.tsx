@@ -13,6 +13,8 @@ const monacoMockState = vi.hoisted(() => ({
     | ((event: { target?: { position?: { lineNumber: number; column: number } } }) => void)
     | null,
   contentWidgetNodes: [] as HTMLElement[],
+  originalDecorationCount: 0,
+  modifiedDecorationCount: 0,
 }))
 
 vi.mock("monaco-editor", () => ({
@@ -37,6 +39,11 @@ vi.mock("monaco-editor", () => ({
             }>,
           ) => {
             monacoMockState.decorationCallCount += 1
+            if (side === "original") {
+              monacoMockState.originalDecorationCount += decorations.length
+            } else {
+              monacoMockState.modifiedDecorationCount += decorations.length
+            }
 
             for (const decoration of decorations) {
               const hoverMessage = decoration.options?.hoverMessage?.value
@@ -100,6 +107,8 @@ describe("PairCodeDiff", () => {
     monacoMockState.originalMouseMoveHandler = null
     monacoMockState.modifiedMouseMoveHandler = null
     monacoMockState.contentWidgetNodes = []
+    monacoMockState.originalDecorationCount = 0
+    monacoMockState.modifiedDecorationCount = 0
     document.body
       .querySelectorAll(".classifi-fragment-explanation-widget")
       .forEach((node) => node.remove())
@@ -453,5 +462,141 @@ describe("PairCodeDiff", () => {
     expect(
       screen.queryByLabelText("Editor fragment explanation"),
     ).not.toBeInTheDocument()
+  })
+
+  it("shows pair-level right-only labels on the right editor only", async () => {
+    render(
+      <PairCodeDiff
+        leftFile={{
+          id: 1,
+          path: "Left.c",
+          filename: "Left.c",
+          content: "int main() {\n  return 0;\n}",
+          lineCount: 3,
+          studentName: "Ava Sinclair",
+        }}
+        rightFile={{
+          id: 2,
+          path: "Right.c",
+          filename: "Right.c",
+          content: "#include <string.h>\nint main() {\n  return 0;\n}",
+          lineCount: 4,
+          studentName: "Alexander Cross",
+        }}
+        fragments={[]}
+        diffExplanationTargets={[
+          {
+            targetId: "pair:0",
+            targetKind: "added",
+            leftSelection: null,
+            rightSelection: { startRow: 0, startCol: 0, endRow: 0, endCol: 19 },
+            explanation: {
+              category: "statement_added",
+              label: "Header Added",
+              reasons: ["The right file adds the string library include."],
+              confidence: 0.91,
+              source: "ai",
+            },
+          },
+        ]}
+        language="c"
+        variant="light"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(monacoMockState.decorationCallCount).toBeGreaterThan(0)
+    })
+
+    expect(monacoMockState.originalDecorationCount).toBe(0)
+    expect(monacoMockState.modifiedDecorationCount).toBe(1)
+
+    act(() => {
+      monacoMockState.originalMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      screen.queryByLabelText("Editor fragment explanation"),
+    ).not.toBeInTheDocument()
+
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      await screen.findByLabelText("Editor fragment explanation"),
+    ).toHaveTextContent("Header Added")
+  })
+
+  it("shows pair-level left-only labels on the left editor only", async () => {
+    render(
+      <PairCodeDiff
+        leftFile={{
+          id: 1,
+          path: "Left.c",
+          filename: "Left.c",
+          content: "printf(\"debug\");\nreturn 0;",
+          lineCount: 2,
+          studentName: "Ava Sinclair",
+        }}
+        rightFile={{
+          id: 2,
+          path: "Right.c",
+          filename: "Right.c",
+          content: "return 0;",
+          lineCount: 1,
+          studentName: "Alexander Cross",
+        }}
+        fragments={[]}
+        diffExplanationTargets={[
+          {
+            targetId: "pair:0",
+            targetKind: "removed",
+            leftSelection: { startRow: 0, startCol: 0, endRow: 0, endCol: 16 },
+            rightSelection: null,
+            explanation: {
+              category: "statement_removed",
+              label: "Debug Output Removed",
+              reasons: ["The right file no longer includes the debug printf line."],
+              confidence: 0.91,
+              source: "ai",
+            },
+          },
+        ]}
+        language="c"
+        variant="light"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(monacoMockState.decorationCallCount).toBeGreaterThan(0)
+    })
+
+    expect(monacoMockState.originalDecorationCount).toBe(1)
+    expect(monacoMockState.modifiedDecorationCount).toBe(0)
+
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      screen.queryByLabelText("Editor fragment explanation"),
+    ).not.toBeInTheDocument()
+
+    act(() => {
+      monacoMockState.originalMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      await screen.findByLabelText("Editor fragment explanation"),
+    ).toHaveTextContent("Debug Output Removed")
   })
 })

@@ -75,8 +75,9 @@ export interface DiffFragmentExplanation {
 
 export interface DiffFragmentExplanationTarget {
   targetId: string
-  leftSelection: CodeRegion
-  rightSelection: CodeRegion
+  targetKind?: "changed" | "added" | "removed"
+  leftSelection: CodeRegion | null
+  rightSelection: CodeRegion | null
   explanation: DiffFragmentExplanation
 }
 
@@ -91,6 +92,7 @@ export interface FilePair {
   overlap: number
   longest: number
   fragments: MatchFragment[]
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
   /** How many k-grams from the left file are matched */
   leftCovered?: number
   /** How many k-grams from the right file are matched */

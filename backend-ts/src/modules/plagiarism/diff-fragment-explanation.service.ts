@@ -6,6 +6,7 @@ import {
   DiffFragmentExplanationSchema,
   type DiffFragmentExplanation,
   type DiffFragmentExplanationTarget,
+  type DiffFragmentExplanationTargetKind,
 } from "@/modules/plagiarism/diff-fragment-explanation.schema.js"
 import {
   buildFallbackDiffFragmentExplanation,
@@ -48,11 +49,36 @@ export interface ExplainDiffFragmentsInput {
   language?: string
 }
 
+export interface ExplainPairDiffInput {
+  leftContent: string
+  rightContent: string
+  language?: string
+}
+
+export interface ExplainDiffProviderTarget {
+  fragmentId: number
+  targetId?: string
+  targetKind: DiffFragmentExplanationTargetKind
+  leftSelection: DiffCodeSelection | null
+  rightSelection: DiffCodeSelection | null
+  leftContextSnippet?: string
+  rightContextSnippet?: string
+  isCommentOnly?: boolean
+}
+
+export interface ExplainDiffProviderInput {
+  leftContent: string
+  rightContent: string
+  fragments: ExplainDiffProviderTarget[]
+  language?: string
+}
+
 export interface ExplainDiffFragmentTarget {
   targetId: string
   parentFragmentId: number
-  leftSelection: DiffCodeSelection
-  rightSelection: DiffCodeSelection
+  targetKind: DiffFragmentExplanationTargetKind
+  leftSelection: DiffCodeSelection | null
+  rightSelection: DiffCodeSelection | null
   leftContextSnippet: string
   rightContextSnippet: string
   isCommentOnly: boolean
@@ -60,7 +86,7 @@ export interface ExplainDiffFragmentTarget {
 
 export interface DiffExplanationProvider {
   explainBatch(
-    input: ExplainDiffFragmentsInput,
+    input: ExplainDiffProviderInput,
   ): Promise<AiFragmentLabelBatchItem[]>
 }
 
@@ -217,6 +243,7 @@ export class DiffFragmentExplanationService {
         fragments: explanationTargets.map((target) => ({
           fragmentId: target.parentFragmentId,
           targetId: target.targetId,
+          targetKind: target.targetKind,
           leftSelection: target.leftSelection,
           rightSelection: target.rightSelection,
           leftContextSnippet: target.leftContextSnippet,
@@ -236,6 +263,71 @@ export class DiffFragmentExplanationService {
       return cloneExplanationTargets(validatedTargets)
     } catch (error) {
       logger.warn("AI diff explanation batch failed; using fallback", {
+        error: serializeProviderError(error),
+      })
+
+      this.setCachedExplanations(cacheKey, fallbackTargets)
+
+      return fallbackTargets
+    }
+  }
+
+  /**
+   * Explains every changed line in the full pair Diff View.
+   *
+   * @param input - Full file contents for both sides of the comparison.
+   * @returns Pair-level explanation targets for changed, added, and removed lines.
+   */
+  async explainPairDiffTargets(
+    input: ExplainPairDiffInput,
+  ): Promise<DiffFragmentExplanationTarget[]> {
+    const explanationTargets = buildPairExplanationTargets(input)
+    const fallbackTargets = explanationTargets.map((target) =>
+      buildFallbackTarget(input, target),
+    )
+
+    if (explanationTargets.length === 0) {
+      return fallbackTargets
+    }
+
+    if (!this.enabled || !this.provider) {
+      return fallbackTargets
+    }
+
+    const providerInput: ExplainDiffProviderInput = {
+      ...input,
+      fragments: explanationTargets.map((target) => ({
+        fragmentId: target.parentFragmentId,
+        targetId: target.targetId,
+        targetKind: target.targetKind,
+        leftSelection: target.leftSelection,
+        rightSelection: target.rightSelection,
+        leftContextSnippet: target.leftContextSnippet,
+        rightContextSnippet: target.rightContextSnippet,
+        isCommentOnly: target.isCommentOnly,
+      })),
+    }
+    const cacheKey = createDiffExplanationCacheKey(providerInput)
+    const cachedExplanations = this.explanationsByPairCacheKey.get(cacheKey)
+
+    if (cachedExplanations) {
+      return cloneExplanationTargets(cachedExplanations)
+    }
+
+    try {
+      const providerExplanations = await this.provider.explainBatch(providerInput)
+      const validatedTargets = mergeProviderExplanationsWithFallbackTargets({
+        fallbackTargets,
+        explanationTargets,
+        providerExplanations,
+        minimumConfidence: this.minimumConfidence,
+      })
+
+      this.setCachedExplanations(cacheKey, validatedTargets)
+
+      return cloneExplanationTargets(validatedTargets)
+    } catch (error) {
+      logger.warn("AI pair diff explanation batch failed; using fallback", {
         error: serializeProviderError(error),
       })
 
@@ -306,7 +398,7 @@ class SharedDiffExplanationProvider implements DiffExplanationProvider {
   }
 
   explainBatch(
-    input: ExplainDiffFragmentsInput,
+    input: ExplainDiffProviderInput,
   ): Promise<AiFragmentLabelBatchItem[]> {
     return this.provider.generateLabels({
       taskName: "diff_view_fragment_labels",
@@ -399,6 +491,7 @@ function buildExplanationTargets(
       targets.push({
         targetId: `${fragment.fragmentId}:${targetIndex}`,
         parentFragmentId: fragment.fragmentId,
+        targetKind: "changed",
         leftSelection,
         rightSelection,
         leftContextSnippet: extractContextSnippet(
@@ -423,13 +516,200 @@ function buildExplanationTargets(
   })
 }
 
+function buildPairExplanationTargets(
+  input: ExplainPairDiffInput,
+): ExplainDiffFragmentTarget[] {
+  const leftLines = input.leftContent.split(/\r?\n/)
+  const rightLines = input.rightContent.split(/\r?\n/)
+  const diffBlocks = buildLineDiffBlocks(leftLines, rightLines)
+  const targets: ExplainDiffFragmentTarget[] = []
+
+  for (const block of diffBlocks) {
+    const pairedChanges = pairSimilarChangedLines(block.removed, block.added)
+    const pairedRemovedIndexes = new Set(
+      pairedChanges.map((pair) => pair.removedIndex),
+    )
+    const pairedAddedIndexes = new Set(pairedChanges.map((pair) => pair.addedIndex))
+    const blockTargets: ExplainDiffFragmentTarget[] = []
+
+    for (const pair of pairedChanges) {
+      const removedLine = block.removed[pair.removedIndex]
+      const addedLine = block.added[pair.addedIndex]
+
+      if (!removedLine || !addedLine) continue
+
+      blockTargets.push(
+        createPairExplanationTarget({
+          input,
+          targetKind: "changed",
+          leftSelection: createFullLineSelection(removedLine),
+          rightSelection: createFullLineSelection(addedLine),
+          leftText: removedLine.text,
+          rightText: addedLine.text,
+        }),
+      )
+    }
+
+    block.removed.forEach((line, index) => {
+      if (pairedRemovedIndexes.has(index)) return
+
+      const leftSelection = createFullLineSelection(line)
+      blockTargets.push(
+        createPairExplanationTarget({
+          input,
+          targetKind: "removed",
+          leftSelection,
+          rightSelection: null,
+          leftText: line.text,
+          rightText: "",
+        }),
+      )
+    })
+
+    block.added.forEach((line, index) => {
+      if (pairedAddedIndexes.has(index)) return
+
+      const rightSelection = createFullLineSelection(line)
+      blockTargets.push(
+        createPairExplanationTarget({
+          input,
+          targetKind: "added",
+          leftSelection: null,
+          rightSelection,
+          leftText: "",
+          rightText: line.text,
+        }),
+      )
+    })
+
+    blockTargets
+      .sort(comparePairTargetsByVisibleOrder)
+      .forEach((target) => targets.push(target))
+  }
+
+  return targets.map((target, index) => ({
+    ...target,
+    targetId: `pair:${index}`,
+  }))
+}
+
+function createPairExplanationTarget(input: {
+  input: ExplainPairDiffInput
+  targetKind: DiffFragmentExplanationTargetKind
+  leftSelection: DiffCodeSelection | null
+  rightSelection: DiffCodeSelection | null
+  leftText: string
+  rightText: string
+}): ExplainDiffFragmentTarget {
+  return {
+    targetId: "pair:pending",
+    parentFragmentId: -1,
+    targetKind: input.targetKind,
+    leftSelection: input.leftSelection,
+    rightSelection: input.rightSelection,
+    leftContextSnippet: input.leftSelection
+      ? extractContextSnippet(
+          input.input.leftContent,
+          input.leftSelection,
+          DIFF_CONTEXT_RADIUS_LINES,
+        )
+      : "",
+    rightContextSnippet: input.rightSelection
+      ? extractContextSnippet(
+          input.input.rightContent,
+          input.rightSelection,
+          DIFF_CONTEXT_RADIUS_LINES,
+        )
+      : "",
+    isCommentOnly: isCommentOnlyTarget(
+      input.leftText,
+      input.rightText,
+      input.input.language,
+    ),
+  }
+}
+
+function createFullLineSelection(segment: SelectedLineSegment): DiffCodeSelection {
+  return {
+    startRow: segment.row,
+    startCol: segment.startCol,
+    endRow: segment.row,
+    endCol: segment.endCol,
+  }
+}
+
+function comparePairTargetsByVisibleOrder(
+  leftTarget: ExplainDiffFragmentTarget,
+  rightTarget: ExplainDiffFragmentTarget,
+): number {
+  const rowDifference = getVisibleTargetRow(leftTarget) - getVisibleTargetRow(rightTarget)
+
+  if (rowDifference !== 0) return rowDifference
+
+  return (
+    getTargetKindSortPriority(leftTarget.targetKind) -
+    getTargetKindSortPriority(rightTarget.targetKind)
+  )
+}
+
+function getVisibleTargetRow(target: ExplainDiffFragmentTarget): number {
+  return Math.min(
+    target.leftSelection?.startRow ?? Number.MAX_SAFE_INTEGER,
+    target.rightSelection?.startRow ?? Number.MAX_SAFE_INTEGER,
+  )
+}
+
+function getTargetKindSortPriority(
+  targetKind: DiffFragmentExplanationTargetKind,
+): number {
+  if (targetKind === "added") return 0
+  if (targetKind === "changed") return 1
+
+  return 2
+}
+
 function buildFallbackTarget(
-  input: ExplainDiffFragmentsInput,
+  input: ExplainDiffFragmentsInput | ExplainPairDiffInput,
   target: ExplainDiffFragmentTarget,
 ): DiffFragmentExplanationTarget {
+  if (target.targetKind === "added") {
+    return {
+      targetId: target.targetId,
+      targetKind: target.targetKind,
+      leftSelection: null,
+      rightSelection: target.rightSelection,
+      explanation: {
+        category: "statement_added",
+        label: "Right File Adds Code",
+        reasons: ["The right submission adds code in this highlighted region."],
+        confidence: 0.65,
+        source: "fallback",
+      },
+    }
+  }
+
+  if (target.targetKind === "removed") {
+    return {
+      targetId: target.targetId,
+      targetKind: target.targetKind,
+      leftSelection: target.leftSelection,
+      rightSelection: null,
+      explanation: {
+        category: "statement_removed",
+        label: "Right File Removes Code",
+        reasons: [
+          "Code from the left submission is missing in the right submission.",
+        ],
+        confidence: 0.65,
+        source: "fallback",
+      },
+    }
+  }
+
   if (target.isCommentOnly) {
     return {
       targetId: target.targetId,
+      targetKind: target.targetKind,
       leftSelection: target.leftSelection,
       rightSelection: target.rightSelection,
       explanation: {
@@ -444,8 +724,27 @@ function buildFallbackTarget(
     }
   }
 
+  if (!target.leftSelection || !target.rightSelection) {
+    return {
+      targetId: target.targetId,
+      targetKind: target.targetKind,
+      leftSelection: target.leftSelection,
+      rightSelection: target.rightSelection,
+      explanation: {
+        category: "code_changed",
+        label: "Highlighted Code Difference",
+        reasons: [
+          "This highlighted region contains code that differs between the two submissions.",
+        ],
+        confidence: 0.45,
+        source: "fallback",
+      },
+    }
+  }
+
   return {
     targetId: target.targetId,
+    targetKind: target.targetKind,
     leftSelection: target.leftSelection,
     rightSelection: target.rightSelection,
     explanation: buildFallbackDiffFragmentExplanation({
@@ -537,6 +836,16 @@ interface SelectedLineSegment {
   text: string
 }
 
+interface LineDiffBlock {
+  removed: SelectedLineSegment[]
+  added: SelectedLineSegment[]
+}
+
+interface SimilarChangedLinePair {
+  removedIndex: number
+  addedIndex: number
+}
+
 function getSelectedLineSegments(
   content: string,
   selection: DiffCodeSelection,
@@ -558,6 +867,142 @@ function getSelectedLineSegments(
   }
 
   return segments
+}
+
+function buildLineDiffBlocks(
+  leftLines: string[],
+  rightLines: string[],
+): LineDiffBlock[] {
+  const lcsLengths = Array.from({ length: leftLines.length + 1 }, () =>
+    Array<number>(rightLines.length + 1).fill(0),
+  )
+
+  for (let leftIndex = leftLines.length - 1; leftIndex >= 0; leftIndex -= 1) {
+    for (
+      let rightIndex = rightLines.length - 1;
+      rightIndex >= 0;
+      rightIndex -= 1
+    ) {
+      lcsLengths[leftIndex][rightIndex] =
+        leftLines[leftIndex] === rightLines[rightIndex]
+          ? (lcsLengths[leftIndex + 1]?.[rightIndex + 1] ?? 0) + 1
+          : Math.max(
+              lcsLengths[leftIndex + 1]?.[rightIndex] ?? 0,
+              lcsLengths[leftIndex]?.[rightIndex + 1] ?? 0,
+            )
+    }
+  }
+
+  const blocks: LineDiffBlock[] = []
+  let currentBlock: LineDiffBlock = { removed: [], added: [] }
+  let leftIndex = 0
+  let rightIndex = 0
+
+  const flushCurrentBlock = () => {
+    if (currentBlock.removed.length || currentBlock.added.length) {
+      blocks.push(currentBlock)
+      currentBlock = { removed: [], added: [] }
+    }
+  }
+
+  while (leftIndex < leftLines.length || rightIndex < rightLines.length) {
+    if (
+      leftIndex < leftLines.length &&
+      rightIndex < rightLines.length &&
+      leftLines[leftIndex] === rightLines[rightIndex]
+    ) {
+      flushCurrentBlock()
+      leftIndex += 1
+      rightIndex += 1
+      continue
+    }
+
+    const shouldRemoveLeftLine =
+      leftIndex < leftLines.length &&
+      (rightIndex >= rightLines.length ||
+        (lcsLengths[leftIndex + 1]?.[rightIndex] ?? 0) >=
+          (lcsLengths[leftIndex]?.[rightIndex + 1] ?? 0))
+
+    if (shouldRemoveLeftLine) {
+      const text = leftLines[leftIndex] ?? ""
+      currentBlock.removed.push({
+        row: leftIndex,
+        startCol: 0,
+        endCol: text.length,
+        text,
+      })
+      leftIndex += 1
+    } else if (rightIndex < rightLines.length) {
+      const text = rightLines[rightIndex] ?? ""
+      currentBlock.added.push({
+        row: rightIndex,
+        startCol: 0,
+        endCol: text.length,
+        text,
+      })
+      rightIndex += 1
+    }
+  }
+
+  flushCurrentBlock()
+
+  return blocks
+}
+
+function pairSimilarChangedLines(
+  removedLines: SelectedLineSegment[],
+  addedLines: SelectedLineSegment[],
+): SimilarChangedLinePair[] {
+  const pairs: SimilarChangedLinePair[] = []
+  const usedRemovedIndexes = new Set<number>()
+  const usedAddedIndexes = new Set<number>()
+  const minimumSimilarityForChangedLine = 0.25
+
+  while (true) {
+    let bestPair: SimilarChangedLinePair | null = null
+    let bestSimilarity = minimumSimilarityForChangedLine
+
+    for (let removedIndex = 0; removedIndex < removedLines.length; removedIndex += 1) {
+      if (usedRemovedIndexes.has(removedIndex)) continue
+
+      for (let addedIndex = 0; addedIndex < addedLines.length; addedIndex += 1) {
+        if (usedAddedIndexes.has(addedIndex)) continue
+
+        const similarity = calculateLineSimilarity(
+          removedLines[removedIndex]?.text ?? "",
+          addedLines[addedIndex]?.text ?? "",
+        )
+
+        if (similarity > bestSimilarity) {
+          bestSimilarity = similarity
+          bestPair = { removedIndex, addedIndex }
+        }
+      }
+    }
+
+    if (!bestPair) return pairs
+
+    usedRemovedIndexes.add(bestPair.removedIndex)
+    usedAddedIndexes.add(bestPair.addedIndex)
+    pairs.push(bestPair)
+  }
+}
+
+function calculateLineSimilarity(leftText: string, rightText: string): number {
+  const leftTokens = tokenizeLineForSimilarity(leftText)
+  const rightTokens = tokenizeLineForSimilarity(rightText)
+
+  if (leftTokens.length === 0 || rightTokens.length === 0) return 0
+
+  const rightTokenSet = new Set(rightTokens)
+  const sharedTokenCount = new Set(leftTokens.filter((token) => rightTokenSet.has(token))).size
+  const totalTokenCount = new Set([...leftTokens, ...rightTokens]).size
+
+  return totalTokenCount === 0 ? 0 : sharedTokenCount / totalTokenCount
+}
+
+function tokenizeLineForSimilarity(line: string): string[] {
+  return line.match(/[A-Za-z_][A-Za-z0-9_]*|\d+|==|!=|<=|>=|[{}()[\];,+\-*/%]/g) ?? []
 }
 
 function getChangedColumnRange(
@@ -676,7 +1121,9 @@ function extractContextSnippet(
   return contextLines.join("\n")
 }
 
-function createDiffExplanationCacheKey(input: ExplainDiffFragmentsInput): string {
+function createDiffExplanationCacheKey(
+  input: ExplainDiffFragmentsInput | ExplainDiffProviderInput,
+): string {
   const cachePayload = {
     language: input.language ?? "unknown",
     leftContent: input.leftContent,
@@ -694,8 +1141,8 @@ function cloneExplanationTargets(
 ): DiffFragmentExplanationTarget[] {
   return explanationTargets.map((target) => ({
     ...target,
-    leftSelection: { ...target.leftSelection },
-    rightSelection: { ...target.rightSelection },
+    leftSelection: target.leftSelection ? { ...target.leftSelection } : null,
+    rightSelection: target.rightSelection ? { ...target.rightSelection } : null,
     explanation: {
       ...target.explanation,
       reasons: [...target.explanation.reasons],
@@ -710,8 +1157,9 @@ function getParentFragmentIdFromTargetId(targetId: string): number | null {
   return Number.isFinite(fragmentId) ? fragmentId : null
 }
 
-function buildProviderFragmentPayloads(input: ExplainDiffFragmentsInput): Array<{
+export function buildProviderFragmentPayloads(input: ExplainDiffProviderInput): Array<{
   targetId: string
+  targetKind: DiffFragmentExplanationTargetKind
   leftSnippet: string
   rightSnippet: string
   leftContextSnippet: string
@@ -719,22 +1167,31 @@ function buildProviderFragmentPayloads(input: ExplainDiffFragmentsInput): Array<
 }> {
   return input.fragments.map((fragment, index) => ({
     targetId: fragment.targetId ?? `${fragment.fragmentId}:${index}`,
-    leftSnippet: extractSelectedCode(input.leftContent, fragment.leftSelection),
-    rightSnippet: extractSelectedCode(input.rightContent, fragment.rightSelection),
+    targetKind: fragment.targetKind,
+    leftSnippet: fragment.leftSelection
+      ? extractSelectedCode(input.leftContent, fragment.leftSelection)
+      : "",
+    rightSnippet: fragment.rightSelection
+      ? extractSelectedCode(input.rightContent, fragment.rightSelection)
+      : "",
     leftContextSnippet:
       fragment.leftContextSnippet ??
-      extractContextSnippet(
-        input.leftContent,
-        fragment.leftSelection,
-        DIFF_CONTEXT_RADIUS_LINES,
-      ),
+      (fragment.leftSelection
+        ? extractContextSnippet(
+            input.leftContent,
+            fragment.leftSelection,
+            DIFF_CONTEXT_RADIUS_LINES,
+          )
+        : ""),
     rightContextSnippet:
       fragment.rightContextSnippet ??
-      extractContextSnippet(
-        input.rightContent,
-        fragment.rightSelection,
-        DIFF_CONTEXT_RADIUS_LINES,
-      ),
+      (fragment.rightSelection
+        ? extractContextSnippet(
+            input.rightContent,
+            fragment.rightSelection,
+            DIFF_CONTEXT_RADIUS_LINES,
+          )
+        : ""),
   }))
 }
 

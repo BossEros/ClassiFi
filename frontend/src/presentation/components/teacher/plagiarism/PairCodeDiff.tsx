@@ -1,6 +1,12 @@
 import React, { useRef, useEffect } from "react"
 import * as monaco from "monaco-editor"
-import type { FileData, MatchFragment, CodeRegion } from "./types"
+import type {
+  CodeRegion,
+  DiffFragmentExplanation,
+  DiffFragmentExplanationTarget,
+  FileData,
+  MatchFragment,
+} from "./types"
 import {
   CLASSIFI_PLAGIARISM_DARK_THEME,
   CLASSIFI_PLAGIARISM_LIGHT_THEME,
@@ -27,6 +33,8 @@ interface PairCodeDiffProps {
   rightFile: FileData
   /** Matching fragments to explain in the diff view */
   fragments?: MatchFragment[]
+  /** Pair-level diff explanation targets for all visible changed lines. */
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
   /** Programming language for syntax highlighting */
   language?: string
   /** Height of the diff editor */
@@ -47,6 +55,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
   leftFile,
   rightFile,
   fragments = [],
+  diffExplanationTargets: pairDiffExplanationTargets,
   language = "java",
   height = 480,
   variant = "dark",
@@ -104,27 +113,28 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       modifiedEditor,
       "classifi-diff-modified-fragment-explanation",
     )
-    const diffExplanationTargets = fragments.flatMap((fragment) => {
-      if (fragment.diffExplanationTargets?.length) {
-        return fragment.diffExplanationTargets
-      }
+    const diffExplanationTargets: DiffFragmentExplanationTarget[] =
+      pairDiffExplanationTargets?.length
+        ? pairDiffExplanationTargets
+        : fragments.flatMap((fragment) => {
+            if (fragment.diffExplanationTargets?.length) {
+              return fragment.diffExplanationTargets
+            }
 
-      return [
-        {
-          targetId: `${fragment.id}:fallback`,
-          leftSelection: fragment.leftSelection,
-          rightSelection: fragment.rightSelection,
-          explanation:
-            fragment.diffExplanation ??
-            buildDiffFragmentExplanation({
-              leftContent: leftFile.content,
-              rightContent: rightFile.content,
-              leftSelection: fragment.leftSelection,
-              rightSelection: fragment.rightSelection,
-            }),
-        },
-      ]
-    })
+            return [
+              {
+                targetId: `${fragment.id}:fallback`,
+                targetKind: "changed" as const,
+                leftSelection: fragment.leftSelection,
+                rightSelection: fragment.rightSelection,
+                explanation: getFragmentDiffExplanation({
+                  fragment,
+                  leftContent: leftFile.content,
+                  rightContent: rightFile.content,
+                }),
+              },
+            ]
+          })
     const changedDiffExplanationTargets = diffExplanationTargets.filter((target) =>
       hasChangedSelectedCode({
         leftContent: leftFile.content,
@@ -133,22 +143,28 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
         rightSelection: target.rightSelection,
       }),
     )
-    const leftDecorations = changedDiffExplanationTargets.map((target) =>
-      createFragmentHoverDecoration(target.leftSelection, target.explanation),
+    const leftDecorations = changedDiffExplanationTargets.flatMap((target) =>
+      target.leftSelection
+        ? [createFragmentHoverDecoration(target.leftSelection, target.explanation)]
+        : [],
     )
-    const rightDecorations = changedDiffExplanationTargets.map((target) =>
-      createFragmentHoverDecoration(target.rightSelection, target.explanation),
+    const rightDecorations = changedDiffExplanationTargets.flatMap((target) =>
+      target.rightSelection
+        ? [createFragmentHoverDecoration(target.rightSelection, target.explanation)]
+        : [],
     )
     const originalDecorationIds = originalEditor.deltaDecorations([], leftDecorations)
     const modifiedDecorationIds = modifiedEditor.deltaDecorations([], rightDecorations)
-    const leftHoverTargets = changedDiffExplanationTargets.map((target) => ({
-      region: target.leftSelection,
-      explanation: target.explanation,
-    }))
-    const rightHoverTargets = changedDiffExplanationTargets.map((target) => ({
-      region: target.rightSelection,
-      explanation: target.explanation,
-    }))
+    const leftHoverTargets = changedDiffExplanationTargets.flatMap((target) =>
+      target.leftSelection
+        ? [{ region: target.leftSelection, explanation: target.explanation }]
+        : [],
+    )
+    const rightHoverTargets = changedDiffExplanationTargets.flatMap((target) =>
+      target.rightSelection
+        ? [{ region: target.rightSelection, explanation: target.explanation }]
+        : [],
+    )
     const disposables: monaco.IDisposable[] = [
       originalEditor.onMouseMove((event) => {
         const lineNumber = event.target?.position?.lineNumber
@@ -189,7 +205,15 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       modifiedModel.dispose()
       editor.dispose()
     }
-  }, [fragments, isLight, isTabletOrBelow, leftFile.content, rightFile.content, language])
+  }, [
+    fragments,
+    isLight,
+    isTabletOrBelow,
+    leftFile.content,
+    rightFile.content,
+    language,
+    pairDiffExplanationTargets,
+  ])
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -385,6 +409,48 @@ function createFragmentHoverDecoration(
   }
 }
 
+function getFragmentDiffExplanation(input: {
+  fragment: MatchFragment
+  leftContent: string
+  rightContent: string
+}): DiffFragmentExplanation {
+  if (input.fragment.diffExplanation) {
+    return input.fragment.diffExplanation
+  }
+
+  const fallbackExplanation = buildDiffFragmentExplanation({
+    leftContent: input.leftContent,
+    rightContent: input.rightContent,
+    leftSelection: input.fragment.leftSelection,
+    rightSelection: input.fragment.rightSelection,
+  })
+
+  return {
+    ...fallbackExplanation,
+    category: mapLocalFallbackDiffCategory(fallbackExplanation.category),
+    confidence: 0.45,
+    source: "fallback",
+  }
+}
+
+function mapLocalFallbackDiffCategory(
+  category: ReturnType<typeof buildDiffFragmentExplanation>["category"],
+): DiffFragmentExplanation["category"] {
+  switch (category) {
+    case "conditional_added":
+    case "conditional_removed":
+      return "conditional_logic_changed"
+    case "loop_condition_changed":
+      return "loop_logic_changed"
+    case "code_added":
+      return "statement_added"
+    case "code_removed":
+      return "statement_removed"
+    default:
+      return category
+  }
+}
+
 interface DiffHoverTarget {
   region: CodeRegion
   explanation: FragmentExplanationWidgetContent
@@ -436,11 +502,15 @@ function showDiffExplanationWidget(
 interface HasChangedSelectedCodeInput {
   leftContent: string
   rightContent: string
-  leftSelection: CodeRegion
-  rightSelection: CodeRegion
+  leftSelection: CodeRegion | null
+  rightSelection: CodeRegion | null
 }
 
 function hasChangedSelectedCode(input: HasChangedSelectedCodeInput): boolean {
+  if (!input.leftSelection || !input.rightSelection) {
+    return Boolean(input.leftSelection || input.rightSelection)
+  }
+
   const leftSnippet = normalizeSnippetLineEndings(
     extractSelectedCode(input.leftContent, input.leftSelection),
   )

@@ -13,6 +13,7 @@ import {
   DiffFragmentExplanationService,
   groupDiffExplanationTargetsByFragmentId,
 } from "@/modules/plagiarism/diff-fragment-explanation.service.js"
+import type { DiffFragmentExplanationTarget } from "@/modules/plagiarism/diff-fragment-explanation.schema.js"
 import { MatchFragmentExplanationService } from "@/modules/plagiarism/match-fragment-explanation.service.js"
 import {
   computeSemanticScoresFromEmbeddings,
@@ -112,6 +113,7 @@ export interface CrossClassResultDTO {
 export interface CrossClassResultDetailsResponse {
   result: CrossClassResultDTO
   fragments: PlagiarismFragmentDTO[]
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
   leftFile: {
     filename: string
     content: string
@@ -498,17 +500,25 @@ export class CrossClassSimilarityService {
     const sourceAssignment = await this.assignmentRepo.getAssignmentById(
       report.assignmentId,
     )
-    const fragmentDTOs = await this.mapFragmentsToDTOs(
-      fragments,
-      leftContent,
-      rightContent,
-      sourceAssignment?.programmingLanguage,
-    )
+    const [fragmentDTOs, pairDiffExplanationTargets] = await Promise.all([
+      this.mapFragmentsToDTOs(
+        fragments,
+        leftContent,
+        rightContent,
+        sourceAssignment?.programmingLanguage,
+      ),
+      this.diffExplanationService.explainPairDiffTargets({
+        leftContent,
+        rightContent,
+        language: sourceAssignment?.programmingLanguage,
+      }),
+    ])
 
     // Return the result DTO, fragment positions, and file content for the side-by-side diff view.
     return {
       result: this.mapResultWithContextToDTO(result, contextRow),
       fragments: fragmentDTOs,
+      diffExplanationTargets: pairDiffExplanationTargets,
       leftFile: {
         filename: `submission_${result.submission1Id}`,
         content: leftContent,

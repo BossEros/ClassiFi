@@ -3,6 +3,7 @@ import { createLogger } from "@/shared/logger.js"
 
 export interface AiFragmentLabelPayload {
   targetId: string
+  targetKind?: string
   leftSnippet: string
   rightSnippet: string
   leftContextSnippet: string
