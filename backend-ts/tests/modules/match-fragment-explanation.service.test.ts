@@ -155,6 +155,7 @@ describe("MatchFragmentExplanationService", () => {
               "The comments describe the same stack setup using different wording.",
             ],
             confidence: 0.92,
+            source: "ai",
           },
         },
       ]
