@@ -234,7 +234,7 @@ function isCommentOnlySnippet(snippet: string): boolean {
   )
 }
 
-function extractSelectedCode(content: string, selection: CodeRegion): string {
+export function extractSelectedCode(content: string, selection: CodeRegion): string {
   const lines = content.split(/\r?\n/)
   const selectedLines = lines.slice(selection.startRow, selection.endRow + 1)
 

@@ -7,7 +7,10 @@ import {
   DIFF_VIEW_COLORS,
   ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
-import { buildDiffFragmentExplanation } from "./diffFragmentExplanation"
+import {
+  buildDiffFragmentExplanation,
+  extractSelectedCode,
+} from "./diffFragmentExplanation"
 import {
   PLAGIARISM_MONACO_HOVER_CSS,
   formatFragmentExplanationHoverMessage,
@@ -112,10 +115,18 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
         },
       ]
     })
-    const leftDecorations = diffExplanationTargets.map((target) =>
+    const changedDiffExplanationTargets = diffExplanationTargets.filter((target) =>
+      hasChangedSelectedCode({
+        leftContent: leftFile.content,
+        rightContent: rightFile.content,
+        leftSelection: target.leftSelection,
+        rightSelection: target.rightSelection,
+      }),
+    )
+    const leftDecorations = changedDiffExplanationTargets.map((target) =>
       createFragmentHoverDecoration(target.leftSelection, target.explanation),
     )
-    const rightDecorations = diffExplanationTargets.map((target) =>
+    const rightDecorations = changedDiffExplanationTargets.map((target) =>
       createFragmentHoverDecoration(target.rightSelection, target.explanation),
     )
     const originalDecorationIds = originalEditor.deltaDecorations([], leftDecorations)
@@ -321,4 +332,26 @@ function createFragmentHoverDecoration(
       },
     },
   }
+}
+
+interface HasChangedSelectedCodeInput {
+  leftContent: string
+  rightContent: string
+  leftSelection: CodeRegion
+  rightSelection: CodeRegion
+}
+
+function hasChangedSelectedCode(input: HasChangedSelectedCodeInput): boolean {
+  const leftSnippet = normalizeSnippetLineEndings(
+    extractSelectedCode(input.leftContent, input.leftSelection),
+  )
+  const rightSnippet = normalizeSnippetLineEndings(
+    extractSelectedCode(input.rightContent, input.rightSelection),
+  )
+
+  return leftSnippet !== rightSnippet
+}
+
+function normalizeSnippetLineEndings(snippet: string): string {
+  return snippet.replace(/\r\n/g, "\n")
 }

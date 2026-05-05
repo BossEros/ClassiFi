@@ -5,6 +5,7 @@ import type { MatchFragment } from "@/presentation/components/teacher/plagiarism
 
 const monacoMockState = vi.hoisted(() => ({
   hoverMessages: [] as string[],
+  decorationCallCount: 0,
 }))
 
 vi.mock("monaco-editor", () => ({
@@ -22,6 +23,8 @@ vi.mock("monaco-editor", () => ({
               options?: { hoverMessage?: { value: string } }
             }>,
           ) => {
+            monacoMockState.decorationCallCount += 1
+
             for (const decoration of decorations) {
               const hoverMessage = decoration.options?.hoverMessage?.value
 
@@ -60,6 +63,7 @@ const renamedIdentifierFragment: MatchFragment = {
 describe("PairCodeDiff", () => {
   beforeEach(() => {
     monacoMockState.hoverMessages = []
+    monacoMockState.decorationCallCount = 0
 
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
@@ -308,5 +312,68 @@ describe("PairCodeDiff", () => {
     expect(allHoverMessages).toContain("Dictionary Variable Renamed")
     expect(allHoverMessages).toContain("Accumulator Variable Renamed")
     expect(allHoverMessages).not.toContain("Variable Names Systematically Renamed")
+  })
+
+  it("does not register hover labels for unchanged diff explanation targets", async () => {
+    render(
+      <PairCodeDiff
+        leftFile={{
+          id: 1,
+          path: "Left.py",
+          filename: "Left.py",
+          content: [
+            "def roman_to_int(s):",
+            "    result = sum(values[c] for c in s)",
+            "    return result",
+          ].join("\n"),
+          lineCount: 3,
+          studentName: "Ava Sinclair",
+        }}
+        rightFile={{
+          id: 2,
+          path: "Right.py",
+          filename: "Right.py",
+          content: [
+            "def roman_to_int(s):",
+            "    result = sum(values[c] for c in s)",
+            "    return result",
+          ].join("\n"),
+          lineCount: 3,
+          studentName: "Alexander Cross",
+        }}
+        fragments={[
+          {
+            id: 301,
+            leftSelection: { startRow: 1, startCol: 4, endRow: 1, endCol: 40 },
+            rightSelection: { startRow: 1, startCol: 4, endRow: 1, endCol: 40 },
+            length: 12,
+            diffExplanationTargets: [
+              {
+                targetId: "301:unchanged",
+                leftSelection: { startRow: 1, startCol: 4, endRow: 1, endCol: 40 },
+                rightSelection: { startRow: 1, startCol: 4, endRow: 1, endCol: 40 },
+                explanation: {
+                  category: "code_changed",
+                  label: "Highlighted Code Difference",
+                  reasons: [
+                    "This highlighted region contains code that differs between the two submissions.",
+                  ],
+                  confidence: 0.5,
+                  source: "fallback",
+                },
+              },
+            ],
+          },
+        ]}
+        language="python"
+        variant="light"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(monacoMockState.decorationCallCount).toBeGreaterThanOrEqual(2)
+    })
+
+    expect(monacoMockState.hoverMessages).toHaveLength(0)
   })
 })
