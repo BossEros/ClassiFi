@@ -13,8 +13,10 @@ import {
 } from "./diffFragmentExplanation"
 import {
   PLAGIARISM_MONACO_HOVER_CSS,
+  SHOULD_SHOW_NATIVE_MONACO_HOVER_MESSAGES,
   formatFragmentExplanationHoverMessage,
 } from "./fragmentExplanationHover"
+import { FragmentExplanationWidget, type FragmentExplanationWidgetContent } from "./fragmentExplanationWidget"
 import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
 import { getTemporalOrder } from "@/presentation/utils/timeUtils"
 
@@ -94,6 +96,14 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
 
     const originalEditor = editor.getOriginalEditor()
     const modifiedEditor = editor.getModifiedEditor()
+    const originalExplanationWidget = new FragmentExplanationWidget(
+      originalEditor,
+      "classifi-diff-original-fragment-explanation",
+    )
+    const modifiedExplanationWidget = new FragmentExplanationWidget(
+      modifiedEditor,
+      "classifi-diff-modified-fragment-explanation",
+    )
     const diffExplanationTargets = fragments.flatMap((fragment) => {
       if (fragment.diffExplanationTargets?.length) {
         return fragment.diffExplanationTargets
@@ -131,9 +141,48 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
     )
     const originalDecorationIds = originalEditor.deltaDecorations([], leftDecorations)
     const modifiedDecorationIds = modifiedEditor.deltaDecorations([], rightDecorations)
+    const leftHoverTargets = changedDiffExplanationTargets.map((target) => ({
+      region: target.leftSelection,
+      explanation: target.explanation,
+    }))
+    const rightHoverTargets = changedDiffExplanationTargets.map((target) => ({
+      region: target.rightSelection,
+      explanation: target.explanation,
+    }))
+    const disposables: monaco.IDisposable[] = [
+      originalEditor.onMouseMove((event) => {
+        const lineNumber = event.target?.position?.lineNumber
+        if (!lineNumber) {
+          originalExplanationWidget.hide()
+          return
+        }
+
+        const hoverTarget = getDiffHoverTargetAtLine(leftHoverTargets, lineNumber)
+        showDiffExplanationWidget(originalExplanationWidget, hoverTarget)
+      }),
+      modifiedEditor.onMouseMove((event) => {
+        const lineNumber = event.target?.position?.lineNumber
+        if (!lineNumber) {
+          modifiedExplanationWidget.hide()
+          return
+        }
+
+        const hoverTarget = getDiffHoverTargetAtLine(rightHoverTargets, lineNumber)
+        showDiffExplanationWidget(modifiedExplanationWidget, hoverTarget)
+      }),
+      originalEditor.onMouseLeave(() => {
+        originalExplanationWidget.hide()
+      }),
+      modifiedEditor.onMouseLeave(() => {
+        modifiedExplanationWidget.hide()
+      }),
+    ]
 
     // Cleanup - dispose the exact editor created by this effect
     return () => {
+      disposables.forEach((disposable) => disposable.dispose())
+      originalExplanationWidget.dispose()
+      modifiedExplanationWidget.dispose()
       originalEditor.deltaDecorations(originalDecorationIds, [])
       modifiedEditor.deltaDecorations(modifiedDecorationIds, [])
       originalModel.dispose()
@@ -327,11 +376,61 @@ function createFragmentHoverDecoration(
       endColumn: region.endCol + 1,
     },
     options: {
-      hoverMessage: {
-        value: formatFragmentExplanationHoverMessage(explanation),
-      },
+      hoverMessage: SHOULD_SHOW_NATIVE_MONACO_HOVER_MESSAGES
+        ? {
+            value: formatFragmentExplanationHoverMessage(explanation),
+          }
+        : undefined,
     },
   }
+}
+
+interface DiffHoverTarget {
+  region: CodeRegion
+  explanation: FragmentExplanationWidgetContent
+}
+
+function getDiffHoverTargetAtLine(
+  targets: DiffHoverTarget[],
+  lineNumber: number,
+): DiffHoverTarget | null {
+  let smallestTarget: DiffHoverTarget | null = null
+  let smallestTargetLength = Number.MAX_SAFE_INTEGER
+
+  for (const target of targets) {
+    const isInsideLineRange =
+      target.region.startRow + 1 <= lineNumber &&
+      lineNumber <= target.region.endRow + 1
+
+    if (!isInsideLineRange) continue
+
+    const targetLength =
+      (target.region.endRow - target.region.startRow + 1) * 10000 +
+      (target.region.endCol - target.region.startCol + 1)
+
+    if (targetLength < smallestTargetLength) {
+      smallestTarget = target
+      smallestTargetLength = targetLength
+    }
+  }
+
+  return smallestTarget
+}
+
+function showDiffExplanationWidget(
+  widget: FragmentExplanationWidget,
+  target: DiffHoverTarget | null,
+): void {
+  if (!target) {
+    widget.hide()
+    return
+  }
+
+  widget.show({
+    explanation: target.explanation,
+    lineNumber: target.region.startRow + 1,
+    column: target.region.startCol + 1,
+  })
 }
 
 interface HasChangedSelectedCodeInput {
