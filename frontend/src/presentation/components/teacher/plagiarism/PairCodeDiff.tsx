@@ -339,7 +339,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
               fontWeight: 600,
             }}
           >
-            Removed
+            Red
           </span>
           <span style={{ color: legendTextColor, fontSize: "12px" }}>
             Red marks code missing from the right file.
