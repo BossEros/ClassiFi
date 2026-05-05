@@ -164,13 +164,13 @@ container.registerSingleton(
   DI_TOKENS.services.crossClassSimilarity,
   CrossClassSimilarityService,
 )
-container.registerSingleton(
+container.registerInstance(
   DI_TOKENS.services.diffFragmentExplanation,
-  DiffFragmentExplanationService,
+  new DiffFragmentExplanationService(),
 )
-container.registerSingleton(
+container.registerInstance(
   DI_TOKENS.services.matchFragmentExplanation,
-  MatchFragmentExplanationService,
+  new MatchFragmentExplanationService(),
 )
 
 export { container }
