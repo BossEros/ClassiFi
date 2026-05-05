@@ -1,11 +1,17 @@
 import React, { useRef, useEffect } from "react"
 import * as monaco from "monaco-editor"
-import type { FileData } from "./types"
+import type { FileData, MatchFragment, CodeRegion } from "./types"
 import {
   CLASSIFI_PLAGIARISM_DARK_THEME,
   CLASSIFI_PLAGIARISM_LIGHT_THEME,
+  DIFF_VIEW_COLORS,
   ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
+import { buildDiffFragmentExplanation } from "./diffFragmentExplanation"
+import {
+  PLAGIARISM_MONACO_HOVER_CSS,
+  formatFragmentExplanationHoverMessage,
+} from "./fragmentExplanationHover"
 import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
 import { getTemporalOrder } from "@/presentation/utils/timeUtils"
 
@@ -14,6 +20,8 @@ interface PairCodeDiffProps {
   leftFile: FileData
   /** Right file (modified) */
   rightFile: FileData
+  /** Matching fragments to explain in the diff view */
+  fragments?: MatchFragment[]
   /** Programming language for syntax highlighting */
   language?: string
   /** Height of the diff editor */
@@ -33,6 +41,7 @@ interface PairCodeDiffProps {
 export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
   leftFile,
   rightFile,
+  fragments = [],
   language = "java",
   height = 480,
   variant = "dark",
@@ -69,6 +78,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       minimap: { enabled: false },
       renderSideBySide: !isTabletOrBelow,
       originalEditable: false,
+      fixedOverflowWidgets: true,
     })
 
     // Assign to ref for external access
@@ -79,13 +89,47 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       modified: modifiedModel,
     })
 
+    const originalEditor = editor.getOriginalEditor()
+    const modifiedEditor = editor.getModifiedEditor()
+    const diffExplanationTargets = fragments.flatMap((fragment) => {
+      if (fragment.diffExplanationTargets?.length) {
+        return fragment.diffExplanationTargets
+      }
+
+      return [
+        {
+          targetId: `${fragment.id}:fallback`,
+          leftSelection: fragment.leftSelection,
+          rightSelection: fragment.rightSelection,
+          explanation:
+            fragment.diffExplanation ??
+            buildDiffFragmentExplanation({
+              leftContent: leftFile.content,
+              rightContent: rightFile.content,
+              leftSelection: fragment.leftSelection,
+              rightSelection: fragment.rightSelection,
+            }),
+        },
+      ]
+    })
+    const leftDecorations = diffExplanationTargets.map((target) =>
+      createFragmentHoverDecoration(target.leftSelection, target.explanation),
+    )
+    const rightDecorations = diffExplanationTargets.map((target) =>
+      createFragmentHoverDecoration(target.rightSelection, target.explanation),
+    )
+    const originalDecorationIds = originalEditor.deltaDecorations([], leftDecorations)
+    const modifiedDecorationIds = modifiedEditor.deltaDecorations([], rightDecorations)
+
     // Cleanup - dispose the exact editor created by this effect
     return () => {
+      originalEditor.deltaDecorations(originalDecorationIds, [])
+      modifiedEditor.deltaDecorations(modifiedDecorationIds, [])
       originalModel.dispose()
       modifiedModel.dispose()
       editor.dispose()
     }
-  }, [isLight, isTabletOrBelow, leftFile.content, rightFile.content, language])
+  }, [fragments, isLight, isTabletOrBelow, leftFile.content, rightFile.content, language])
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -207,9 +251,9 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
               alignItems: "center",
               borderRadius: "9999px",
               padding: "2px 8px",
-              backgroundColor: "rgba(16, 185, 129, 0.12)",
-              border: "1px solid rgba(5, 150, 105, 0.24)",
-              color: "#047857",
+              backgroundColor: DIFF_VIEW_COLORS.addedBadgeBackground,
+              border: `1px solid ${DIFF_VIEW_COLORS.addedBadgeBorder}`,
+              color: DIFF_VIEW_COLORS.addedBadgeText,
               fontSize: "12px",
               fontWeight: 600,
             }}
@@ -217,7 +261,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
             Added
           </span>
           <span style={{ color: legendTextColor, fontSize: "12px" }}>
-            Emerald marks code present only in the right file.
+            Green marks code present only in the right file.
           </span>
         </div>
 
@@ -228,9 +272,9 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
               alignItems: "center",
               borderRadius: "9999px",
               padding: "2px 8px",
-              backgroundColor: "rgba(244, 63, 94, 0.12)",
-              border: "1px solid rgba(225, 29, 72, 0.24)",
-              color: "#be123c",
+              backgroundColor: DIFF_VIEW_COLORS.removedBadgeBackground,
+              border: `1px solid ${DIFF_VIEW_COLORS.removedBadgeBorder}`,
+              color: DIFF_VIEW_COLORS.removedBadgeText,
               fontSize: "12px",
               fontWeight: 600,
             }}
@@ -238,7 +282,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
             Removed
           </span>
           <span style={{ color: legendTextColor, fontSize: "12px" }}>
-            Rose marks code missing from the right file.
+            Red marks code missing from the right file.
           </span>
         </div>
       </div>
@@ -253,8 +297,28 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
           backgroundColor: isLight ? "#ffffff" : "#0f172a",
         }}
       />
+      <style>{PLAGIARISM_MONACO_HOVER_CSS}</style>
     </div>
   )
 }
 
 export default PairCodeDiff
+
+function createFragmentHoverDecoration(
+  region: CodeRegion,
+  explanation: { label: string; reasons: string[] },
+): monaco.editor.IModelDeltaDecoration {
+  return {
+    range: {
+      startLineNumber: region.startRow + 1,
+      startColumn: region.startCol + 1,
+      endLineNumber: region.endRow + 1,
+      endColumn: region.endCol + 1,
+    },
+    options: {
+      hoverMessage: {
+        value: formatFragmentExplanationHoverMessage(explanation),
+      },
+    },
+  }
+}

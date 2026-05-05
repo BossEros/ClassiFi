@@ -299,6 +299,9 @@ export function FragmentEvidenceTable({
         <TableHeaderCell width={fragmentReportTableColumnWidths.range}>
           Right Student Lines
         </TableHeaderCell>
+        <TableHeaderCell width={fragmentReportTableColumnWidths.explanation}>
+          Match Label
+        </TableHeaderCell>
         <TableHeaderCell
           width={fragmentReportTableColumnWidths.length}
           isLastColumn={true}
@@ -328,6 +331,9 @@ export function FragmentEvidenceTable({
           </TableCell>
           <TableCell width={fragmentReportTableColumnWidths.range}>
             <Text style={pdfStyles.plainCellText}>{row.rightRange}</Text>
+          </TableCell>
+          <TableCell width={fragmentReportTableColumnWidths.explanation}>
+            <Text style={pdfStyles.plainCellText}>{row.explanationLabel}</Text>
           </TableCell>
           <TableCell
             width={fragmentReportTableColumnWidths.length}

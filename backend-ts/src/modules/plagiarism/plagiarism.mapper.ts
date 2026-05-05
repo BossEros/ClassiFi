@@ -1,5 +1,10 @@
 import type { Pair, Fragment } from "@/lib/plagiarism/index.js"
 import { PlagiarismDetector, type LanguageName } from "@/lib/plagiarism/index.js"
+import type { FragmentExplanation } from "@/modules/plagiarism/plagiarism-fragment-explanation.js"
+import type {
+  DiffFragmentExplanation,
+  DiffFragmentExplanationTarget,
+} from "@/modules/plagiarism/diff-fragment-explanation.schema.js"
 
 /** Configuration for plagiarism detection */
 export const PLAGIARISM_CONFIG = {
@@ -81,6 +86,9 @@ export interface PlagiarismFragmentDTO {
     endCol: number
   }
   length: number
+  explanation?: FragmentExplanation
+  diffExplanation?: DiffFragmentExplanation
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
 }
 
 /** DTO for plagiarism analysis summary */

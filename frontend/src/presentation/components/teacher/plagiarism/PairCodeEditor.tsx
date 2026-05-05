@@ -7,6 +7,10 @@ import {
   CLASSIFI_PLAGIARISM_LIGHT_THEME,
   ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
+import {
+  PLAGIARISM_MONACO_HOVER_CSS,
+  formatFragmentExplanationHoverMessage,
+} from "./fragmentExplanationHover"
 
 interface PairCodeEditorProps {
   /** Which side of the comparison (left or right file) */
@@ -255,6 +259,14 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
         options: {
           className,
           isWholeLine: sel.isWholeLine,
+          hoverMessage:
+            sel.fragment !== "ignored" && sel.fragment.explanation
+              ? {
+                  value: formatFragmentExplanationHoverMessage(
+                    sel.fragment.explanation,
+                  ),
+                }
+              : undefined,
         },
       })
     }
@@ -302,6 +314,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       minimap: { enabled: false },
       contextmenu: false,
       scrollBeyondLastLine: false,
+      fixedOverflowWidgets: true,
     })
 
     return () => {
@@ -330,13 +343,16 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     // Handle hover
     disposables.push(
       editorRef.current.onMouseMove((e) => {
-        if (e.target?.position) {
-          const fragment = getFragmentAtPosition(
-            e.target.position.lineNumber,
-            e.target.position.column,
-          )
-          onFragmentHover(fragment)
+        if (!e.target?.position) {
+          onFragmentHover(null)
+          return
         }
+
+        const fragment = getFragmentAtPosition(
+          e.target.position.lineNumber,
+          e.target.position.column,
+        )
+        onFragmentHover(fragment)
       }),
     )
 
@@ -530,6 +546,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
           background-color: ${MATCH_COLORS.matchIgnored};
           box-shadow: inset 0 0 0 1px ${MATCH_COLORS.matchIgnoredOutline};
         }
+        ${PLAGIARISM_MONACO_HOVER_CSS}
       `}</style>
     </div>
   )

@@ -220,6 +220,7 @@ Admin enrollment workspace behavior:
 - Teacher gradebook `Average` now represents a points-weighted current standing: assignments with no submission yet count as `0`, submitted work awaiting grading is excluded until a score exists, and the final percentage is computed from earned points over countable possible points.
 - **Teacher gradebook exports**: CSV exports include a `Status` column for `Active` / `Inactive` students. PDF exports include inactive students by default, label them explicitly, highlight their rows subtly, and keep summary metrics scoped to active students only. Both CSV and PDF follow the currently selected teacher gradebook sort order (`Rank` or `Last Name`).
 - **Teacher roster status filters**: The class `Students` tab exposes `Active` and `Inactive` filters only. The roster defaults to active students, while inactive/deactivated students are still reviewable through the inactive filter and are labeled with an explicit status badge.
+- **Teacher class-list exports**: The class `Students` tab provides a gradebook-style export menu with CSV and PDF downloads for the full currently filtered roster, including student name, email, account status, and enrollment date.
 - **`StudentClassGradesContent`**: Student-only class grades tab that shows personal current grade, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, similarity-deduction breakdowns, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
@@ -639,6 +640,7 @@ Specialized types for the class detail page redesign:
    - Switch to Students tab to view enrolled students
    - Use only two roster filters: `Active` and `Inactive`
    - The default roster view shows active students only, and inactive students appear with a status badge when the inactive filter is selected
+   - Use the `Export` menu to download the currently filtered class list as CSV or PDF
 5. **Create New Assignment**:
    - Click "Add Assignment" button (from module card or tab header)
    - Select which module to assign the assignment to via the module selector dropdown
@@ -655,12 +657,14 @@ Specialized types for the class detail page redesign:
    - Use the graph and table together; they share one threshold and selection flow.
 3. **Compare Code**:
    - View matched code fragments highlighted in both files
+   - Review backend-generated Match View fragment labels that explain visible similarity evidence in one neutral sentence. Comment-only matched fragments are labeled as comment text, and deterministic fallback labels remain available when AI labels are disabled or unavailable.
+   - Review backend-generated Diff View hover labels that explain what changed inside smaller highlighted line/segment targets. Comment-only changes are labeled as comment changes instead of code renames. AI-assisted labels are shown only after backend validation; deterministic fallback labels remain available when AI labels are disabled or unavailable.
    - Use synchronized scrolling to navigate through matches
    - Click on fragments in the table to jump to specific matches
    - Toggle between "Match" and "Diff" views for different perspectives
 4. **Export Evidence**:
    - Use `Download Class Report` to export the active threshold view for the whole class; only pairs at or above the current threshold are included.
-   - Use `Download Pair Report` inside the comparison panel when a specific `Student A vs Student B` review needs standalone evidence.
+   - Use `Download Pair Report` inside the comparison panel when a specific `Student A vs Student B` review needs standalone evidence, including fragment explanation labels.
 5. **Take Action**:
    - Document findings for academic integrity review
    - Contact students as needed

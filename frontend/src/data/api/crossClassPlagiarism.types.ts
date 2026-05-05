@@ -1,4 +1,10 @@
 /** Cross-class similarity result DTO for API responses */
+import type {
+  DiffFragmentExplanation,
+  DiffFragmentExplanationTarget,
+  FragmentExplanation,
+} from "./plagiarism.types"
+
 export interface CrossClassResultDTO {
   id: number
   submission1Id: number
@@ -62,6 +68,9 @@ export interface CrossClassResultDetailsResponse {
       endCol: number
     }
     length: number
+    explanation?: FragmentExplanation
+    diffExplanation?: DiffFragmentExplanation
+    diffExplanationTargets?: DiffFragmentExplanationTarget[]
   }>
   leftFile: {
     filename: string

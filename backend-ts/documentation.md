@@ -274,6 +274,13 @@ This flow uses in-memory scheduling plus periodic reconciliation and does not re
 - **`SEMANTIC_SIMILARITY_MAX_RETRIES`** (default: `1`) retries transient semantic failures (timeouts/5xx/429) before using fallback `semanticScore=0`.
 - **`PLAGIARISM_STRUCTURAL_WEIGHT`** (default: `0.7`) sets the structural contribution to hybrid plagiarism scoring.
 - **`PLAGIARISM_SEMANTIC_WEIGHT`** (default: `0.3`) sets the semantic contribution to hybrid plagiarism scoring.
+- **`AI_FRAGMENT_LABELS_ENABLED`** (default: `false`) enables AI-assisted labels for Match View and Diff View fragment hover explanations.
+- **`AI_FRAGMENT_LABELS_PROVIDER`** (default: `anthropic`) selects the swappable AI provider adapter used by the shared plagiarism-label provider.
+- **`AI_FRAGMENT_LABELS_MODEL`** (default: `claude-haiku-4-5`) selects the model for AI fragment labels. Use `claude-haiku-4-5` for Claude Haiku 4.5.
+- **`AI_FRAGMENT_LABELS_TIMEOUT_MS`** (default: `5000`) caps each pair-level AI fragment-label request.
+- **`AI_DIFF_LABELS_ENABLED`**, **`AI_DIFF_LABELS_PROVIDER`**, **`AI_DIFF_LABELS_MODEL`**, and **`AI_DIFF_LABELS_TIMEOUT_MS`** remain supported as legacy fallback names when the new `AI_FRAGMENT_LABELS_*` values are unset.
+- **`ANTHROPIC_API_KEY`** is required only when AI fragment labels are enabled with the Anthropic provider.
+- **`OPENAI_API_KEY`** is required only when AI fragment labels are enabled with the OpenAI provider.
 
 **Behavior**:
 
@@ -283,6 +290,7 @@ This flow uses in-memory scheduling plus periodic reconciliation and does not re
 - Assignment report persistence acquires an assignment-scoped transaction lock to prevent duplicate latest reports during concurrent analysis runs.
 - Assignment report `averageSimilarity`, `highestSimilarity`, and pair ordering follow the weighted hybrid score instead of structural score alone.
 - When an assignment enables similarity deduction, persisted assignment reports also refresh latest-submission similarity penalties through `SimilarityPenaltyService`.
+- Match View and Diff View label generation is backend-owned. `MatchFragmentExplanationService` asks the shared provider for one batch of Match labels per opened pair, while `DiffFragmentExplanationService` asks for one separate batch of smaller changed line/segment Diff labels per opened pair. Comment-only Match fragments are labeled locally as `comment_text`, and comment-only Diff targets are labeled locally as `comment_changed`. Each returned label is validated with Zod and falls back to deterministic labels on provider errors, refusal, invalid schema, timeout, missing target output, or low confidence. Valid provider responses and fallback responses after failures are stored in bounded in-memory caches keyed by pair content, language, and fragment selections so reopening the same pair during the same backend process can avoid another AI call. The cache is not persisted and is cleared when the backend restarts. Anthropic returns plain JSON text for parsing; OpenAI uses structured JSON schema output.
 
 ### Programming Language Support
 
@@ -392,6 +400,7 @@ Student enrolled-classes query behavior:
 
 - Accepts optional query `status=active|inactive|all`
 - Each returned student includes `isActive`
+- Each returned student includes `enrolledAt` as an ISO timestamp from the enrollment record
 - This supports the teacher roster rule of defaulting to active students while still allowing explicit review of inactive/deactivated students
 
 **Gradebook CSV Export** (`GET /gradebook/classes/:classId/export`):
@@ -535,7 +544,8 @@ The plagiarism API now focuses on assignment-level review workflows:
 - Assignment-level analyze/report responses also include `generatedAt`, allowing the frontend to stamp exported evidence PDFs with both report-generation time and download time.
 - Pair rows include both students plus structural, semantic, and hybrid similarity scores alongside overlap and longest match.
 - Clients can sort/filter pair results to prioritize high-risk comparisons and generate threshold-aware class or pairwise PDF evidence on the frontend without needing a server-side PDF endpoint.
-- Detailed fragment/code inspection remains available through result-detail endpoints.
+- Detailed fragment/code inspection remains available through result-detail endpoints. Each returned fragment may include a Match View `explanation` object with `category`, `label`, and `reasons` fields so clients can show neutral similarity-evidence labels. When AI fragment labels are enabled, validated Match View labels replace deterministic labels; comment-only matched fragments use the local `comment_text` category.
+- Result-detail fragments may also include `diffExplanationTargets` for precise Diff View hover cards. Each target includes `targetId`, left/right source ranges, and an explanation object with `category`, `label`, `reasons`, `confidence`, and `source`; `source` is `ai` for validated provider output and `fallback` for deterministic fallback output. The older fragment-level `diffExplanation` remains available as a compatibility fallback.
 - Cross-class result-detail responses include both student names and submission timestamps so clients can render the same temporal review cues used by intra-assignment comparisons.
 - `POST /plagiarism/analyze/assignment/:assignmentId` reuses the latest existing report when no new/latest submissions have been added since that report was generated.
 - The system keeps only one report per assignment; when a new report is generated (or a reusable one is reviewed), older reports for that assignment are deleted.
@@ -1020,6 +1030,7 @@ class PlagiarismService {
 - Returns reusable report metadata (`reportId`, `generatedAt`, submissions, pairs) needed by the frontend evidence-export workflow
 - Supports Python, Java, and C programming languages
 - Passes the assignment's programming language to the semantic similarity microservice, enabling language-aware logging and future per-language optimisations in the GraphCodeBERT inference pipeline
+- Uses a provider-neutral diff explanation service so AI labeling can switch providers without changing plagiarism result-detail code
 
 ### CrossClassSimilarityService
 

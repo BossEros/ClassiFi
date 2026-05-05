@@ -10,6 +10,11 @@ import {
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
 import {
+  DiffFragmentExplanationService,
+  groupDiffExplanationTargetsByFragmentId,
+} from "@/modules/plagiarism/diff-fragment-explanation.service.js"
+import { MatchFragmentExplanationService } from "@/modules/plagiarism/match-fragment-explanation.service.js"
+import {
   computeSemanticScoresFromEmbeddings,
   type SemanticScorePairEntry,
 } from "@/modules/plagiarism/semantic-scoring.js"
@@ -171,6 +176,10 @@ export class CrossClassSimilarityService {
     private fileService: PlagiarismSubmissionFileService,
     @inject(DI_TOKENS.services.semanticSimilarityClient)
     private semanticClient: SemanticSimilarityClient,
+    @inject(DI_TOKENS.services.diffFragmentExplanation)
+    private diffExplanationService: DiffFragmentExplanationService = new DiffFragmentExplanationService(),
+    @inject(DI_TOKENS.services.matchFragmentExplanation)
+    private matchExplanationService: MatchFragmentExplanationService = new MatchFragmentExplanationService(),
   ) {}
 
   /**
@@ -486,10 +495,20 @@ export class CrossClassSimilarityService {
         rightFilePath,
       )
 
+    const sourceAssignment = await this.assignmentRepo.getAssignmentById(
+      report.assignmentId,
+    )
+    const fragmentDTOs = await this.mapFragmentsToDTOs(
+      fragments,
+      leftContent,
+      rightContent,
+      sourceAssignment?.programmingLanguage,
+    )
+
     // Return the result DTO, fragment positions, and file content for the side-by-side diff view.
     return {
       result: this.mapResultWithContextToDTO(result, contextRow),
-      fragments: this.mapFragmentsToDTOs(fragments),
+      fragments: fragmentDTOs,
       leftFile: {
         filename: `submission_${result.submission1Id}`,
         content: leftContent,
@@ -1098,11 +1117,14 @@ export class CrossClassSimilarityService {
     }
   }
 
-  private mapFragmentsToDTOs(
+  private async mapFragmentsToDTOs(
     fragments: MatchFragment[],
-  ): PlagiarismFragmentDTO[] {
-    return fragments.map((fragment) => ({
-      id: fragment.id,
+    leftContent?: string,
+    rightContent?: string,
+    language?: string,
+  ): Promise<PlagiarismFragmentDTO[]> {
+    const fragmentSelections = fragments.map((fragment) => ({
+      fragmentId: fragment.id,
       leftSelection: {
         startRow: fragment.leftStartRow,
         startCol: fragment.leftStartCol,
@@ -1115,8 +1137,54 @@ export class CrossClassSimilarityService {
         endRow: fragment.rightEndRow,
         endCol: fragment.rightEndCol,
       },
-      length: fragment.length,
     }))
+    const [matchExplanationsByFragmentId, diffExplanationTargets] =
+      leftContent && rightContent
+        ? await Promise.all([
+            this.matchExplanationService.explainMatchFragments({
+              leftContent,
+              rightContent,
+              language,
+              fragments: fragmentSelections,
+            }),
+            this.diffExplanationService.explainDiffFragmentTargets({
+              leftContent,
+              rightContent,
+              language,
+              fragments: fragmentSelections,
+            }),
+          ])
+        : [new Map(), []]
+    const diffExplanationTargetsByFragmentId =
+      groupDiffExplanationTargetsByFragmentId(diffExplanationTargets)
+
+    return fragments.map((fragment, fragmentIndex) => {
+      const fragmentSelection = fragmentSelections[fragmentIndex]
+      const leftSelection = {
+        startRow: fragmentSelection.leftSelection.startRow,
+        startCol: fragmentSelection.leftSelection.startCol,
+        endRow: fragmentSelection.leftSelection.endRow,
+        endCol: fragmentSelection.leftSelection.endCol,
+      }
+      const rightSelection = {
+        startRow: fragmentSelection.rightSelection.startRow,
+        startCol: fragmentSelection.rightSelection.startCol,
+        endRow: fragmentSelection.rightSelection.endRow,
+        endCol: fragmentSelection.rightSelection.endCol,
+      }
+
+      return {
+        id: fragment.id,
+        leftSelection,
+        rightSelection,
+        length: fragment.length,
+        explanation: matchExplanationsByFragmentId.get(fragment.id),
+        diffExplanation:
+          diffExplanationTargetsByFragmentId.get(fragment.id)?.[0]?.explanation,
+        diffExplanationTargets:
+          diffExplanationTargetsByFragmentId.get(fragment.id) ?? [],
+      }
+    })
   }
 
   // ===========================================================================

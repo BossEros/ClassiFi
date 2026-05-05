@@ -26,6 +26,7 @@ export interface EnrolledStudentDTO {
   lastName: string
   avatarUrl: string | null
   isActive: boolean
+  enrolledAt: string
 }
 
 export type ClassStudentStatusFilter = "active" | "inactive" | "all"

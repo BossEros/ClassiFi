@@ -34,6 +34,50 @@ export interface MatchFragment {
   leftSelection: CodeRegion
   rightSelection: CodeRegion
   length: number // Number of matched structural fingerprints in this fragment
+  explanation?: FragmentExplanation
+  diffExplanation?: DiffFragmentExplanation
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
+}
+
+export type FragmentExplanationCategory =
+  | "library_import"
+  | "identifier_names"
+  | "control_flow"
+  | "function_structure"
+  | "code_structure"
+  | "comment_text"
+
+export interface FragmentExplanation {
+  category: FragmentExplanationCategory
+  label: string
+  reasons: string[]
+}
+
+export type DiffFragmentExplanationCategory =
+  | "identifier_renaming"
+  | "conditional_logic_changed"
+  | "loop_logic_changed"
+  | "output_logic_changed"
+  | "statement_added"
+  | "statement_removed"
+  | "comment_changed"
+  | "code_changed"
+
+export type DiffFragmentExplanationSource = "ai" | "fallback"
+
+export interface DiffFragmentExplanation {
+  category: DiffFragmentExplanationCategory
+  label: string
+  reasons: string[]
+  confidence: number
+  source: DiffFragmentExplanationSource
+}
+
+export interface DiffFragmentExplanationTarget {
+  targetId: string
+  leftSelection: CodeRegion
+  rightSelection: CodeRegion
+  explanation: DiffFragmentExplanation
 }
 
 /**

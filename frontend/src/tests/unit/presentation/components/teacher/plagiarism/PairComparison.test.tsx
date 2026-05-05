@@ -39,6 +39,11 @@ const pairFixture: FilePair = {
       leftSelection: { startRow: 0, startCol: 0, endRow: 10, endCol: 5 },
       rightSelection: { startRow: 0, startCol: 0, endRow: 10, endCol: 5 },
       length: 32,
+      explanation: {
+        category: "control_flow",
+        label: "Same Control Flow Structure",
+        reasons: ["Both fragments use for-loop and conditional logic"],
+      },
     },
     {
       id: 2,
@@ -67,13 +72,17 @@ describe("PairComparison", () => {
     })
   })
 
-  it("shows fragment navigation without the structural fingerprint count", async () => {
+  it("shows fragment navigation and explains selection or hover labels", async () => {
     render(<PairComparison pair={pairFixture} variant="light" />)
 
     const user = userEvent.setup()
     const previousFragmentButton = screen.getByRole("button", {
       name: "Previous fragment",
     })
+    expect(
+      screen.queryByLabelText("Editor fragment explanation"),
+    ).not.toBeInTheDocument()
+
     await user.click(screen.getByRole("button", { name: "Next fragment" }))
 
     expect(previousFragmentButton.parentElement).toHaveTextContent(
@@ -83,6 +92,11 @@ describe("PairComparison", () => {
     expect(
       previousFragmentButton.parentElement,
     ).not.toHaveTextContent(/structural fingerprint/i)
-    expect(screen.getByText(/Fragments are ordered strongest first\./i)).toBeInTheDocument()
+    expect(
+      screen.queryByLabelText("Editor fragment explanation"),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(/Click or hover over a highlighted block to see its evidence label/i),
+    ).toBeInTheDocument()
   })
 })

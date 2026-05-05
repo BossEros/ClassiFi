@@ -343,6 +343,7 @@ export class ClassService {
       lastName: studentRow.user.lastName,
       avatarUrl: studentRow.user.avatarUrl ?? null,
       isActive: studentRow.user.isActive,
+      enrolledAt: studentRow.enrolledAt?.toISOString() ?? new Date().toISOString(),
     }))
   }
 

@@ -1,7 +1,9 @@
-import { Search, Users, Filter } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { ChevronDown, Download, FileText, Filter, Search, Users } from "lucide-react"
 import { StudentListItem } from "@/presentation/components/shared/dashboard/StudentListItem"
 import { Pagination } from "@/presentation/components/ui/Pagination"
 import { Select } from "@/presentation/components/ui/Select"
+import { Button } from "@/presentation/components/ui/Button"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import type {
   EnrolledStudent,
@@ -34,6 +36,10 @@ interface StudentsTabContentProps {
   ) => void
   onRemoveStudent: (student: EnrolledStudent) => void
   onStudentPageChange: (page: number) => void
+  onExportCsv?: () => void
+  onDownloadPdf?: () => void
+  isExportingCsv?: boolean
+  isDownloadingPdf?: boolean
   variant?: "dark" | "light"
 }
 
@@ -55,12 +61,17 @@ export function StudentsTabContent({
   onStudentStatusFilterChange,
   onRemoveStudent,
   onStudentPageChange,
+  onExportCsv,
+  onDownloadPdf,
+  isExportingCsv = false,
+  isDownloadingPdf = false,
   variant = "dark",
 }: StudentsTabContentProps) {
   const isLight = variant === "light"
+  const exportMenuRef = useRef<HTMLDivElement | null>(null)
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
 
   // Preserve the teacher-only remove action inputs so the trash button can be restored quickly later.
-  void isTeacher
   void onRemoveStudent
 
   const shouldShowRosterEmptyState =
@@ -94,6 +105,31 @@ export function StudentsTabContent({
       }
     },
   )
+  const isExportDisabled =
+    isLoadingStudents ||
+    filteredStudents.length === 0 ||
+    isExportingCsv ||
+    isDownloadingPdf ||
+    !onExportCsv ||
+    !onDownloadPdf
+
+  useEffect(() => {
+    if (!isExportMenuOpen) {
+      return
+    }
+
+    function closeMenuOnOutsideClick(event: MouseEvent): void {
+      if (!exportMenuRef.current?.contains(event.target as Node)) {
+        setIsExportMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", closeMenuOnOutsideClick)
+
+    return () => {
+      document.removeEventListener("mousedown", closeMenuOnOutsideClick)
+    }
+  }, [isExportMenuOpen])
 
   return (
     <div className="space-y-6">
@@ -134,27 +170,88 @@ export function StudentsTabContent({
           </div>
 
           {isTeacher && (
-            <div className="group relative w-full sm:w-[200px]">
-              <Filter
-                className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${
-                  isLight ? "text-slate-400" : "text-gray-500"
-                }`}
-                aria-hidden="true"
-              />
-              <Select
-                value={studentStatusFilter}
-                onChange={(value) =>
-                  onStudentStatusFilterChange(
-                    value as Extract<ClassStudentStatusFilter, "active" | "inactive">,
-                  )
-                }
-                options={studentStatusOptions}
-                aria-label="Filter enrolled students by account status"
-                disabled={isLoadingStudents}
-                variant={variant}
-                className="h-11 cursor-pointer pl-9 pr-10 sm:h-10"
-              />
-            </div>
+            <>
+              <div className="group relative w-full sm:w-[200px]">
+                <Filter
+                  className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${
+                    isLight ? "text-slate-400" : "text-gray-500"
+                  }`}
+                  aria-hidden="true"
+                />
+                <Select
+                  value={studentStatusFilter}
+                  onChange={(value) =>
+                    onStudentStatusFilterChange(
+                      value as Extract<ClassStudentStatusFilter, "active" | "inactive">,
+                    )
+                  }
+                  options={studentStatusOptions}
+                  aria-label="Filter enrolled students by account status"
+                  disabled={isLoadingStudents}
+                  variant={variant}
+                  className="h-11 cursor-pointer pl-9 pr-10 sm:h-10"
+                />
+              </div>
+
+              <div className="relative w-full sm:w-auto" ref={exportMenuRef}>
+                <Button
+                  onClick={() => setIsExportMenuOpen((previous) => !previous)}
+                  className="h-11 w-full px-4 sm:h-10 sm:w-auto"
+                  disabled={isExportDisabled}
+                >
+                  <Download
+                    className={`mr-2 h-4 w-4 ${isExportingCsv || isDownloadingPdf ? "animate-bounce" : ""}`}
+                  />
+                  {isExportingCsv
+                    ? "Exporting..."
+                    : isDownloadingPdf
+                      ? "Preparing..."
+                      : "Export"}
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+
+                {isExportMenuOpen && (
+                  <div
+                    className={`absolute right-0 top-full z-50 mt-2 min-w-[180px] overflow-hidden rounded-lg p-1 shadow-lg shadow-black/20 ${
+                      isLight
+                        ? "border border-slate-200 bg-white"
+                        : "border border-white/10 bg-slate-900/95 backdrop-blur-sm"
+                    }`}
+                  >
+                    <button
+                      onClick={() => {
+                        setIsExportMenuOpen(false)
+                        onExportCsv?.()
+                      }}
+                      disabled={isExportingCsv}
+                      className={`flex w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors duration-150 ${
+                        isLight
+                          ? "text-slate-700 hover:bg-teal-100 hover:text-teal-800"
+                          : "text-gray-300 hover:bg-white/20 hover:text-white"
+                      }`}
+                    >
+                      <Download className="h-4 w-4" />
+                      Export as CSV
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsExportMenuOpen(false)
+                        onDownloadPdf?.()
+                      }}
+                      disabled={isDownloadingPdf}
+                      className={`flex w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors duration-150 ${
+                        isLight
+                          ? "text-slate-700 hover:bg-teal-100 hover:text-teal-800"
+                          : "text-gray-300 hover:bg-white/20 hover:text-white"
+                      }`}
+                    >
+                      <FileText className="h-4 w-4" />
+                      Download as PDF
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
