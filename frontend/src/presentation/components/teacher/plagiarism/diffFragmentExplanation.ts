@@ -171,7 +171,8 @@ export function buildDiffFragmentExplanation(
 
   if (
     identifierRenames.length > 0 &&
-    haveSimilarTokenShapeIgnoringIdentifiers(leftTokens, rightTokens)
+    (haveSameCodeShapeIgnoringIdentifiers(leftSnippet, rightSnippet) ||
+      haveSimilarTokenShapeIgnoringIdentifiers(leftTokens, rightTokens))
   ) {
     return {
       category: "identifier_renaming",
@@ -195,6 +196,23 @@ export function buildDiffFragmentExplanation(
   }
 
   return FALLBACK_DIFF_EXPLANATION
+}
+
+function haveSameCodeShapeIgnoringIdentifiers(
+  leftSnippet: string,
+  rightSnippet: string,
+): boolean {
+  const leftNormalizedSnippet = normalizeIdentifiersInSnippet(leftSnippet)
+  const rightNormalizedSnippet = normalizeIdentifiersInSnippet(rightSnippet)
+
+  return leftNormalizedSnippet === rightNormalizedSnippet
+}
+
+function normalizeIdentifiersInSnippet(snippet: string): string {
+  return snippet
+    .replace(/\b[A-Za-z_][A-Za-z0-9_]*\b/g, "<identifier>")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 function isCommentOnlySnippet(snippet: string): boolean {
@@ -299,6 +317,19 @@ function haveSimilarTokenShapeIgnoringIdentifiers(
   leftTokens: CodeToken[],
   rightTokens: CodeToken[],
 ): boolean {
+  const leftGeneralizedSignature = createGeneralizedTokenSignature(leftTokens)
+  const rightGeneralizedSignature = createGeneralizedTokenSignature(rightTokens)
+
+  if (
+    leftGeneralizedSignature.length === rightGeneralizedSignature.length &&
+    leftGeneralizedSignature.every(
+      (leftTokenSignature, tokenIndex) =>
+        leftTokenSignature === rightGeneralizedSignature[tokenIndex],
+    )
+  ) {
+    return true
+  }
+
   const leftNonIdentifierSignature = createNonIdentifierSignature(leftTokens)
   const rightNonIdentifierSignature = createNonIdentifierSignature(rightTokens)
   const shorterSignatureLength = Math.min(
@@ -317,6 +348,14 @@ function haveSimilarTokenShapeIgnoringIdentifiers(
   }
 
   return matchingTokenCount / shorterSignatureLength >= 0.75
+}
+
+function createGeneralizedTokenSignature(tokens: CodeToken[]): string[] {
+  return tokens.map((token) => {
+    if (token.kind === "identifier") return "identifier:<name>"
+
+    return `${token.kind}:${token.value}`
+  })
 }
 
 function createNonIdentifierSignature(tokens: CodeToken[]): string[] {
