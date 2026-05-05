@@ -5,8 +5,17 @@ import { PairComparison } from "@/presentation/components/teacher/plagiarism/Pai
 import type { FilePair } from "@/presentation/components/teacher/plagiarism/types"
 
 vi.mock("@/presentation/components/teacher/plagiarism/PairCodeEditor", () => ({
-  PairCodeEditor: ({ side }: { side: "left" | "right" }) => (
-    <div>{side === "left" ? "Left editor" : "Right editor"}</div>
+  PairCodeEditor: ({
+    side,
+    shouldShowSelectedExplanation,
+  }: {
+    side: "left" | "right"
+    shouldShowSelectedExplanation?: boolean
+  }) => (
+    <div>
+      {side === "left" ? "Left editor" : "Right editor"}
+      {shouldShowSelectedExplanation ? " selected explanation enabled" : ""}
+    </div>
   ),
 }))
 
@@ -96,7 +105,8 @@ describe("PairComparison", () => {
       screen.queryByLabelText("Editor fragment explanation"),
     ).not.toBeInTheDocument()
     expect(
-      screen.getByText(/Click or hover over a highlighted block to see its evidence label/i),
+      screen.getByText(/Hover over a highlighted fragment or select it/i),
     ).toBeInTheDocument()
+    expect(screen.getByText(/Left editor selected explanation enabled/i)).toBeInTheDocument()
   })
 })

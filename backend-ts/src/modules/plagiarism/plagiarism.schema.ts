@@ -216,6 +216,7 @@ export const ResultDetailsResponseSchema = z.object({
     rightTotal: z.number(),
   }),
   fragments: z.array(FragmentResponseSchema),
+  diffExplanationTargets: z.array(DiffFragmentExplanationTargetSchema).optional(),
   leftFile: ResultFileDetailsSchema,
   rightFile: ResultFileDetailsSchema,
 })

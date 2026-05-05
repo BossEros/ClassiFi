@@ -12,6 +12,11 @@ export const DiffFragmentExplanationCategorySchema = z.enum([
 ])
 
 export const DiffFragmentExplanationSourceSchema = z.enum(["ai", "fallback"])
+export const DiffFragmentExplanationTargetKindSchema = z.enum([
+  "changed",
+  "added",
+  "removed",
+])
 
 export const DiffFragmentExplanationSchema = z
   .object({
@@ -35,8 +40,9 @@ export const DiffCodeSelectionSchema = z
 export const DiffFragmentExplanationTargetSchema = z
   .object({
     targetId: z.string().trim().min(1),
-    leftSelection: DiffCodeSelectionSchema,
-    rightSelection: DiffCodeSelectionSchema,
+    targetKind: DiffFragmentExplanationTargetKindSchema,
+    leftSelection: DiffCodeSelectionSchema.nullable(),
+    rightSelection: DiffCodeSelectionSchema.nullable(),
     explanation: DiffFragmentExplanationSchema,
   })
   .strict()
@@ -47,6 +53,10 @@ export type DiffFragmentExplanationCategory = z.infer<
 
 export type DiffFragmentExplanationSource = z.infer<
   typeof DiffFragmentExplanationSourceSchema
+>
+
+export type DiffFragmentExplanationTargetKind = z.infer<
+  typeof DiffFragmentExplanationTargetKindSchema
 >
 
 export type DiffFragmentExplanation = z.infer<

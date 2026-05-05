@@ -256,6 +256,7 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             language={language}
             height={editorHeight}
             variant={variant}
+            shouldShowSelectedExplanation
             submittedFirst={
               temporalOrder === null ? null : temporalOrder === "left"
             }
@@ -302,9 +303,9 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
         }}
       >
         <strong style={{ color: valueColor }}>Tip:</strong>{" "}
-        Shared fragments are highlighted in sky blue. Click or hover over a
-        highlighted block to see its evidence label, or use the arrows above to
-        navigate between matches. Fragments are ordered strongest first.
+        Shared fragments are highlighted in sky blue. Hover over a highlighted
+        fragment or select it with the arrows above to see its evidence label.
+        Fragments are ordered strongest first.
       </div>
     </div>
   )

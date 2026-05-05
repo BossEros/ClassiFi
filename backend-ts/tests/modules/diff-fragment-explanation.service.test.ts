@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { DiffFragmentExplanationSchema } from "@/modules/plagiarism/diff-fragment-explanation.schema.js"
 import {
+  buildProviderFragmentPayloads,
   DiffFragmentExplanationService,
   parseProviderBatchOutput,
   type DiffExplanationProvider,
@@ -226,7 +227,7 @@ describe("DiffFragmentExplanationService", () => {
     expect(explanation.source).toBe("ai")
     expect(reason).toContain("`roman_dict` to `values`")
     expect(reason).toContain("`total` to `result`")
-    expect(reason.length).toBeLessThanOrEqual(260)
+    expect(reason.length).toBeLessThanOrEqual(360)
   })
 
   it("requests all fragments from the provider in one pair-level batch", async () => {
@@ -358,13 +359,28 @@ describe("DiffFragmentExplanationService", () => {
     ])
   })
 
-  it("labels comment-only changes as comment changes without calling the provider", async () => {
+  it("sends comment-only changes to the provider when AI labels are enabled", async () => {
     let providerCallCount = 0
+    let observedIsCommentOnly: boolean | undefined
     const provider: DiffExplanationProvider = {
-      explainBatch: async () => {
+      explainBatch: async (providerInput) => {
         providerCallCount += 1
+        observedIsCommentOnly = providerInput.fragments[0]?.isCommentOnly
 
-        return []
+        return [
+          {
+            targetId: "301:0",
+            explanation: {
+              category: "comment_changed",
+              label: "Comment Purpose Changed",
+              reasons: [
+                "The right comment changes the setup wording from creating a stack to initializing it.",
+              ],
+              confidence: 0.91,
+              source: "ai",
+            },
+          },
+        ]
       },
     }
     const service = new DiffFragmentExplanationService({
@@ -394,15 +410,16 @@ describe("DiffFragmentExplanationService", () => {
       ],
     })
 
-    expect(providerCallCount).toBe(0)
+    expect(providerCallCount).toBe(1)
+    expect(observedIsCommentOnly).toBe(true)
     expect(explanationTargets).toHaveLength(1)
     expect(explanationTargets[0]?.explanation).toMatchObject({
       category: "comment_changed",
-      label: "Comment Text Changed",
-      source: "fallback",
+      label: "Comment Purpose Changed",
+      source: "ai",
     })
     expect(explanationTargets[0]?.explanation.reasons[0]).toContain(
-      "comment",
+      "initializing",
     )
   })
 
@@ -581,6 +598,138 @@ describe("DiffFragmentExplanationService", () => {
     expect(providerCallCount).toBe(1)
     expect(firstTargets[0]?.explanation.source).toBe("fallback")
     expect(secondTargets[0]?.explanation.source).toBe("fallback")
+  })
+
+  it("creates full-file targets for added, removed, and changed lines", async () => {
+    const service = new DiffFragmentExplanationService({
+      enabled: false,
+      minimumConfidence: 0.7,
+    })
+
+    const targets = await service.explainPairDiffTargets({
+      leftContent: ["#include <stdio.h>", "int value = 5;", "printf(\"old\");"].join(
+        "\n",
+      ),
+      rightContent: [
+        "#include <stdio.h>",
+        "#include <string.h>",
+        "int value = strlen(s);",
+      ].join("\n"),
+      language: "c",
+    })
+
+    expect(targets.map((target) => target.targetKind)).toEqual([
+      "added",
+      "changed",
+      "removed",
+    ])
+    expect(targets[0]).toMatchObject({
+      targetId: "pair:0",
+      leftSelection: null,
+      rightSelection: { startRow: 1, startCol: 0, endRow: 1, endCol: 19 },
+    })
+    expect(targets[1]).toMatchObject({
+      targetId: "pair:1",
+      leftSelection: { startRow: 1, startCol: 0, endRow: 1, endCol: 14 },
+      rightSelection: { startRow: 2, startCol: 0, endRow: 2, endCol: 22 },
+    })
+    expect(targets[2]).toMatchObject({
+      targetId: "pair:2",
+      leftSelection: { startRow: 2, startCol: 0, endRow: 2, endCol: 14 },
+      rightSelection: null,
+    })
+  })
+
+  it("passes one-sided full-file targets to the provider before fallback merge", async () => {
+    const observedTargets: Array<{
+      targetId: string | undefined
+      targetKind: string | undefined
+      hasLeftSelection: boolean
+      hasRightSelection: boolean
+    }> = []
+    const provider: DiffExplanationProvider = {
+      explainBatch: async (providerInput) => {
+        observedTargets.push(
+          ...providerInput.fragments.map((fragment) => ({
+            targetId: fragment.targetId,
+            targetKind: fragment.targetKind,
+            hasLeftSelection: fragment.leftSelection !== null,
+            hasRightSelection: fragment.rightSelection !== null,
+          })),
+        )
+
+        return []
+      },
+    }
+    const service = new DiffFragmentExplanationService({
+      enabled: true,
+      provider,
+      minimumConfidence: 0.7,
+    })
+
+    await service.explainPairDiffTargets({
+      leftContent: ["int value = 5;", "printf(\"old\");"].join("\n"),
+      rightContent: ["#include <string.h>", "int value = 5;"].join("\n"),
+      language: "c",
+    })
+
+    expect(observedTargets).toEqual([
+      {
+        targetId: "pair:0",
+        targetKind: "added",
+        hasLeftSelection: false,
+        hasRightSelection: true,
+      },
+      {
+        targetId: "pair:1",
+        targetKind: "removed",
+        hasLeftSelection: true,
+        hasRightSelection: false,
+      },
+    ])
+  })
+
+  it("builds provider payloads with empty snippets for missing added and removed sides", () => {
+    const payloads = buildProviderFragmentPayloads({
+      leftContent: ["int value = 5;", "printf(\"old\");"].join("\n"),
+      rightContent: ["#include <string.h>", "int value = 5;"].join("\n"),
+      language: "c",
+      fragments: [
+        {
+          fragmentId: -1,
+          targetId: "pair:0",
+          targetKind: "added",
+          leftSelection: null,
+          rightSelection: { startRow: 0, startCol: 0, endRow: 0, endCol: 19 },
+          leftContextSnippet: "",
+          rightContextSnippet: "> 1: #include <string.h>",
+        },
+        {
+          fragmentId: -1,
+          targetId: "pair:1",
+          targetKind: "removed",
+          leftSelection: { startRow: 1, startCol: 0, endRow: 1, endCol: 14 },
+          rightSelection: null,
+          leftContextSnippet: "> 2: printf(\"old\");",
+          rightContextSnippet: "",
+        },
+      ],
+    })
+
+    expect(payloads).toMatchObject([
+      {
+        targetId: "pair:0",
+        targetKind: "added",
+        leftSnippet: "",
+        rightSnippet: "#include <string.h>",
+      },
+      {
+        targetId: "pair:1",
+        targetKind: "removed",
+        leftSnippet: "printf(\"old\");",
+        rightSnippet: "",
+      },
+    ])
   })
 })
 

@@ -658,7 +658,7 @@ Specialized types for the class detail page redesign:
 3. **Compare Code**:
    - View matched code fragments highlighted in both files
    - Review backend-generated Match View fragment labels that explain visible similarity evidence in one neutral sentence. Comment-only matched fragments are labeled as comment text, and deterministic fallback labels remain available when AI labels are disabled or unavailable.
-   - Review backend-generated Diff View hover labels that explain what changed inside smaller highlighted line/segment targets. Comment-only changes are labeled as comment changes instead of code renames. AI-assisted labels are shown only after backend validation; deterministic fallback labels remain available when AI labels are disabled or unavailable.
+   - Review backend-generated Diff View hover labels that explain visible changed lines, including paired changes, right-only added code, and left-only removed code. Pair-level targets are preferred when present; fragment-level targets remain a compatibility fallback. Comment-only changes are labeled as comment changes instead of code renames. AI-assisted labels are shown only after backend validation; deterministic fallback labels remain available when AI labels are disabled or unavailable.
    - Use synchronized scrolling to navigate through matches
    - Click on fragments in the table to jump to specific matches
    - Toggle between "Match" and "Diff" views for different perspectives

@@ -1,17 +1,28 @@
 import React, { useRef, useEffect } from "react"
 import * as monaco from "monaco-editor"
-import type { FileData, MatchFragment, CodeRegion } from "./types"
+import type {
+  CodeRegion,
+  DiffFragmentExplanation,
+  DiffFragmentExplanationTarget,
+  FileData,
+  MatchFragment,
+} from "./types"
 import {
   CLASSIFI_PLAGIARISM_DARK_THEME,
   CLASSIFI_PLAGIARISM_LIGHT_THEME,
   DIFF_VIEW_COLORS,
   ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
-import { buildDiffFragmentExplanation } from "./diffFragmentExplanation"
+import {
+  buildDiffFragmentExplanation,
+  extractSelectedCode,
+} from "./diffFragmentExplanation"
 import {
   PLAGIARISM_MONACO_HOVER_CSS,
+  SHOULD_SHOW_NATIVE_MONACO_HOVER_MESSAGES,
   formatFragmentExplanationHoverMessage,
 } from "./fragmentExplanationHover"
+import { FragmentExplanationWidget, type FragmentExplanationWidgetContent } from "./fragmentExplanationWidget"
 import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
 import { getTemporalOrder } from "@/presentation/utils/timeUtils"
 
@@ -22,6 +33,8 @@ interface PairCodeDiffProps {
   rightFile: FileData
   /** Matching fragments to explain in the diff view */
   fragments?: MatchFragment[]
+  /** Pair-level diff explanation targets for all visible changed lines. */
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
   /** Programming language for syntax highlighting */
   language?: string
   /** Height of the diff editor */
@@ -34,7 +47,7 @@ interface PairCodeDiffProps {
  * Monaco diff editor showing differences between two files.
  *
  * Shows a side-by-side diff view highlighting:
- * - Added lines (green)
+ * - Code only in the right submission (yellow-green Monaco inserted color)
  * - Removed lines (red)
  * - Unchanged lines (normal)
  */
@@ -42,6 +55,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
   leftFile,
   rightFile,
   fragments = [],
+  diffExplanationTargets: pairDiffExplanationTargets,
   language = "java",
   height = 480,
   variant = "dark",
@@ -91,45 +105,115 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
 
     const originalEditor = editor.getOriginalEditor()
     const modifiedEditor = editor.getModifiedEditor()
-    const diffExplanationTargets = fragments.flatMap((fragment) => {
-      if (fragment.diffExplanationTargets?.length) {
-        return fragment.diffExplanationTargets
-      }
-
-      return [
-        {
-          targetId: `${fragment.id}:fallback`,
-          leftSelection: fragment.leftSelection,
-          rightSelection: fragment.rightSelection,
-          explanation:
-            fragment.diffExplanation ??
-            buildDiffFragmentExplanation({
-              leftContent: leftFile.content,
-              rightContent: rightFile.content,
-              leftSelection: fragment.leftSelection,
-              rightSelection: fragment.rightSelection,
-            }),
-        },
-      ]
-    })
-    const leftDecorations = diffExplanationTargets.map((target) =>
-      createFragmentHoverDecoration(target.leftSelection, target.explanation),
+    const originalExplanationWidget = new FragmentExplanationWidget(
+      originalEditor,
+      "classifi-diff-original-fragment-explanation",
     )
-    const rightDecorations = diffExplanationTargets.map((target) =>
-      createFragmentHoverDecoration(target.rightSelection, target.explanation),
+    const modifiedExplanationWidget = new FragmentExplanationWidget(
+      modifiedEditor,
+      "classifi-diff-modified-fragment-explanation",
+    )
+    const diffExplanationTargets: DiffFragmentExplanationTarget[] =
+      pairDiffExplanationTargets?.length
+        ? pairDiffExplanationTargets
+        : fragments.flatMap((fragment) => {
+            if (fragment.diffExplanationTargets?.length) {
+              return fragment.diffExplanationTargets
+            }
+
+            return [
+              {
+                targetId: `${fragment.id}:fallback`,
+                targetKind: "changed" as const,
+                leftSelection: fragment.leftSelection,
+                rightSelection: fragment.rightSelection,
+                explanation: getFragmentDiffExplanation({
+                  fragment,
+                  leftContent: leftFile.content,
+                  rightContent: rightFile.content,
+                }),
+              },
+            ]
+          })
+    const changedDiffExplanationTargets = diffExplanationTargets.filter((target) =>
+      hasChangedSelectedCode({
+        leftContent: leftFile.content,
+        rightContent: rightFile.content,
+        leftSelection: target.leftSelection,
+        rightSelection: target.rightSelection,
+      }),
+    )
+    const leftDecorations = changedDiffExplanationTargets.flatMap((target) =>
+      target.leftSelection
+        ? [createFragmentHoverDecoration(target.leftSelection, target.explanation)]
+        : [],
+    )
+    const rightDecorations = changedDiffExplanationTargets.flatMap((target) =>
+      target.rightSelection
+        ? [createFragmentHoverDecoration(target.rightSelection, target.explanation)]
+        : [],
     )
     const originalDecorationIds = originalEditor.deltaDecorations([], leftDecorations)
     const modifiedDecorationIds = modifiedEditor.deltaDecorations([], rightDecorations)
+    const leftHoverTargets = changedDiffExplanationTargets.flatMap((target) =>
+      target.leftSelection
+        ? [{ region: target.leftSelection, explanation: target.explanation }]
+        : [],
+    )
+    const rightHoverTargets = changedDiffExplanationTargets.flatMap((target) =>
+      target.rightSelection
+        ? [{ region: target.rightSelection, explanation: target.explanation }]
+        : [],
+    )
+    const disposables: monaco.IDisposable[] = [
+      originalEditor.onMouseMove((event) => {
+        const lineNumber = event.target?.position?.lineNumber
+        if (!lineNumber) {
+          originalExplanationWidget.hide()
+          return
+        }
+
+        const hoverTarget = getDiffHoverTargetAtLine(leftHoverTargets, lineNumber)
+        showDiffExplanationWidget(originalExplanationWidget, hoverTarget)
+      }),
+      modifiedEditor.onMouseMove((event) => {
+        const lineNumber = event.target?.position?.lineNumber
+        if (!lineNumber) {
+          modifiedExplanationWidget.hide()
+          return
+        }
+
+        const hoverTarget = getDiffHoverTargetAtLine(rightHoverTargets, lineNumber)
+        showDiffExplanationWidget(modifiedExplanationWidget, hoverTarget)
+      }),
+      originalEditor.onMouseLeave(() => {
+        originalExplanationWidget.hide()
+      }),
+      modifiedEditor.onMouseLeave(() => {
+        modifiedExplanationWidget.hide()
+      }),
+    ]
 
     // Cleanup - dispose the exact editor created by this effect
     return () => {
+      disposables.forEach((disposable) => disposable.dispose())
+      originalExplanationWidget.dispose()
+      modifiedExplanationWidget.dispose()
       originalEditor.deltaDecorations(originalDecorationIds, [])
       modifiedEditor.deltaDecorations(modifiedDecorationIds, [])
       originalModel.dispose()
       modifiedModel.dispose()
       editor.dispose()
     }
-  }, [fragments, isLight, isTabletOrBelow, leftFile.content, rightFile.content, language])
+  }, [
+    fragments,
+    isLight,
+    isTabletOrBelow,
+    leftFile.content,
+    rightFile.content,
+    language,
+    pairDiffExplanationTargets,
+  ])
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -258,10 +342,10 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
               fontWeight: 600,
             }}
           >
-            Added
+            Yellow-Green
           </span>
           <span style={{ color: legendTextColor, fontSize: "12px" }}>
-            Green marks code present only in the right file.
+            Yellow-green marks code present only in the right file.
           </span>
         </div>
 
@@ -279,7 +363,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
               fontWeight: 600,
             }}
           >
-            Removed
+            Red
           </span>
           <span style={{ color: legendTextColor, fontSize: "12px" }}>
             Red marks code missing from the right file.
@@ -316,9 +400,127 @@ function createFragmentHoverDecoration(
       endColumn: region.endCol + 1,
     },
     options: {
-      hoverMessage: {
-        value: formatFragmentExplanationHoverMessage(explanation),
-      },
+      hoverMessage: SHOULD_SHOW_NATIVE_MONACO_HOVER_MESSAGES
+        ? {
+            value: formatFragmentExplanationHoverMessage(explanation),
+          }
+        : undefined,
     },
   }
+}
+
+function getFragmentDiffExplanation(input: {
+  fragment: MatchFragment
+  leftContent: string
+  rightContent: string
+}): DiffFragmentExplanation {
+  if (input.fragment.diffExplanation) {
+    return input.fragment.diffExplanation
+  }
+
+  const fallbackExplanation = buildDiffFragmentExplanation({
+    leftContent: input.leftContent,
+    rightContent: input.rightContent,
+    leftSelection: input.fragment.leftSelection,
+    rightSelection: input.fragment.rightSelection,
+  })
+
+  return {
+    ...fallbackExplanation,
+    category: mapLocalFallbackDiffCategory(fallbackExplanation.category),
+    confidence: 0.45,
+    source: "fallback",
+  }
+}
+
+function mapLocalFallbackDiffCategory(
+  category: ReturnType<typeof buildDiffFragmentExplanation>["category"],
+): DiffFragmentExplanation["category"] {
+  switch (category) {
+    case "conditional_added":
+    case "conditional_removed":
+      return "conditional_logic_changed"
+    case "loop_condition_changed":
+      return "loop_logic_changed"
+    case "code_added":
+      return "statement_added"
+    case "code_removed":
+      return "statement_removed"
+    default:
+      return category
+  }
+}
+
+interface DiffHoverTarget {
+  region: CodeRegion
+  explanation: FragmentExplanationWidgetContent
+}
+
+function getDiffHoverTargetAtLine(
+  targets: DiffHoverTarget[],
+  lineNumber: number,
+): DiffHoverTarget | null {
+  let smallestTarget: DiffHoverTarget | null = null
+  let smallestTargetLength = Number.MAX_SAFE_INTEGER
+
+  for (const target of targets) {
+    const isInsideLineRange =
+      target.region.startRow + 1 <= lineNumber &&
+      lineNumber <= target.region.endRow + 1
+
+    if (!isInsideLineRange) continue
+
+    const targetLength =
+      (target.region.endRow - target.region.startRow + 1) * 10000 +
+      (target.region.endCol - target.region.startCol + 1)
+
+    if (targetLength < smallestTargetLength) {
+      smallestTarget = target
+      smallestTargetLength = targetLength
+    }
+  }
+
+  return smallestTarget
+}
+
+function showDiffExplanationWidget(
+  widget: FragmentExplanationWidget,
+  target: DiffHoverTarget | null,
+): void {
+  if (!target) {
+    widget.hide()
+    return
+  }
+
+  widget.show({
+    explanation: target.explanation,
+    lineNumber: target.region.startRow + 1,
+    column: target.region.startCol + 1,
+  })
+}
+
+interface HasChangedSelectedCodeInput {
+  leftContent: string
+  rightContent: string
+  leftSelection: CodeRegion | null
+  rightSelection: CodeRegion | null
+}
+
+function hasChangedSelectedCode(input: HasChangedSelectedCodeInput): boolean {
+  if (!input.leftSelection || !input.rightSelection) {
+    return Boolean(input.leftSelection || input.rightSelection)
+  }
+
+  const leftSnippet = normalizeSnippetLineEndings(
+    extractSelectedCode(input.leftContent, input.leftSelection),
+  )
+  const rightSnippet = normalizeSnippetLineEndings(
+    extractSelectedCode(input.rightContent, input.rightSelection),
+  )
+
+  return leftSnippet !== rightSnippet
+}
+
+function normalizeSnippetLineEndings(snippet: string): string {
+  return snippet.replace(/\r\n/g, "\n")
 }

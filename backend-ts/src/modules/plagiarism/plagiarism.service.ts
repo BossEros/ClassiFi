@@ -9,6 +9,7 @@ import {
   DiffFragmentExplanationService,
   groupDiffExplanationTargetsByFragmentId,
 } from "@/modules/plagiarism/diff-fragment-explanation.service.js"
+import type { DiffFragmentExplanationTarget } from "@/modules/plagiarism/diff-fragment-explanation.schema.js"
 import { MatchFragmentExplanationService } from "@/modules/plagiarism/match-fragment-explanation.service.js"
 import {
   computeSemanticScoresFromEmbeddings,
@@ -88,6 +89,7 @@ export interface ResultDetailsResponse {
     rightTotal: number
   }
   fragments: PlagiarismFragmentDTO[]
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
   leftFile: {
     filename: string
     content: string
@@ -226,7 +228,11 @@ export class PlagiarismService {
         endCol: fragment.rightEndCol,
       },
     }))
-    const [matchExplanationsByFragmentId, diffExplanationTargets] =
+    const [
+      matchExplanationsByFragmentId,
+      fragmentDiffExplanationTargets,
+      pairDiffExplanationTargets,
+    ] =
       await Promise.all([
         this.matchExplanationService.explainMatchFragments({
           leftContent,
@@ -240,10 +246,14 @@ export class PlagiarismService {
           language: assignment?.programmingLanguage,
           fragments: fragmentSelections,
         }),
+        this.diffExplanationService.explainPairDiffTargets({
+          leftContent,
+          rightContent,
+          language: assignment?.programmingLanguage,
+        }),
       ])
-    const diffExplanationTargetsByFragmentId = groupDiffExplanationTargetsByFragmentId(
-      diffExplanationTargets,
-    )
+    const diffExplanationTargetsByFragmentId =
+      groupDiffExplanationTargetsByFragmentId(fragmentDiffExplanationTargets)
     const fragmentDetails = fragments.map((fragment, fragmentIndex) => {
       const fragmentSelection = fragmentSelections[fragmentIndex]
 
@@ -276,6 +286,7 @@ export class PlagiarismService {
         rightTotal: result.rightTotal,
       },
       fragments: fragmentDetails,
+      diffExplanationTargets: pairDiffExplanationTargets,
       leftFile: {
         filename: submission1.submission.fileName,
         content: leftContent,

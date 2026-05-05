@@ -72,6 +72,7 @@ export interface CrossClassResultDetailsResponse {
     diffExplanation?: DiffFragmentExplanation
     diffExplanationTargets?: DiffFragmentExplanationTarget[]
   }>
+  diffExplanationTargets?: DiffFragmentExplanationTarget[]
   leftFile: {
     filename: string
     content: string

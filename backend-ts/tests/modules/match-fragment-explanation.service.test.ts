@@ -90,7 +90,7 @@ describe("MatchFragmentExplanationService", () => {
 
     expect(explanations.get(101)?.label).toBe("Renamed Loop Variables")
     expect(reason).toContain("`total` renamed to `result`")
-    expect(reason.length).toBeLessThanOrEqual(260)
+    expect(reason.length).toBeLessThanOrEqual(360)
     expect(reason.endsWith(".")).toBe(true)
   })
 
@@ -136,12 +136,29 @@ describe("MatchFragmentExplanationService", () => {
     expect(explanations.get(101)?.label).not.toBe("Uncertain Label")
   })
 
-  it("skips comment-only fragments and does not call the provider for them", async () => {
+  it("sends comment-only fragments to the provider when AI labels are enabled", async () => {
     let providerCallCount = 0
-    const provider = createProvider(async () => {
+    let observedLeftSnippet = ""
+    let observedRightSnippet = ""
+    const provider = createProvider(async (providerInput) => {
       providerCallCount += 1
+      observedLeftSnippet = providerInput.fragments[0]?.leftSnippet ?? ""
+      observedRightSnippet = providerInput.fragments[0]?.rightSnippet ?? ""
 
-      return []
+      return [
+        {
+          targetId: "202",
+          explanation: {
+            category: "comment_text",
+            label: "Comment Purpose Renamed",
+            reasons: [
+              "The comments describe the same stack setup using different wording.",
+            ],
+            confidence: 0.92,
+            source: "ai",
+          },
+        },
+      ]
     })
     const service = new MatchFragmentExplanationService({
       enabled: true,
@@ -162,12 +179,14 @@ describe("MatchFragmentExplanationService", () => {
       ],
     })
 
-    expect(providerCallCount).toBe(0)
+    expect(providerCallCount).toBe(1)
+    expect(observedLeftSnippet).toBe("// Create a stack to store opening brackets")
+    expect(observedRightSnippet).toBe("// Initialize stack to store opening brackets")
     expect(explanations.get(202)).toEqual({
       category: "comment_text",
-      label: "Matched Comment Text",
+      label: "Comment Purpose Renamed",
       reasons: [
-        "Both matched fragments are comments; executable code is not matched here.",
+        "The comments describe the same stack setup using different wording.",
       ],
     })
   })

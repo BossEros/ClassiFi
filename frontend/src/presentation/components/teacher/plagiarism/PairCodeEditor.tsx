@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from "react"
+import React, { useRef, useEffect, useCallback, useState } from "react"
 import * as monaco from "monaco-editor"
 import type { FileData, MatchFragment, CodeRegion } from "./types"
 import { MATCH_COLORS } from "./types"
@@ -9,8 +9,10 @@ import {
 } from "./monacoDarkTheme"
 import {
   PLAGIARISM_MONACO_HOVER_CSS,
+  SHOULD_SHOW_NATIVE_MONACO_HOVER_MESSAGES,
   formatFragmentExplanationHoverMessage,
 } from "./fragmentExplanationHover"
+import { FragmentExplanationWidget } from "./fragmentExplanationWidget"
 
 interface PairCodeEditorProps {
   /** Which side of the comparison (left or right file) */
@@ -37,6 +39,8 @@ interface PairCodeEditorProps {
   variant?: "dark" | "light"
   /** Whether this file was submitted first in the pair */
   submittedFirst?: boolean | null
+  /** Whether the selected fragment explanation should stay visible in this editor. */
+  shouldShowSelectedExplanation?: boolean
 }
 
 /**
@@ -63,10 +67,14 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
   height = "480px",
   variant = "dark",
   submittedFirst,
+  shouldShowSelectedExplanation = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const explanationWidgetRef = useRef<FragmentExplanationWidget | null>(null)
   const decorationsRef = useRef<string[]>([])
+  const [locallyHoveredFragment, setLocallyHoveredFragment] =
+    useState<MatchFragment | null>(null)
   const isLight = variant === "light"
 
   // Sort fragments by start position
@@ -87,41 +95,19 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     [side],
   )
 
-  // Find fragment at a cursor position (smallest-match-first)
+  // Find fragment at a cursor position (smallest-match-first).
+  // Hover discovery is line-range based so users do not need to hit exact code characters.
   const getFragmentAtPosition = useCallback(
-    (lineNumber: number, column: number): MatchFragment | null => {
+    (lineNumber: number): MatchFragment | null => {
       let smallestMatch: MatchFragment | null = null
       let smallestMatchLength = Number.MAX_SAFE_INTEGER
 
       for (const fragment of sortedFragments) {
         const region = getRegion(fragment)
-        // Check if row is within range
         const inRowRange =
           region.startRow + 1 <= lineNumber && lineNumber <= region.endRow + 1
         if (!inRowRange) continue
 
-        // Check column range
-        let inColRange = true
-        // For single-line fragments, both constraints must be satisfied
-        if (
-          lineNumber === region.startRow + 1 &&
-          lineNumber === region.endRow + 1
-        ) {
-          inColRange =
-            column >= region.startCol + 1 && column <= region.endCol + 1
-        } else {
-          // For multi-line fragments, check start and end separately
-          if (lineNumber === region.startRow + 1) {
-            inColRange = column >= region.startCol + 1
-          }
-          if (lineNumber === region.endRow + 1) {
-            inColRange = column <= region.endCol + 1
-          }
-        }
-
-        if (!inColRange) continue
-
-        // Check if this is the smallest match
         const length =
           (region.endRow - region.startRow + 1) * 10000 +
           (region.endCol - region.startCol + 1)
@@ -134,6 +120,23 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       return smallestMatch
     },
     [sortedFragments, getRegion],
+  )
+
+  const showFragmentExplanationWidget = useCallback(
+    (fragment: MatchFragment | null, lineNumber?: number, column?: number) => {
+      if (!explanationWidgetRef.current || !fragment?.explanation) {
+        explanationWidgetRef.current?.hide()
+        return
+      }
+
+      const region = getRegion(fragment)
+      explanationWidgetRef.current.show({
+        explanation: fragment.explanation,
+        lineNumber: lineNumber ?? region.startRow + 1,
+        column: column ?? region.startCol + 1,
+      })
+    },
+    [getRegion],
   )
 
   // Build selections for multi-line fragments
@@ -260,7 +263,9 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
           className,
           isWholeLine: sel.isWholeLine,
           hoverMessage:
-            sel.fragment !== "ignored" && sel.fragment.explanation
+            SHOULD_SHOW_NATIVE_MONACO_HOVER_MESSAGES &&
+            sel.fragment !== "ignored" &&
+            sel.fragment.explanation
               ? {
                   value: formatFragmentExplanationHoverMessage(
                     sel.fragment.explanation,
@@ -300,7 +305,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
 
     ensurePlagiarismMonacoThemes()
 
-    editorRef.current = monaco.editor.create(containerRef.current, {
+    const editor = monaco.editor.create(containerRef.current, {
       value: file.content,
       language,
       theme: isLight
@@ -316,11 +321,18 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       scrollBeyondLastLine: false,
       fixedOverflowWidgets: true,
     })
+    editorRef.current = editor
+    explanationWidgetRef.current = new FragmentExplanationWidget(
+      editor,
+      `classifi-match-fragment-explanation-${side}`,
+    )
 
     return () => {
+      explanationWidgetRef.current?.dispose()
+      explanationWidgetRef.current = null
       editorRef.current?.dispose()
     }
-  }, [file.content, isLight, language])
+  }, [file.content, isLight, language, side])
 
   // Register event handlers (runs when handlers or dependencies change)
   useEffect(() => {
@@ -334,7 +346,6 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
         if (!e.position?.lineNumber) return
         const fragment = getFragmentAtPosition(
           e.position.lineNumber,
-          e.position.column,
         )
         onFragmentSelect(fragment)
       }),
@@ -344,14 +355,15 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     disposables.push(
       editorRef.current.onMouseMove((e) => {
         if (!e.target?.position) {
+          setLocallyHoveredFragment(null)
           onFragmentHover(null)
           return
         }
 
         const fragment = getFragmentAtPosition(
           e.target.position.lineNumber,
-          e.target.position.column,
         )
+        setLocallyHoveredFragment(fragment)
         onFragmentHover(fragment)
       }),
     )
@@ -359,6 +371,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     // Handle mouse leave
     disposables.push(
       editorRef.current.onMouseLeave(() => {
+        setLocallyHoveredFragment(null)
         onFragmentHover(null)
       }),
     )
@@ -429,6 +442,25 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     selectedFragment,
   ])
 
+  useEffect(() => {
+    if (locallyHoveredFragment) {
+      showFragmentExplanationWidget(locallyHoveredFragment)
+      return
+    }
+
+    if (shouldShowSelectedExplanation) {
+      showFragmentExplanationWidget(selectedFragment)
+      return
+    }
+
+    explanationWidgetRef.current?.hide()
+  }, [
+    locallyHoveredFragment,
+    selectedFragment,
+    shouldShowSelectedExplanation,
+    showFragmentExplanationWidget,
+  ])
+
   // Update decorations when fragments/selection changes
   useEffect(() => {
     updateDecorations()
@@ -436,7 +468,9 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
 
   // Scroll to selected fragment when it changes (if not focused)
   useEffect(() => {
-    if (selectedFragment && !editorRef.current?.hasTextFocus()) {
+    const hasEditorTextFocus = editorRef.current?.hasTextFocus?.() ?? false
+
+    if (selectedFragment && !hasEditorTextFocus) {
       scrollToFragment(selectedFragment)
     }
   }, [selectedFragment, scrollToFragment])

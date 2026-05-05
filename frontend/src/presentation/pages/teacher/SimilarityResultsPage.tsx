@@ -237,6 +237,7 @@ export function SimilarityResultsPage() {
         rightCovered: details.result.rightCovered,
         leftTotal: details.result.leftTotal,
         rightTotal: details.result.rightTotal,
+        diffExplanationTargets: details.diffExplanationTargets,
         fragments: details.fragments.map((fragment, index) => ({
           id: fragment.id || index,
           leftSelection: fragment.leftSelection,
@@ -830,6 +831,7 @@ export function SimilarityResultsPage() {
                     leftFile={pairDetails.leftFile}
                     rightFile={pairDetails.rightFile}
                     fragments={pairDetails.fragments}
+                    diffExplanationTargets={pairDetails.diffExplanationTargets}
                     language={detectedLanguage}
                     height={480}
                     variant="light"

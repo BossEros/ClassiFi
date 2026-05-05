@@ -1,20 +1,36 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import { PairCodeDiff } from "@/presentation/components/teacher/plagiarism/PairCodeDiff"
 import type { MatchFragment } from "@/presentation/components/teacher/plagiarism/types"
 
 const monacoMockState = vi.hoisted(() => ({
   hoverMessages: [] as string[],
+  decorationCallCount: 0,
+  originalMouseMoveHandler: null as
+    | ((event: { target?: { position?: { lineNumber: number; column: number } } }) => void)
+    | null,
+  modifiedMouseMoveHandler: null as
+    | ((event: { target?: { position?: { lineNumber: number; column: number } } }) => void)
+    | null,
+  contentWidgetNodes: [] as HTMLElement[],
+  originalDecorationCount: 0,
+  modifiedDecorationCount: 0,
 }))
 
 vi.mock("monaco-editor", () => ({
   editor: {
+    ContentWidgetPositionPreference: { ABOVE: 1, BELOW: 2 },
     defineTheme: vi.fn(),
     createModel: vi.fn(() => ({
       dispose: vi.fn(),
     })),
     createDiffEditor: vi.fn(() => {
-      const createCodeEditor = () => ({
+      const createCodeEditor = (side: "original" | "modified") => ({
+        addContentWidget: vi.fn((widget: { getDomNode: () => HTMLElement }) => {
+          const node = widget.getDomNode()
+          monacoMockState.contentWidgetNodes.push(node)
+          document.body.appendChild(node)
+        }),
         deltaDecorations: vi.fn(
           (
             _previousDecorationIds: string[],
@@ -22,6 +38,13 @@ vi.mock("monaco-editor", () => ({
               options?: { hoverMessage?: { value: string } }
             }>,
           ) => {
+            monacoMockState.decorationCallCount += 1
+            if (side === "original") {
+              monacoMockState.originalDecorationCount += decorations.length
+            } else {
+              monacoMockState.modifiedDecorationCount += decorations.length
+            }
+
             for (const decoration of decorations) {
               const hoverMessage = decoration.options?.hoverMessage?.value
 
@@ -33,12 +56,32 @@ vi.mock("monaco-editor", () => ({
             return decorations.map((_, index) => `decoration-${index}`)
           },
         ),
+        layoutContentWidget: vi.fn(),
+        onMouseLeave: vi.fn(() => ({ dispose: vi.fn() })),
+        onMouseMove: vi.fn(
+          (
+            handler: (event: {
+              target?: { position?: { lineNumber: number; column: number } }
+            }) => void,
+          ) => {
+            if (side === "original") {
+              monacoMockState.originalMouseMoveHandler = handler
+            } else {
+              monacoMockState.modifiedMouseMoveHandler = handler
+            }
+
+            return { dispose: vi.fn() }
+          },
+        ),
+        removeContentWidget: vi.fn((widget: { getDomNode: () => HTMLElement }) => {
+          widget.getDomNode().remove()
+        }),
       })
 
       return {
         dispose: vi.fn(),
-        getModifiedEditor: createCodeEditor,
-        getOriginalEditor: createCodeEditor,
+        getModifiedEditor: () => createCodeEditor("modified"),
+        getOriginalEditor: () => createCodeEditor("original"),
         setModel: vi.fn(),
       }
     }),
@@ -60,6 +103,15 @@ const renamedIdentifierFragment: MatchFragment = {
 describe("PairCodeDiff", () => {
   beforeEach(() => {
     monacoMockState.hoverMessages = []
+    monacoMockState.decorationCallCount = 0
+    monacoMockState.originalMouseMoveHandler = null
+    monacoMockState.modifiedMouseMoveHandler = null
+    monacoMockState.contentWidgetNodes = []
+    monacoMockState.originalDecorationCount = 0
+    monacoMockState.modifiedDecorationCount = 0
+    document.body
+      .querySelectorAll(".classifi-fragment-explanation-widget")
+      .forEach((node) => node.remove())
 
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
@@ -115,13 +167,21 @@ describe("PairCodeDiff", () => {
     )
 
     await waitFor(() => {
-      expect(monacoMockState.hoverMessages.length).toBeGreaterThan(0)
+      expect(monacoMockState.decorationCallCount).toBeGreaterThan(0)
     })
 
-    expect(monacoMockState.hoverMessages.join("\n")).toContain(
-      "Identifier Renaming With Same Logic",
-    )
-    expect(monacoMockState.hoverMessages.join("\n")).not.toContain(
+    expect(monacoMockState.hoverMessages).toHaveLength(0)
+
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      await screen.findByLabelText("Editor fragment explanation"),
+    ).toHaveTextContent("Identifier Renaming With Same Logic")
+    expect(screen.getByLabelText("Editor fragment explanation")).not.toHaveTextContent(
       "Same Control Flow Structure",
     )
   })
@@ -165,13 +225,21 @@ describe("PairCodeDiff", () => {
     )
 
     await waitFor(() => {
-      expect(monacoMockState.hoverMessages.length).toBeGreaterThan(0)
+      expect(monacoMockState.decorationCallCount).toBeGreaterThan(0)
     })
 
-    expect(monacoMockState.hoverMessages.join("\n")).toContain(
-      "AI Reviewed Return Difference",
-    )
-    expect(monacoMockState.hoverMessages.join("\n")).not.toContain(
+    expect(monacoMockState.hoverMessages).toHaveLength(0)
+
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      await screen.findByLabelText("Editor fragment explanation"),
+    ).toHaveTextContent("AI Reviewed Return Difference")
+    expect(screen.getByLabelText("Editor fragment explanation")).not.toHaveTextContent(
       "Output Logic Differs",
     )
   })
@@ -218,15 +286,22 @@ describe("PairCodeDiff", () => {
     )
 
     await waitFor(() => {
-      expect(monacoMockState.hoverMessages.length).toBeGreaterThan(0)
+      expect(monacoMockState.decorationCallCount).toBeGreaterThan(0)
     })
 
-    expect(monacoMockState.hoverMessages.join("\n")).toContain(
-      [
-        "**Dictionary Variable Renamed**",
-        "",
-        "Left code uses roman_dict while right code uses values.",
-      ].join("\n"),
+    expect(monacoMockState.hoverMessages).toHaveLength(0)
+
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      await screen.findByLabelText("Editor fragment explanation"),
+    ).toHaveTextContent("Dictionary Variable Renamed")
+    expect(screen.getByLabelText("Editor fragment explanation")).toHaveTextContent(
+      "Left code uses roman_dict while right code uses values.",
     )
   })
 
@@ -300,13 +375,228 @@ describe("PairCodeDiff", () => {
     )
 
     await waitFor(() => {
-      expect(monacoMockState.hoverMessages.length).toBeGreaterThan(0)
+      expect(monacoMockState.decorationCallCount).toBeGreaterThan(0)
     })
 
-    const allHoverMessages = monacoMockState.hoverMessages.join("\n")
+    expect(monacoMockState.hoverMessages).toHaveLength(0)
 
-    expect(allHoverMessages).toContain("Dictionary Variable Renamed")
-    expect(allHoverMessages).toContain("Accumulator Variable Renamed")
-    expect(allHoverMessages).not.toContain("Variable Names Systematically Renamed")
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      await screen.findByLabelText("Editor fragment explanation"),
+    ).toHaveTextContent("Dictionary Variable Renamed")
+  })
+
+  it("does not register hover labels for unchanged diff explanation targets", async () => {
+    render(
+      <PairCodeDiff
+        leftFile={{
+          id: 1,
+          path: "Left.py",
+          filename: "Left.py",
+          content: [
+            "def roman_to_int(s):",
+            "    result = sum(values[c] for c in s)",
+            "    return result",
+          ].join("\n"),
+          lineCount: 3,
+          studentName: "Ava Sinclair",
+        }}
+        rightFile={{
+          id: 2,
+          path: "Right.py",
+          filename: "Right.py",
+          content: [
+            "def roman_to_int(s):",
+            "    result = sum(values[c] for c in s)",
+            "    return result",
+          ].join("\n"),
+          lineCount: 3,
+          studentName: "Alexander Cross",
+        }}
+        fragments={[
+          {
+            id: 301,
+            leftSelection: { startRow: 1, startCol: 4, endRow: 1, endCol: 40 },
+            rightSelection: { startRow: 1, startCol: 4, endRow: 1, endCol: 40 },
+            length: 12,
+            diffExplanationTargets: [
+              {
+                targetId: "301:unchanged",
+                leftSelection: { startRow: 1, startCol: 4, endRow: 1, endCol: 40 },
+                rightSelection: { startRow: 1, startCol: 4, endRow: 1, endCol: 40 },
+                explanation: {
+                  category: "code_changed",
+                  label: "Highlighted Code Difference",
+                  reasons: [
+                    "This highlighted region contains code that differs between the two submissions.",
+                  ],
+                  confidence: 0.5,
+                  source: "fallback",
+                },
+              },
+            ],
+          },
+        ]}
+        language="python"
+        variant="light"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(monacoMockState.decorationCallCount).toBeGreaterThanOrEqual(2)
+    })
+
+    expect(monacoMockState.hoverMessages).toHaveLength(0)
+
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 2, column: 80 } },
+      })
+    })
+
+    expect(
+      screen.queryByLabelText("Editor fragment explanation"),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows pair-level right-only labels on the right editor only", async () => {
+    render(
+      <PairCodeDiff
+        leftFile={{
+          id: 1,
+          path: "Left.c",
+          filename: "Left.c",
+          content: "int main() {\n  return 0;\n}",
+          lineCount: 3,
+          studentName: "Ava Sinclair",
+        }}
+        rightFile={{
+          id: 2,
+          path: "Right.c",
+          filename: "Right.c",
+          content: "#include <string.h>\nint main() {\n  return 0;\n}",
+          lineCount: 4,
+          studentName: "Alexander Cross",
+        }}
+        fragments={[]}
+        diffExplanationTargets={[
+          {
+            targetId: "pair:0",
+            targetKind: "added",
+            leftSelection: null,
+            rightSelection: { startRow: 0, startCol: 0, endRow: 0, endCol: 19 },
+            explanation: {
+              category: "statement_added",
+              label: "Header Added",
+              reasons: ["The right file adds the string library include."],
+              confidence: 0.91,
+              source: "ai",
+            },
+          },
+        ]}
+        language="c"
+        variant="light"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(monacoMockState.decorationCallCount).toBeGreaterThan(0)
+    })
+
+    expect(monacoMockState.originalDecorationCount).toBe(0)
+    expect(monacoMockState.modifiedDecorationCount).toBe(1)
+
+    act(() => {
+      monacoMockState.originalMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      screen.queryByLabelText("Editor fragment explanation"),
+    ).not.toBeInTheDocument()
+
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      await screen.findByLabelText("Editor fragment explanation"),
+    ).toHaveTextContent("Header Added")
+  })
+
+  it("shows pair-level left-only labels on the left editor only", async () => {
+    render(
+      <PairCodeDiff
+        leftFile={{
+          id: 1,
+          path: "Left.c",
+          filename: "Left.c",
+          content: "printf(\"debug\");\nreturn 0;",
+          lineCount: 2,
+          studentName: "Ava Sinclair",
+        }}
+        rightFile={{
+          id: 2,
+          path: "Right.c",
+          filename: "Right.c",
+          content: "return 0;",
+          lineCount: 1,
+          studentName: "Alexander Cross",
+        }}
+        fragments={[]}
+        diffExplanationTargets={[
+          {
+            targetId: "pair:0",
+            targetKind: "removed",
+            leftSelection: { startRow: 0, startCol: 0, endRow: 0, endCol: 16 },
+            rightSelection: null,
+            explanation: {
+              category: "statement_removed",
+              label: "Debug Output Removed",
+              reasons: ["The right file no longer includes the debug printf line."],
+              confidence: 0.91,
+              source: "ai",
+            },
+          },
+        ]}
+        language="c"
+        variant="light"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(monacoMockState.decorationCallCount).toBeGreaterThan(0)
+    })
+
+    expect(monacoMockState.originalDecorationCount).toBe(1)
+    expect(monacoMockState.modifiedDecorationCount).toBe(0)
+
+    act(() => {
+      monacoMockState.modifiedMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      screen.queryByLabelText("Editor fragment explanation"),
+    ).not.toBeInTheDocument()
+
+    act(() => {
+      monacoMockState.originalMouseMoveHandler?.({
+        target: { position: { lineNumber: 1, column: 80 } },
+      })
+    })
+
+    expect(
+      await screen.findByLabelText("Editor fragment explanation"),
+    ).toHaveTextContent("Debug Output Removed")
   })
 })

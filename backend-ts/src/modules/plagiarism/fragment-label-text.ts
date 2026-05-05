@@ -1,4 +1,4 @@
-const MAX_FRAGMENT_REASON_LENGTH = 260
+const MAX_FRAGMENT_REASON_LENGTH = 360
 
 /**
  * Normalizes an AI-provided fragment explanation into one display sentence.
