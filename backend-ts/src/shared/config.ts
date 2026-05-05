@@ -82,6 +82,22 @@ const EnvSchema = z
         (v) => Number.isFinite(v) && v >= 0 && v <= 1,
         "PLAGIARISM_SEMANTIC_WEIGHT must be between 0 and 1",
       ),
+    AI_DIFF_LABELS_ENABLED: z
+      .string()
+      .default("false")
+      .transform((v) => v === "true" || v === "True"),
+    AI_DIFF_LABELS_PROVIDER: z.enum(["openai", "anthropic"]).default("anthropic"),
+    AI_DIFF_LABELS_MODEL: z.string().default("claude-haiku-4-5"),
+    AI_DIFF_LABELS_TIMEOUT_MS: z
+      .string()
+      .default("5000")
+      .transform(Number)
+      .refine(
+        (v) => Number.isInteger(v) && v > 0,
+        "AI_DIFF_LABELS_TIMEOUT_MS must be a positive integer",
+      ),
+    OPENAI_API_KEY: z.string().optional(),
+    ANTHROPIC_API_KEY: z.string().optional(),
 
     // Test Execution Timeout (in seconds)
     TEST_EXECUTION_TIMEOUT_SECONDS: z
@@ -227,6 +243,12 @@ export const settings = {
   semanticSimilarityMaxRetries: env.SEMANTIC_SIMILARITY_MAX_RETRIES,
   plagiarismStructuralWeight: env.PLAGIARISM_STRUCTURAL_WEIGHT,
   plagiarismSemanticWeight: env.PLAGIARISM_SEMANTIC_WEIGHT,
+  aiDiffLabelsEnabled: env.AI_DIFF_LABELS_ENABLED,
+  aiDiffLabelsProvider: env.AI_DIFF_LABELS_PROVIDER,
+  aiDiffLabelsModel: env.AI_DIFF_LABELS_MODEL,
+  aiDiffLabelsTimeoutMs: env.AI_DIFF_LABELS_TIMEOUT_MS,
+  openAiApiKey: env.OPENAI_API_KEY,
+  anthropicApiKey: env.ANTHROPIC_API_KEY,
 
   // Test Execution
   testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,

@@ -225,6 +225,7 @@ export function buildPairSimilarityReportData(
     ],
     fragmentRows: options.pairDetails.fragments.map((fragment, index) => ({
       fragmentLabel: `Fragment ${index + 1}`,
+      explanationLabel: fragment.explanation?.label ?? "Matched Code Structure",
       leftRange: formatCodeRange(
         fragment.leftSelection.startRow,
         fragment.leftSelection.endRow,
@@ -391,6 +392,7 @@ export function buildCrossClassPairReportData(
     ],
     fragmentRows: pairDetails.fragments.map((fragment, index) => ({
       fragmentLabel: `Fragment ${index + 1}`,
+      explanationLabel: fragment.explanation?.label ?? "Matched Code Structure",
       leftRange: formatCodeRange(
         fragment.leftSelection.startRow,
         fragment.leftSelection.endRow,

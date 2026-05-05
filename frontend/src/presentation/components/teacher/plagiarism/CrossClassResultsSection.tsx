@@ -317,6 +317,9 @@ export function CrossClassResultsSection({
           leftSelection: fragment.leftSelection,
           rightSelection: fragment.rightSelection,
           length: fragment.length,
+          explanation: fragment.explanation,
+          diffExplanation: fragment.diffExplanation,
+          diffExplanationTargets: fragment.diffExplanationTargets,
         })),
       }
 
@@ -859,6 +862,7 @@ export function CrossClassResultsSection({
                 <PairCodeDiff
                   leftFile={pairDetails.leftFile}
                   rightFile={pairDetails.rightFile}
+                  fragments={pairDetails.fragments}
                   language={detectedLanguage}
                   height={480}
                   variant="light"

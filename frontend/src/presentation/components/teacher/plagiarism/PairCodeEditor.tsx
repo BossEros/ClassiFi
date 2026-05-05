@@ -255,6 +255,12 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
         options: {
           className,
           isWholeLine: sel.isWholeLine,
+          hoverMessage:
+            sel.fragment !== "ignored" && sel.fragment.explanation
+              ? {
+                  value: `**${sel.fragment.explanation.label}**\n\n${sel.fragment.explanation.reasons.join("\n")}`,
+                }
+              : undefined,
         },
       })
     }
@@ -277,6 +283,24 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
           column: region.startCol + 1,
         },
         monaco.editor.ScrollType.Smooth,
+      )
+    },
+    [getRegion],
+  )
+
+  const showSelectedFragmentHover = useCallback(
+    (fragment: MatchFragment) => {
+      if (!editorRef.current || !fragment.explanation) return
+
+      const region = getRegion(fragment)
+      editorRef.current.setPosition({
+        lineNumber: region.startRow + 1,
+        column: Math.max(region.startCol + 1, 1),
+      })
+      editorRef.current.trigger(
+        "classifi.fragmentExplanation",
+        "editor.action.showHover",
+        undefined,
       )
     },
     [getRegion],
@@ -330,13 +354,16 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     // Handle hover
     disposables.push(
       editorRef.current.onMouseMove((e) => {
-        if (e.target?.position) {
-          const fragment = getFragmentAtPosition(
-            e.target.position.lineNumber,
-            e.target.position.column,
-          )
-          onFragmentHover(fragment)
+        if (!e.target?.position) {
+          onFragmentHover(null)
+          return
         }
+
+        const fragment = getFragmentAtPosition(
+          e.target.position.lineNumber,
+          e.target.position.column,
+        )
+        onFragmentHover(fragment)
       }),
     )
 
@@ -424,6 +451,16 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       scrollToFragment(selectedFragment)
     }
   }, [selectedFragment, scrollToFragment])
+
+  useEffect(() => {
+    if (!selectedFragment?.explanation || hoveredFragment) return
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      showSelectedFragmentHover(selectedFragment)
+    })
+
+    return () => window.cancelAnimationFrame(animationFrameId)
+  }, [hoveredFragment, selectedFragment, showSelectedFragmentHover])
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

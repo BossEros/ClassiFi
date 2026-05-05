@@ -47,6 +47,7 @@ export interface ClassReportPairRow {
 
 export interface FragmentEvidenceRow {
   fragmentLabel: string
+  explanationLabel: string
   leftRange: string
   rightRange: string
   length: string

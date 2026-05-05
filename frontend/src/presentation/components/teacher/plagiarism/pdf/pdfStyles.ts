@@ -34,9 +34,10 @@ export const classReportTableColumnWidths = {
 } as const
 
 export const fragmentReportTableColumnWidths = {
-  fragment: "20%",
-  range: "32%",
-  length: "16%",
+  fragment: "16%",
+  explanation: "24%",
+  range: "24%",
+  length: "12%",
 } as const
 
 // ─── StyleSheet ────────────────────────────────────────────────────────────────

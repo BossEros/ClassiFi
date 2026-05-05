@@ -3,17 +3,30 @@ import * as monaco from "monaco-editor"
 export const CLASSIFI_PLAGIARISM_DARK_THEME = "classifi-plagiarism-dark"
 export const CLASSIFI_PLAGIARISM_LIGHT_THEME = "classifi-plagiarism-light"
 
-let areThemesDefined = false
+export const DIFF_VIEW_COLORS = {
+  addedTextBackground: "#22c55e80",
+  addedTextBorder: "#15803dcc",
+  addedLineBackground: "#22c55e3d",
+  addedGutterBackground: "#22c55e52",
+  addedOverviewForeground: "#16a34acc",
+  addedBadgeBackground: "rgba(34, 197, 94, 0.16)",
+  addedBadgeBorder: "rgba(21, 128, 61, 0.28)",
+  addedBadgeText: "#15803d",
+  removedTextBackground: "#ef444480",
+  removedTextBorder: "#b91c1ccc",
+  removedLineBackground: "#ef44443d",
+  removedGutterBackground: "#ef444452",
+  removedOverviewForeground: "#dc2626cc",
+  removedBadgeBackground: "rgba(239, 68, 68, 0.16)",
+  removedBadgeBorder: "rgba(185, 28, 28, 0.28)",
+  removedBadgeText: "#b91c1c",
+} as const
 
 /**
- * Defines the shared plagiarism Monaco themes once.
+ * Defines or refreshes the shared plagiarism Monaco themes.
  * Safe to call from both match and diff editors.
  */
 export function ensurePlagiarismMonacoThemes(): void {
-  if (areThemesDefined) {
-    return
-  }
-
   const darkDiffColors = {
     "editor.background": "#0f172a",
     "editorGutter.background": "#0f172a",
@@ -24,12 +37,16 @@ export function ensurePlagiarismMonacoThemes(): void {
     "editor.inactiveSelectionBackground": "#38bdf822",
     "editorIndentGuide.background1": "#1e293b",
     "editorIndentGuide.activeBackground1": "#334155",
-    "diffEditor.insertedTextBackground": "#10b98147",
-    "diffEditor.insertedTextBorder": "#05966999",
-    "diffEditor.insertedLineBackground": "#10b9811f",
-    "diffEditor.removedTextBackground": "#f43f5e40",
-    "diffEditor.removedTextBorder": "#e11d4899",
-    "diffEditor.removedLineBackground": "#f43f5e1a",
+    "diffEditor.insertedTextBackground": DIFF_VIEW_COLORS.addedTextBackground,
+    "diffEditor.insertedTextBorder": DIFF_VIEW_COLORS.addedTextBorder,
+    "diffEditor.insertedLineBackground": DIFF_VIEW_COLORS.addedLineBackground,
+    "diffEditorGutter.insertedLineBackground": DIFF_VIEW_COLORS.addedGutterBackground,
+    "diffEditorOverview.insertedForeground": DIFF_VIEW_COLORS.addedOverviewForeground,
+    "diffEditor.removedTextBackground": DIFF_VIEW_COLORS.removedTextBackground,
+    "diffEditor.removedTextBorder": DIFF_VIEW_COLORS.removedTextBorder,
+    "diffEditor.removedLineBackground": DIFF_VIEW_COLORS.removedLineBackground,
+    "diffEditorGutter.removedLineBackground": DIFF_VIEW_COLORS.removedGutterBackground,
+    "diffEditorOverview.removedForeground": DIFF_VIEW_COLORS.removedOverviewForeground,
   } as const
 
   const lightDiffColors = {
@@ -42,12 +59,16 @@ export function ensurePlagiarismMonacoThemes(): void {
     "editor.inactiveSelectionBackground": "#dbeafe66",
     "editorIndentGuide.background1": "#e2e8f0",
     "editorIndentGuide.activeBackground1": "#cbd5e1",
-    "diffEditor.insertedTextBackground": "#10b98147",
-    "diffEditor.insertedTextBorder": "#05966980",
-    "diffEditor.insertedLineBackground": "#10b9811f",
-    "diffEditor.removedTextBackground": "#f43f5e3d",
-    "diffEditor.removedTextBorder": "#e11d4873",
-    "diffEditor.removedLineBackground": "#f43f5e1a",
+    "diffEditor.insertedTextBackground": DIFF_VIEW_COLORS.addedTextBackground,
+    "diffEditor.insertedTextBorder": DIFF_VIEW_COLORS.addedTextBorder,
+    "diffEditor.insertedLineBackground": DIFF_VIEW_COLORS.addedLineBackground,
+    "diffEditorGutter.insertedLineBackground": DIFF_VIEW_COLORS.addedGutterBackground,
+    "diffEditorOverview.insertedForeground": DIFF_VIEW_COLORS.addedOverviewForeground,
+    "diffEditor.removedTextBackground": DIFF_VIEW_COLORS.removedTextBackground,
+    "diffEditor.removedTextBorder": DIFF_VIEW_COLORS.removedTextBorder,
+    "diffEditor.removedLineBackground": DIFF_VIEW_COLORS.removedLineBackground,
+    "diffEditorGutter.removedLineBackground": DIFF_VIEW_COLORS.removedGutterBackground,
+    "diffEditorOverview.removedForeground": DIFF_VIEW_COLORS.removedOverviewForeground,
   } as const
 
   monaco.editor.defineTheme(CLASSIFI_PLAGIARISM_DARK_THEME, {
@@ -63,6 +84,4 @@ export function ensurePlagiarismMonacoThemes(): void {
     rules: [],
     colors: lightDiffColors,
   })
-
-  areThemesDefined = true
 }

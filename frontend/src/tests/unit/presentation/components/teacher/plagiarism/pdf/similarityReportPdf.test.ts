@@ -6,6 +6,7 @@ import {
   buildPairSimilarityReportData,
   CLASS_REPORT_TABLE_HEADERS,
 } from "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf"
+import type { FilePair } from "@/presentation/components/teacher/plagiarism/types"
 
 const mockTeacher = {
   id: "7",
@@ -136,7 +137,7 @@ const mockResults = {
   scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },
 }
 
-const mockPairDetails = {
+const mockPairDetails: FilePair = {
   id: 10,
   leftFile: {
     id: 1,
@@ -171,6 +172,11 @@ const mockPairDetails = {
         endCol: 10,
       },
       length: 2,
+      explanation: {
+        category: "code_structure",
+        label: "Matched Code Structure",
+        reasons: ["The detector matched these fragments by structural code tokens"],
+      },
     },
   ],
 }
@@ -316,6 +322,7 @@ describe("similarityReportPdf", () => {
     expect(reportData.fragmentRows).toEqual([
       {
         fragmentLabel: "Fragment 1",
+        explanationLabel: "Matched Code Structure",
         leftRange: "Lines 2\u20133",
         rightRange: "Lines 4\u20135",
         length: "2",

@@ -25,6 +25,56 @@ export interface ScoringWeights {
   semanticWeight: number
 }
 
+export type FragmentExplanationCategory =
+  | "library_import"
+  | "identifier_names"
+  | "control_flow"
+  | "function_structure"
+  | "code_structure"
+
+export interface FragmentExplanation {
+  category: FragmentExplanationCategory
+  label: string
+  reasons: string[]
+}
+
+export type DiffFragmentExplanationCategory =
+  | "identifier_renaming"
+  | "conditional_logic_changed"
+  | "loop_logic_changed"
+  | "output_logic_changed"
+  | "statement_added"
+  | "statement_removed"
+  | "comment_changed"
+  | "code_changed"
+
+export type DiffFragmentExplanationSource = "ai" | "fallback"
+
+export interface DiffFragmentExplanation {
+  category: DiffFragmentExplanationCategory
+  label: string
+  reasons: string[]
+  confidence: number
+  source: DiffFragmentExplanationSource
+}
+
+export interface DiffFragmentExplanationTarget {
+  targetId: string
+  leftSelection: {
+    startRow: number
+    startCol: number
+    endRow: number
+    endCol: number
+  }
+  rightSelection: {
+    startRow: number
+    startCol: number
+    endRow: number
+    endCol: number
+  }
+  explanation: DiffFragmentExplanation
+}
+
 export interface AnalyzeResponse {
   reportId: string
   isReusedReport: boolean
@@ -75,6 +125,9 @@ export interface ResultDetailsResponse {
       endCol: number
     }
     length: number
+    explanation?: FragmentExplanation
+    diffExplanation?: DiffFragmentExplanation
+    diffExplanationTargets?: DiffFragmentExplanationTarget[]
   }>
   leftFile: {
     filename: string

@@ -657,12 +657,14 @@ Specialized types for the class detail page redesign:
    - Use the graph and table together; they share one threshold and selection flow.
 3. **Compare Code**:
    - View matched code fragments highlighted in both files
+   - Review Match View fragment labels that explain the evidence category, such as shared imports, identifier names, control-flow structure, function structure, or matched code structure
+   - Review backend-generated Diff View hover labels that explain what changed inside smaller highlighted line/segment targets. Comment-only changes are labeled as comment changes instead of code renames. AI-assisted labels are shown only after backend validation; deterministic fallback labels remain available when AI labels are disabled or unavailable.
    - Use synchronized scrolling to navigate through matches
    - Click on fragments in the table to jump to specific matches
    - Toggle between "Match" and "Diff" views for different perspectives
 4. **Export Evidence**:
    - Use `Download Class Report` to export the active threshold view for the whole class; only pairs at or above the current threshold are included.
-   - Use `Download Pair Report` inside the comparison panel when a specific `Student A vs Student B` review needs standalone evidence.
+   - Use `Download Pair Report` inside the comparison panel when a specific `Student A vs Student B` review needs standalone evidence, including fragment explanation labels.
 5. **Take Action**:
    - Document findings for academic integrity review
    - Contact students as needed

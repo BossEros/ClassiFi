@@ -6,6 +6,10 @@ import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-pe
 import { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
 import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
 import {
+  DiffFragmentExplanationService,
+  groupDiffExplanationTargetsByFragmentId,
+} from "@/modules/plagiarism/diff-fragment-explanation.service.js"
+import {
   computeSemanticScoresFromEmbeddings,
   type SemanticScorePairEntry,
 } from "@/modules/plagiarism/semantic-scoring.js"
@@ -18,6 +22,7 @@ import {
   type PlagiarismFragmentDTO,
   type PlagiarismSummaryDTO,
 } from "@/modules/plagiarism/plagiarism.mapper.js"
+import { explainMatchedFragment } from "@/modules/plagiarism/plagiarism-fragment-explanation.js"
 import {
   buildPairSimilarityScoreBreakdown,
   normalizeSubmissionPair,
@@ -30,7 +35,6 @@ import {
   PlagiarismResultNotFoundError,
   UnsupportedLanguageError,
 } from "@/shared/errors.js"
-import type { MatchFragment } from "@/modules/plagiarism/match-fragment.model.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { settings } from "@/shared/config.js"
 
@@ -117,6 +121,8 @@ export class PlagiarismService {
     private similarityPenaltyService: SimilarityPenaltyService,
     @inject(DI_TOKENS.services.semanticSimilarityClient)
     private semanticClient: SemanticSimilarityClient,
+    @inject(DI_TOKENS.services.diffFragmentExplanation)
+    private diffExplanationService: DiffFragmentExplanationService,
   ) {}
 
   /** Get pair details with fragments. */
@@ -200,6 +206,55 @@ export class PlagiarismService {
         submission2.submission.filePath,
       )
 
+    const assignment = await this.assignmentRepo.getAssignmentById(
+      submission1.submission.assignmentId,
+    )
+    const fragmentSelections = fragments.map((fragment) => ({
+      fragmentId: fragment.id,
+      leftSelection: {
+        startRow: fragment.leftStartRow,
+        startCol: fragment.leftStartCol,
+        endRow: fragment.leftEndRow,
+        endCol: fragment.leftEndCol,
+      },
+      rightSelection: {
+        startRow: fragment.rightStartRow,
+        startCol: fragment.rightStartCol,
+        endRow: fragment.rightEndRow,
+        endCol: fragment.rightEndCol,
+      },
+    }))
+    const diffExplanationTargets =
+      await this.diffExplanationService.explainDiffFragmentTargets({
+        leftContent,
+        rightContent,
+        language: assignment?.programmingLanguage,
+        fragments: fragmentSelections,
+      })
+    const diffExplanationTargetsByFragmentId = groupDiffExplanationTargetsByFragmentId(
+      diffExplanationTargets,
+    )
+    const fragmentDetails = fragments.map((fragment, fragmentIndex) => {
+      const fragmentSelection = fragmentSelections[fragmentIndex]
+
+      return {
+        id: fragment.id,
+        leftSelection: fragmentSelection.leftSelection,
+        rightSelection: fragmentSelection.rightSelection,
+        length: fragment.length,
+        explanation: explainMatchedFragment({
+          leftContent,
+          rightContent,
+          leftSelection: fragmentSelection.leftSelection,
+          rightSelection: fragmentSelection.rightSelection,
+        }),
+        diffExplanation:
+          diffExplanationTargetsByFragmentId.get(fragment.id)?.[0]?.explanation,
+        diffExplanationTargets:
+          diffExplanationTargetsByFragmentId.get(fragment.id) ?? [],
+      }
+    })
+
     return {
       result: {
         id: result.id,
@@ -215,22 +270,7 @@ export class PlagiarismService {
         leftTotal: result.leftTotal,
         rightTotal: result.rightTotal,
       },
-      fragments: fragments.map((fragment: MatchFragment) => ({
-        id: fragment.id,
-        leftSelection: {
-          startRow: fragment.leftStartRow,
-          startCol: fragment.leftStartCol,
-          endRow: fragment.leftEndRow,
-          endCol: fragment.leftEndCol,
-        },
-        rightSelection: {
-          startRow: fragment.rightStartRow,
-          startCol: fragment.rightStartCol,
-          endRow: fragment.rightEndRow,
-          endCol: fragment.rightEndCol,
-        },
-        length: fragment.length,
-      })),
+      fragments: fragmentDetails,
       leftFile: {
         filename: submission1.submission.fileName,
         content: leftContent,

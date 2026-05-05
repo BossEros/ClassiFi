@@ -1,4 +1,8 @@
 import { z } from "zod"
+import {
+  DiffFragmentExplanationSchema,
+  DiffFragmentExplanationTargetSchema,
+} from "@/modules/plagiarism/diff-fragment-explanation.schema.js"
 
 // ============================================================================
 // Param Schemas
@@ -128,12 +132,30 @@ export const SelectionSchema = z.object({
 
 export type Selection = z.infer<typeof SelectionSchema>
 
+/** Explanation schema for fragment labels */
+export const FragmentExplanationSchema = z.object({
+  category: z.enum([
+    "library_import",
+    "identifier_names",
+    "control_flow",
+    "function_structure",
+    "code_structure",
+  ]),
+  label: z.string(),
+  reasons: z.array(z.string()),
+})
+
+export type FragmentExplanation = z.infer<typeof FragmentExplanationSchema>
+
 /** Fragment response schema */
 export const FragmentResponseSchema = z.object({
   id: z.number(),
   leftSelection: SelectionSchema,
   rightSelection: SelectionSchema,
   length: z.number(),
+  explanation: FragmentExplanationSchema.optional(),
+  diffExplanation: DiffFragmentExplanationSchema.optional(),
+  diffExplanationTargets: z.array(DiffFragmentExplanationTargetSchema).optional(),
 })
 
 export type FragmentResponse = z.infer<typeof FragmentResponseSchema>

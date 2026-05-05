@@ -302,9 +302,9 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
         }}
       >
         <strong style={{ color: valueColor }}>Tip:</strong>{" "}
-        Shared fragments are highlighted in sky blue. Click any highlighted
-        block or use the arrows above to navigate between matches. Fragments
-        are ordered strongest first.
+        Shared fragments are highlighted in sky blue. Click or hover over a
+        highlighted block to see its evidence label, or use the arrows above to
+        navigate between matches. Fragments are ordered strongest first.
       </div>
     </div>
   )
